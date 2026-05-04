@@ -484,101 +484,6 @@ tr:hover td{background:var(--bg3);}
       <div class="msg-list" id="msg-list"></div>
     </div>
 
-    <!-- TEACHER: STUDENTS -->
-<div class="page" id="page-students">
-  <div class="page-header">
-    <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان</div></div>
-    <button class="btn-sm" style="background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600" onclick="showAddStudent()">+ هنرجوی جدید</button>
-  </div>
-  <div id="students-list" style="display:flex;flex-direction:column;gap:12px;"></div>
-</div>
-
-<!-- MODAL: ADD STUDENT -->
-<div id="modal-student" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;margin:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-size:16px;font-weight:700;">افزودن هنرجو</div>
-      <button onclick="closeStudentModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div class="form-group"><label>نام کامل *</label><input id="st-name" type="text" placeholder="نام و نام‌خانوادگی"></div>
-      <div class="grid-2">
-        <div class="form-group"><label>شماره تماس</label><input id="st-phone" type="tel" placeholder="09xx" dir="ltr"></div>
-        <div class="form-group"><label>سن</label><input id="st-age" type="number" placeholder="۱۵" dir="ltr"></div>
-      </div>
-      <div class="form-group"><label>ایمیل</label><input id="st-email" type="email" placeholder="example@email.com" dir="ltr"></div>
-      <div class="grid-2">
-        <div class="form-group"><label>ساز تخصصی</label>
-          <select id="st-instrument">
-            <option value="گیتار کلاسیک">گیتار کلاسیک</option>
-            <option value="گیتار الکتریک">گیتار الکتریک</option>
-            <option value="گیتار باس">گیتار باس</option>
-            <option value="پیانو">پیانو</option>
-            <option value="ویولن">ویولن</option>
-            <option value="درامز">درامز</option>
-            <option value="آواز">آواز</option>
-          </select>
-        </div>
-        <div class="form-group"><label>سطح</label>
-          <select id="st-level">
-            <option value="beginner">مبتدی</option>
-            <option value="intermediate">متوسط</option>
-            <option value="advanced">پیشرفته</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group"><label>هدف هنرجو</label>
-        <select id="st-goal">
-          <option value="تفریحی">تفریحی</option>
-          <option value="حرفه‌ای">حرفه‌ای</option>
-          <option value="کنکور هنر">کنکور هنر</option>
-          <option value="ضبط و استودیو">ضبط و استودیو</option>
-        </select>
-      </div>
-      <div class="form-group"><label>روزهای کلاس</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-          ${['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'].map(d=>`
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;">
-              <input type="checkbox" value="${d}" class="day-check" style="accent-color:var(--gold)"> ${d}
-            </label>`).join('')}
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group"><label>ساعت کلاس</label><input id="st-time" type="time" dir="ltr"></div>
-        <div class="form-group"><label>مدت جلسه</label>
-          <select id="st-duration">
-            <option value="30">۳۰ دقیقه</option>
-            <option value="45">۴۵ دقیقه</option>
-            <option value="60" selected>۶۰ دقیقه</option>
-            <option value="90">۹۰ دقیقه</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group"><label>نوع کلاس</label>
-          <select id="st-type">
-            <option value="in-person">حضوری</option>
-            <option value="online">آنلاین</option>
-          </select>
-        </div>
-        <div class="form-group"><label>شهریه ماهانه (تومان)</label><input id="st-fee" type="number" placeholder="500000" dir="ltr"></div>
-      </div>
-      <div class="form-group"><label>وضعیت پرداخت</label>
-        <select id="st-payment">
-          <option value="pending">در انتظار</option>
-          <option value="paid">پرداخت شده</option>
-          <option value="overdue">معوق</option>
-        </select>
-      </div>
-      <div class="form-group"><label>یادداشت مربی</label>
-        <textarea id="st-notes" class="msg-textarea" placeholder="نقاط قوت، ضعف، توضیحات..." style="min-height:70px;"></textarea>
-      </div>
-      <button class="btn-primary" onclick="saveStudent()">ذخیره هنرجو</button>
-    </div>
-  </div>
-</div>
-
-
     <!-- TEACHER: SCORES -->
     <div class="page" id="page-scores">
       <div class="page-header"><div><div class="page-title">ثبت نمره جلسه</div></div></div>
@@ -619,23 +524,127 @@ tr:hover td{background:var(--bg3);}
     <!-- TEACHER: STUDENTS -->
     <div class="page" id="page-students">
       <div class="page-header">
-        <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان فعال و آرشیو</div></div>
-        <button class="btn-sm" style="background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600" onclick="showAddStudent()">+ هنرجوی جدید</button>
+        <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان</div></div>
       </div>
 
-      <!-- هنرجوهای فعال -->
-      <div class="section-header" style="margin-bottom:10px">
-        <div class="section-title">🟢 هنرجویان فعال</div>
-        <span id="active-count" style="font-size:12px;color:var(--text3)"></span>
+      <!-- ۱. هنرجوهای جدید (pending) -->
+      <div id="section-pending" style="margin-bottom:28px;">
+        <div class="section-header" style="margin-bottom:10px;">
+          <div class="section-title" style="color:var(--teal)">🔔 هنرجوهای جدید — منتظر تأیید</div>
+          <span id="pending-count" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <div id="students-pending" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
-      <div id="students-list" style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;"></div>
 
-      <!-- آرشیو -->
-      <div class="section-header" style="margin-bottom:10px;margin-top:8px;">
-        <div class="section-title" style="color:var(--text3)">🗂 آرشیو (غیرفعال)</div>
-        <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
+      <!-- ۲. هنرجوهای فعال -->
+      <div style="margin-bottom:28px;">
+        <div class="section-header" style="margin-bottom:10px;">
+          <div class="section-title" style="color:var(--green)">🟢 هنرجویان فعال</div>
+          <span id="active-count" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <div id="students-list" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
-      <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
+
+      <!-- ۳. آرشیو (inactive) -->
+      <div>
+        <div class="section-header" style="margin-bottom:10px;">
+          <div class="section-title" style="color:var(--text3)">🗂 آرشیو — غیرفعال</div>
+          <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
+      </div>
+    </div>
+
+    <!-- MODAL: تکمیل اطلاعات هنرجو توسط استاد -->
+    <div id="modal-student" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;margin:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div style="font-size:16px;font-weight:700;" id="modal-student-title">اطلاعات کلاس هنرجو</div>
+          <button onclick="closeStudentModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <!-- نام هنرجو (فقط نمایش) -->
+        <div style="padding:10px 14px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
+          <div style="font-size:11px;color:var(--teal);margin-bottom:2px;">هنرجو</div>
+          <div style="font-size:15px;font-weight:700;" id="modal-student-name">—</div>
+        </div>
+        <input type="hidden" id="st-profile-id">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="grid-2">
+            <div class="form-group"><label>شماره تماس</label><input id="st-phone" type="tel" placeholder="09xx" dir="ltr"></div>
+            <div class="form-group"><label>سن</label><input id="st-age" type="number" placeholder="۱۵" dir="ltr"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>ساز تخصصی</label>
+              <select id="st-instrument">
+                <option value="گیتار کلاسیک">گیتار کلاسیک</option>
+                <option value="گیتار الکتریک">گیتار الکتریک</option>
+                <option value="گیتار باس">گیتار باس</option>
+                <option value="پیانو">پیانو</option>
+                <option value="ویولن">ویولن</option>
+                <option value="درامز">درامز</option>
+                <option value="آواز">آواز</option>
+              </select>
+            </div>
+            <div class="form-group"><label>سطح</label>
+              <select id="st-level">
+                <option value="beginner">مبتدی</option>
+                <option value="intermediate">متوسط</option>
+                <option value="advanced">پیشرفته</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>هدف هنرجو</label>
+            <select id="st-goal">
+              <option value="تفریحی">تفریحی</option>
+              <option value="حرفه‌ای">حرفه‌ای</option>
+              <option value="کنکور هنر">کنکور هنر</option>
+              <option value="ضبط و استودیو">ضبط و استودیو</option>
+            </select>
+          </div>
+          <div class="form-group"><label>روزهای کلاس</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="شنبه"    class="day-check" style="accent-color:var(--gold)"> شنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="یکشنبه"  class="day-check" style="accent-color:var(--gold)"> یکشنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="دوشنبه"  class="day-check" style="accent-color:var(--gold)"> دوشنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="سه‌شنبه" class="day-check" style="accent-color:var(--gold)"> سه‌شنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="چهارشنبه" class="day-check" style="accent-color:var(--gold)"> چهارشنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="پنجشنبه" class="day-check" style="accent-color:var(--gold)"> پنجشنبه</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="جمعه"    class="day-check" style="accent-color:var(--gold)"> جمعه</label>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>ساعت کلاس</label><input id="st-time" type="time" dir="ltr"></div>
+            <div class="form-group"><label>مدت جلسه</label>
+              <select id="st-duration">
+                <option value="30">۳۰ دقیقه</option>
+                <option value="45">۴۵ دقیقه</option>
+                <option value="60" selected>۶۰ دقیقه</option>
+                <option value="90">۹۰ دقیقه</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>نوع کلاس</label>
+              <select id="st-type">
+                <option value="in-person">حضوری</option>
+                <option value="online">آنلاین</option>
+              </select>
+            </div>
+            <div class="form-group"><label>شهریه ماهانه (تومان)</label><input id="st-fee" type="number" placeholder="500000" dir="ltr"></div>
+          </div>
+          <div class="form-group"><label>وضعیت پرداخت</label>
+            <select id="st-payment">
+              <option value="pending">در انتظار</option>
+              <option value="paid">پرداخت شده</option>
+              <option value="overdue">معوق</option>
+            </select>
+          </div>
+          <div class="form-group"><label>یادداشت مربی</label>
+            <textarea id="st-notes" class="msg-textarea" placeholder="نقاط قوت، ضعف، توضیحات..." style="min-height:70px;"></textarea>
+          </div>
+          <button class="btn-primary" onclick="activateStudent()">✅ فعال‌سازی هنرجو</button>
+        </div>
+      </div>
     </div>
 
     <!-- PARENT -->
@@ -1347,63 +1356,149 @@ async function saveStudent(){
 }
 
 async function loadStudents(){
-  const {data,error} = await sb.from('students')
+  // هنرجوهایی که از طریق کد وصل شدن (جدول profiles)
+  const {data:profileStudents} = await sb.from('profiles')
+    .select('id,name,email,role,status')
+    .eq('teacher_id', currentUser.id)
+    .eq('role','student');
+
+  // هنرجوهایی که در جدول students هستن (با اطلاعات کامل)
+  const {data:fullStudents} = await sb.from('students')
     .select('*')
     .eq('teacher_id', currentUser.id)
-    .order('created_at', {ascending:false});
+    .order('created_at',{ascending:false});
 
-  if(error) return;
+  const fullMap = {};
+  (fullStudents||[]).forEach(s => { if(s.profile_id) fullMap[s.profile_id] = s; });
 
-  const levelMap = {beginner:'مبتدی', intermediate:'متوسط', advanced:'پیشرفته'};
-  const payMap   = {paid:'badge-green', pending:'badge-gold', overdue:'badge-red'};
-  const payLabel = {paid:'پرداخت شده', pending:'در انتظار', overdue:'معوق'};
+  const pending  = (profileStudents||[]).filter(p => !fullMap[p.id]);
+  const active   = (fullStudents||[]).filter(s => s.status !== 'inactive');
+  const inactive = (fullStudents||[]).filter(s => s.status === 'inactive');
 
-  const active   = (data||[]).filter(s => s.status !== 'inactive');
-  const inactive = (data||[]).filter(s => s.status === 'inactive');
-
-  document.getElementById('active-count').textContent   = active.length + ' نفر';
+  // شمارش
+  document.getElementById('pending-count').textContent  = pending.length  + ' نفر';
+  document.getElementById('active-count').textContent   = active.length   + ' نفر';
   document.getElementById('inactive-count').textContent = inactive.length + ' نفر';
 
-  function renderCard(s, isInactive){
-    return `
-    <div class="card" style="display:flex;flex-direction:column;gap:10px;${isInactive?'filter:grayscale(0.4)':''}">
+  // section pending
+  const pendingEl = document.getElementById('students-pending');
+  const sectionPending = document.getElementById('section-pending');
+  sectionPending.style.display = pending.length > 0 ? 'block' : 'none';
+  pendingEl.innerHTML = pending.map(p=>`
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-right:3px solid var(--teal);">
+      <div>
+        <div style="font-size:15px;font-weight:700;">${p.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${p.email||''}</div>
+        <div style="font-size:11px;color:var(--teal);margin-top:4px;">ثبت‌نام کرده — منتظر تکمیل اطلاعات</div>
+      </div>
+      <button onclick="openStudentModal('${p.id}','${p.name.replace(/'/g,"\\'")}','${p.email||''}')"
+        style="padding:8px 18px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:var(--teal);cursor:pointer;font-family:inherit;white-space:nowrap;">
+        تکمیل اطلاعات و فعال‌سازی
+      </button>
+    </div>`).join('') || '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px;">هنرجوی جدیدی وجود ندارد</div>';
+
+  // section active
+  const levelMap = {beginner:'مبتدی',intermediate:'متوسط',advanced:'پیشرفته'};
+  const payMap   = {paid:'badge-green',pending:'badge-gold',overdue:'badge-red'};
+  const payLabel = {paid:'پرداخت شده',pending:'در انتظار',overdue:'معوق'};
+
+  function renderActiveCard(s){
+    return `<div class="card" style="display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div style="font-size:15px;font-weight:700;">${s.name}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          ${s.instrument?`<span class="badge badge-teal">${s.instrument}</span>`:''}
+          ${s.instrument ? `<span class="badge badge-teal">${s.instrument}</span>`:''}
           <span class="badge badge-purple">${levelMap[s.level]||s.level||'—'}</span>
           <span class="badge ${payMap[s.payment_status]||'badge-gold'}">${payLabel[s.payment_status]||'—'}</span>
-          ${isInactive
-            ? `<button onclick="setStudentStatus('${s.id}','active')" style="padding:3px 10px;background:var(--green-dim);border:1px solid rgba(74,222,128,0.3);border-radius:5px;font-size:11px;color:var(--green);cursor:pointer;font-family:inherit;">فعال‌سازی</button>`
-            : `<button onclick="setStudentStatus('${s.id}','inactive')" style="padding:3px 10px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:5px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;">غیرفعال</button>`
-          }
+          <button onclick="setStudentStatus('${s.id}','inactive')"
+            style="padding:3px 10px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:5px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;">
+            غیرفعال
+          </button>
         </div>
       </div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);">
-        ${s.phone        ? `<span>📞 ${s.phone}</span>`:''}
-        ${s.age          ? `<span>🎂 ${s.age} سال</span>`:''}
-        ${s.class_time   ? `<span>🕐 ${s.class_time}</span>`:''}
+        ${s.phone         ? `<span>📞 ${s.phone}</span>`:''}
+        ${s.age           ? `<span>🎂 ${s.age} سال</span>`:''}
+        ${s.class_time    ? `<span>🕐 ${s.class_time}</span>`:''}
         ${s.class_days?.length ? `<span>📅 ${s.class_days.join('، ')}</span>`:''}
-        ${s.class_duration ? `<span>⏱ ${s.class_duration} دقیقه</span>`:''}
-        ${s.class_type==='online' ? `<span>💻 آنلاین</span>`:`<span>🏫 حضوری</span>`}
+        ${s.class_duration? `<span>⏱ ${s.class_duration} دقیقه</span>`:''}
+        <span>${s.class_type==='online'?'💻 آنلاین':'🏫 حضوری'}</span>
       </div>
       ${s.notes ? `<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg3);border-radius:6px;">${s.notes}</div>`:''}
     </div>`;
   }
 
-  const activeEl = document.getElementById('students-list');
-  activeEl.innerHTML = active.length === 0
+  document.getElementById('students-list').innerHTML = active.length===0
     ? '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">هنوز هنرجوی فعالی ندارید</div>'
-    : active.map(s => renderCard(s, false)).join('');
+    : active.map(renderActiveCard).join('');
 
-  const archiveEl = document.getElementById('students-archive');
-  archiveEl.innerHTML = inactive.length === 0
+  document.getElementById('students-archive').innerHTML = inactive.length===0
     ? '<div style="text-align:center;color:var(--text3);padding:12px;font-size:12px;">آرشیوی وجود ندارد</div>'
-    : inactive.map(s => renderCard(s, true)).join('');
+    : inactive.map(s=>`
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">${s.name}</div>
+          <div style="font-size:12px;color:var(--text2)">${s.instrument||''} ${s.level?'· '+levelMap[s.level]:''}</div>
+        </div>
+        <button onclick="setStudentStatus('${s.id}','active')"
+          style="padding:5px 14px;background:var(--green-dim);border:1px solid rgba(74,222,128,0.3);border-radius:5px;font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;">
+          فعال‌سازی مجدد
+        </button>
+      </div>`).join('');
 }
 
+function openStudentModal(profileId, name, email){
+  document.getElementById('st-profile-id').value = profileId;
+  document.getElementById('modal-student-name').textContent = name;
+  document.getElementById('modal-student-title').textContent = 'تکمیل اطلاعات: '+name;
+  // پاک‌سازی فرم
+  ['st-phone','st-age','st-time','st-fee','st-notes'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.querySelectorAll('.day-check').forEach(c=>c.checked=false);
+  document.getElementById('modal-student').style.display='flex';
+}
+
+function showAddStudent(){ openStudentModal('','هنرجوی جدید',''); }
+function closeStudentModal(){ document.getElementById('modal-student').style.display='none'; }
+
+async function activateStudent(){
+  const profileId = document.getElementById('st-profile-id').value;
+  const name      = document.getElementById('modal-student-name').textContent;
+  const days      = [...document.querySelectorAll('.day-check:checked')].map(c=>c.value);
+
+  const data = {
+    teacher_id:      currentUser.id,
+    profile_id:      profileId || null,
+    name,
+    phone:           document.getElementById('st-phone').value,
+    age:             +document.getElementById('st-age').value || null,
+    instrument:      document.getElementById('st-instrument').value,
+    level:           document.getElementById('st-level').value,
+    goal:            document.getElementById('st-goal').value,
+    class_days:      days,
+    class_time:      document.getElementById('st-time').value,
+    class_duration:  +document.getElementById('st-duration').value,
+    class_type:      document.getElementById('st-type').value,
+    monthly_fee:     +document.getElementById('st-fee').value || null,
+    payment_status:  document.getElementById('st-payment').value,
+    notes:           document.getElementById('st-notes').value,
+    status:          'active'
+  };
+
+  const {error} = await sb.from('students').insert(data);
+  if(error){ showNotif('❌ خطا: '+error.message); return; }
+
+  showNotif('✅ '+name+' فعال شد!');
+  closeStudentModal();
+  loadStudents();
+  loadScoreStudents();
+}
+
+async function saveStudent(){ await activateStudent(); }
+
 async function setStudentStatus(id, status){
-  const {error} = await sb.from('students').update({status}).eq('id', id);
+  const {error} = await sb.from('students').update({status}).eq('id',id);
   if(error){ showNotif('❌ خطا: '+error.message); return; }
   showNotif(status==='active' ? '✅ هنرجو فعال شد' : '📦 هنرجو به آرشیو رفت');
   loadStudents();
