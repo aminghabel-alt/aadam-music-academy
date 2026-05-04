@@ -278,64 +278,115 @@ tr:hover td{background:var(--bg3);}
   <div class="main-content">
 
     <!-- DASHBOARD -->
+    <!-- ══════════════════════════════════════ -->
+    <!-- داشبورد مربی                           -->
+    <!-- ══════════════════════════════════════ -->
     <div class="page active" id="page-dashboard">
-      <div class="page-header">
-        <div><div class="page-title">داشبورد</div><div class="page-sub" id="dash-greeting">خوش آمدی!</div></div>
-        <button class="btn-sm" onclick="showNotif('📚 جلسه بعدی: شنبه ساعت ۱۶')">یادآوری</button>
-      </div>
 
-      <!-- کارت کد دعوت — فقط مربی می‌بینه -->
+      <!-- کد دعوت -->
       <div id="invite-card" style="display:none;margin-bottom:20px;">
         <div style="background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.3);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
           <div>
-            <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px;letter-spacing:0.05em">🔑 کد دعوت اختصاصی شما</div>
+            <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px">🔑 کد دعوت اختصاصی شما</div>
             <div id="invite-code-display" style="font-size:32px;font-weight:700;color:var(--gold);letter-spacing:5px;line-height:1;">—</div>
             <div style="font-size:11px;color:var(--text3);margin-top:6px">این کد را به هنرجویان خود بدهید تا در اپ ثبت‌نام کنند</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="copyInviteCode()" style="padding:10px 20px;background:var(--gold);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;">
-              📋 کپی کد
-            </button>
-            <button onclick="shareInviteCode()" style="padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s;">
-              📤 اشتراک‌گذاری
-            </button>
+            <button onclick="copyInviteCode()" style="padding:10px 20px;background:var(--gold);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">📋 کپی کد</button>
+            <button onclick="shareInviteCode()" style="padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;">📤 اشتراک‌گذاری</button>
           </div>
         </div>
       </div>
-      <div class="stats-grid">
-        <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value">۱۸.۵</div><div class="stat-label">میانگین نمرات</div><div class="stat-change up">↑ ۰.۸ این ماه</div></div>
-        <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value">۱۲</div><div class="stat-label">جلسات این ترم</div><div class="stat-change neutral">از ۱۶ جلسه</div></div>
-        <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value">۴۲</div><div class="stat-label">دقیقه تمرین امروز</div><div class="stat-change up">↑ هدف ۳۰</div></div>
-        <div class="stat-card green"><div class="stat-icon">🎯</div><div class="stat-value">۳/۸</div><div class="stat-label">فصل‌های کامل</div><div class="stat-change neutral">فصل ۴ در پیش</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="section-header"><div class="section-title">آخرین نمرات</div><button class="btn-sm" onclick="navigate('report')">همه</button></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>جلسه</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>وضعیت</th></tr></thead>
-              <tbody>
-                <tr><td>جلسه ۱۲</td><td>۱۸</td><td>۱۹</td><td>۱۷</td><td><span class="badge badge-green">عالی</span></td></tr>
-                <tr><td>جلسه ۱۱</td><td>۱۷</td><td>۱۸</td><td>۱۶</td><td><span class="badge badge-teal">خوب</span></td></tr>
-                <tr><td>جلسه ۱۰</td><td>۱۵</td><td>۱۶</td><td>۱۸</td><td><span class="badge badge-gold">متوسط</span></td></tr>
-              </tbody>
-            </table>
+
+      <!-- داشبورد مربی -->
+      <div id="teacher-dashboard" style="display:none;">
+        <div class="page-header">
+          <div><div class="page-title">داشبورد مربی</div><div class="page-sub" id="dash-greeting"></div></div>
+        </div>
+
+        <!-- آمار کلی مربی -->
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card teal"><div class="stat-icon">👥</div><div class="stat-value" id="t-total-students">—</div><div class="stat-label">هنرجوی فعال</div></div>
+          <div class="stat-card gold"><div class="stat-icon">📝</div><div class="stat-value" id="t-total-scores">—</div><div class="stat-label">نمره ثبت‌شده</div></div>
+          <div class="stat-card purple"><div class="stat-icon">⭐</div><div class="stat-value" id="t-avg-score">—</div><div class="stat-label">میانگین کلاس</div></div>
+        </div>
+
+        <!-- انتخاب هنرجو برای مشاهده جزئیات -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-header">
+            <div class="section-title">📊 وضعیت هنرجو</div>
+            <select id="t-select-student" onchange="loadStudentDetail(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;">
+              <option value="">-- انتخاب هنرجو --</option>
+            </select>
+          </div>
+
+          <!-- جزئیات هنرجوی انتخاب‌شده -->
+          <div id="student-detail" style="display:none;">
+            <div class="stats-grid" style="margin-bottom:16px;">
+              <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value" id="sd-avg">—</div><div class="stat-label">میانگین نمرات</div></div>
+              <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value" id="sd-sessions">—</div><div class="stat-label">جلسات</div></div>
+              <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value" id="sd-practice">—</div><div class="stat-label">دقیقه تمرین امروز</div></div>
+            </div>
+
+            <div class="grid-2">
+              <!-- آخرین نمرات هنرجو -->
+              <div>
+                <div class="section-title" style="margin-bottom:10px;">آخرین جلسات</div>
+                <div class="table-wrap"><table>
+                  <thead><tr><th>جلسه</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>میانگین</th></tr></thead>
+                  <tbody id="sd-scores-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3)">انتخاب کنید</td></tr></tbody>
+                </table></div>
+              </div>
+
+              <!-- نقاط قوت و ضعف -->
+              <div>
+                <div class="section-title" style="margin-bottom:10px;">نقاط قوت و ضعف</div>
+                <div id="sd-strengths" style="display:flex;flex-direction:column;gap:10px;">
+                  <div style="text-align:center;color:var(--text3);font-size:13px;padding:20px;">یک هنرجو انتخاب کنید</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="student-detail-empty" style="text-align:center;color:var(--text3);padding:28px;font-size:13px;">
+            یک هنرجو از لیست بالا انتخاب کنید
           </div>
         </div>
-        <div class="card">
-          <div class="section-header"><div class="section-title">نقاط قوت و ضعف</div></div>
-          <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px;">
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">ملودی‌نوازی</span><span style="color:var(--green);font-weight:600">عالی — ۸۹%</span></div><div class="progress-bar"><div class="progress-fill" style="width:89%;background:linear-gradient(90deg,var(--green),#6ee7b7)"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">گوش موسیقی</span><span style="color:var(--teal);font-weight:600">خوب — ۷۵%</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:linear-gradient(90deg,var(--teal),#5eead4)"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">ریتم</span><span style="color:var(--gold);font-weight:600">متوسط — ۶۲%</span></div><div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">فرت‌برد</span><span style="color:var(--red);font-weight:600">ضعیف — ۴۱%</span></div><div class="progress-bar"><div class="progress-fill" style="width:41%;background:linear-gradient(90deg,var(--red),#fca5a5)"></div></div></div>
+      </div>
+
+      <!-- ══════════════════════════════════════ -->
+      <!-- داشبورد هنرجو                          -->
+      <!-- ══════════════════════════════════════ -->
+      <div id="student-dashboard" style="display:none;">
+        <div class="page-header">
+          <div><div class="page-title">داشبورد</div><div class="page-sub" id="dash-greeting-s"></div></div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value" id="s-avg">—</div><div class="stat-label">میانگین نمرات</div></div>
+          <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value" id="s-sessions">—</div><div class="stat-label">جلسات این ترم</div></div>
+          <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value" id="s-practice">—</div><div class="stat-label">دقیقه تمرین امروز</div></div>
+          <div class="stat-card green"><div class="stat-icon">🎯</div><div class="stat-value" id="s-chapters">—</div><div class="stat-label">فصل‌های کامل</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-header"><div class="section-title">آخرین نمرات جلسات</div><button class="btn-sm" onclick="navigate('report')">همه</button></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>جلسه</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>میانگین</th></tr></thead>
+              <tbody id="s-scores-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr></tbody>
+            </table></div>
           </div>
-          <div style="margin-top:16px;padding:12px;background:var(--purple-dim);border-radius:var(--radius-sm);border:1px solid rgba(167,139,250,0.15)">
-            <p style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:4px">💡 پیشنهاد مربی</p>
-            <p style="font-size:12px;color:var(--text2)">برای تقویت فرت‌برد، کارگاه یکشنبه ۱۸ دی پیشنهاد می‌شود.</p>
+
+          <div class="card">
+            <div class="section-header"><div class="section-title">نقاط قوت و ضعف</div></div>
+            <div id="s-strengths" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="text-align:center;color:var(--text3);font-size:13px;padding:20px;">در حال بارگذاری...</div>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- REPORT -->
@@ -808,19 +859,25 @@ function setupUserUI(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+nav[0].id).classList.add('active');
   fillReport();fillChapters();fillMessages();buildBeats(4);buildWeekGrid();
+
   if(u.role==='teacher'){
+    document.getElementById('teacher-dashboard').style.display='block';
+    document.getElementById('student-dashboard').style.display='none';
+    document.getElementById('dash-greeting').textContent='سلام استاد '+u.name.split(' ')[0]+' 👋';
+    // کد دعوت
+    const inviteCard=document.getElementById('invite-card');
+    const inviteDisplay=document.getElementById('invite-code-display');
+    if(inviteCard&&u.invite_code){inviteCard.style.display='block';inviteDisplay.textContent=u.invite_code;}
     loadStudents();
     loadScoreStudents();
-    // نمایش کد دعوت توی داشبورد
-    const inviteCard = document.getElementById('invite-card');
-    const inviteDisplay = document.getElementById('invite-code-display');
-    if(inviteCard && u.invite_code){
-      inviteCard.style.display = 'block';
-      inviteDisplay.textContent = u.invite_code;
-    }
+    loadTeacherDashboard();
   } else {
-    const inviteCard = document.getElementById('invite-card');
-    if(inviteCard) inviteCard.style.display = 'none';
+    document.getElementById('teacher-dashboard').style.display='none';
+    document.getElementById('student-dashboard').style.display='block';
+    document.getElementById('dash-greeting-s').textContent='سلام '+u.name.split(' ')[0]+' 👋';
+    const inviteCard=document.getElementById('invite-card');
+    if(inviteCard) inviteCard.style.display='none';
+    loadStudentDashboard();
   }
 }
 
@@ -1064,7 +1121,127 @@ async function saveScore(){
 }
 
 
-async function loadScoreStudents(){
+async function loadTeacherDashboard(){
+  // آمار کلی
+  const {data:students} = await sb.from('students').select('id,name').eq('teacher_id',currentUser.id).neq('status','inactive');
+  const {data:scores}   = await sb.from('scores').select('average').eq('teacher_id',currentUser.id);
+
+  const totalStudents = (students||[]).length;
+  const totalScores   = (scores||[]).length;
+  const avgScore      = totalScores > 0
+    ? ((scores||[]).reduce((s,r)=>s+(+r.average||0),0)/totalScores).toFixed(1)
+    : '—';
+
+  document.getElementById('t-total-students').textContent = totalStudents;
+  document.getElementById('t-total-scores').textContent   = totalScores;
+  document.getElementById('t-avg-score').textContent      = avgScore;
+
+  // پر کردن select هنرجو در داشبورد
+  const sel = document.getElementById('t-select-student');
+  if(sel && students && students.length > 0){
+    sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
+      students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }
+}
+
+async function loadStudentDetail(studentId){
+  const detail = document.getElementById('student-detail');
+  const empty  = document.getElementById('student-detail-empty');
+  if(!studentId){ detail.style.display='none'; empty.style.display='block'; return; }
+  detail.style.display='block'; empty.style.display='none';
+
+  // نمرات این هنرجو
+  const {data:scores} = await sb.from('scores')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('session_number', {ascending:false})
+    .limit(8);
+
+  const list = scores||[];
+  const avg  = list.length > 0
+    ? (list.reduce((s,r)=>s+(+r.average||0),0)/list.length).toFixed(1) : '—';
+
+  document.getElementById('sd-avg').textContent      = avg;
+  document.getElementById('sd-sessions').textContent = list.length;
+  document.getElementById('sd-practice').textContent = '—';
+
+  // جدول نمرات
+  document.getElementById('sd-scores-tbody').innerHTML = list.length===0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>'
+    : list.map(s=>`<tr>
+        <td>جلسه ${s.session_number}</td>
+        <td>${s.technique||'—'}</td>
+        <td>${s.rhythm||'—'}</td>
+        <td>${s.melody||'—'}</td>
+        <td><span class="badge ${(s.average>=17)?'badge-green':(s.average>=14)?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
+      </tr>`).join('');
+
+  // نقاط قوت و ضعف
+  renderStrengths('sd-strengths', list);
+}
+
+async function loadStudentDashboard(){
+  // نمرات هنرجوی لاگین‌کرده از طریق profiles.id
+  const {data:scores} = await sb.from('scores')
+    .select('*')
+    .eq('student_id', currentUser.id)
+    .order('session_number', {ascending:false})
+    .limit(8);
+
+  const list = scores||[];
+  const avg  = list.length > 0
+    ? (list.reduce((s,r)=>s+(+r.average||0),0)/list.length).toFixed(1) : '—';
+
+  document.getElementById('s-avg').textContent      = avg;
+  document.getElementById('s-sessions').textContent = list.length;
+  document.getElementById('s-practice').textContent = '—';
+  document.getElementById('s-chapters').textContent = '—';
+
+  // جدول نمرات
+  document.getElementById('s-scores-tbody').innerHTML = list.length===0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>'
+    : list.map(s=>`<tr>
+        <td>جلسه ${s.session_number}</td>
+        <td>${s.technique||'—'}</td>
+        <td>${s.rhythm||'—'}</td>
+        <td>${s.melody||'—'}</td>
+        <td><span class="badge ${(s.average>=17)?'badge-green':(s.average>=14)?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
+      </tr>`).join('');
+
+  renderStrengths('s-strengths', list);
+}
+
+function renderStrengths(containerId, scores){
+  const el = document.getElementById(containerId);
+  if(!scores || scores.length===0){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px;">داده‌ای موجود نیست</div>';
+    return;
+  }
+  const fields = [
+    {key:'technique', label:'تکنیک'},
+    {key:'rhythm',    label:'ریتم'},
+    {key:'melody',    label:'ملودی'},
+    {key:'fretboard', label:'فرت‌برد'},
+    {key:'ear',       label:'گوش'},
+  ];
+  el.innerHTML = fields.map(f=>{
+    const vals = scores.map(s=>+s[f.key]||0).filter(v=>v>0);
+    const avg  = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    const pct  = Math.round((avg/20)*100);
+    const color= pct>=80?'var(--green)':pct>=65?'var(--teal)':pct>=50?'var(--gold)':'var(--red)';
+    const label= pct>=80?'عالی':pct>=65?'خوب':pct>=50?'متوسط':'نیاز به تمرین';
+    const bg   = pct>=80?'linear-gradient(90deg,var(--green),#6ee7b7)':pct>=65?'linear-gradient(90deg,var(--teal),#5eead4)':pct>=50?'linear-gradient(90deg,var(--gold),var(--gold2))':'linear-gradient(90deg,var(--red),#fca5a5)';
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;">
+        <span style="color:var(--text2)">${f.label}</span>
+        <span style="color:${color};font-weight:600">${label} — ${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${bg}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+
   const sel = document.getElementById('score-student');
   if(!sel) return;
 
