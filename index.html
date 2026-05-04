@@ -522,25 +522,30 @@ tr:hover td{background:var(--bg3);}
         <div class="card">
           <div class="section-title" style="margin-bottom:16px">اطلاعات جلسه</div>
           <div class="score-form">
-            <div class="score-row"><label>هنرجو</label><select class="score-input" id="score-student"><option>علی رضایی</option><option>نیلوفر احمدی</option><option>رضا کریمی</option><option>سارا محمدی</option></select></div>
-            <div class="score-row"><label>شماره جلسه</label><input type="number" class="score-input" value="13" id="score-session"></div>
-            <div class="score-row"><label>تکنیک (۲۰)</label><input type="number" class="score-input" min="0" max="20" value="17" id="sc-tech"></div>
-            <div class="score-row"><label>ریتم (۲۰)</label><input type="number" class="score-input" min="0" max="20" value="18" id="sc-rhythm"></div>
-            <div class="score-row"><label>ملودی (۲۰)</label><input type="number" class="score-input" min="0" max="20" value="16" id="sc-melody"></div>
-            <div class="score-row"><label>فرت‌برد (۲۰)</label><input type="number" class="score-input" min="0" max="20" value="14" id="sc-fret"></div>
-            <div class="score-row"><label>گوش (۲۰)</label><input type="number" class="score-input" min="0" max="20" value="17" id="sc-ear"></div>
-            <div class="score-row" style="align-items:flex-start"><label>نظر مربی</label><textarea class="score-input" style="min-height:70px;resize:vertical;direction:rtl;text-align:right" id="sc-comment">پیشرفت خوبی دیده شد.</textarea></div>
+            <div class="score-row">
+              <label>هنرجو</label>
+              <select class="score-input" id="score-student">
+                <option value="">-- انتخاب هنرجو --</option>
+              </select>
+            </div>
+            <div class="score-row"><label>شماره جلسه</label><input type="number" class="score-input" value="" id="score-session" placeholder="۱"></div>
+            <div class="score-row"><label>تکنیک (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-tech"></div>
+            <div class="score-row"><label>ریتم (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-rhythm"></div>
+            <div class="score-row"><label>ملودی (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-melody"></div>
+            <div class="score-row"><label>فرت‌برد (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-fret"></div>
+            <div class="score-row"><label>گوش (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-ear"></div>
+            <div class="score-row" style="align-items:flex-start"><label>نظر مربی</label>
+              <textarea class="score-input" style="min-height:70px;resize:vertical;direction:rtl;text-align:right" id="sc-comment" placeholder="نکات جلسه..."></textarea>
+            </div>
             <button class="btn-primary" style="margin-top:4px" onclick="saveScore()">ثبت نمره</button>
           </div>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:14px">آخرین ثبت‌ها</div>
           <div class="table-wrap"><table>
-            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>وضعیت</th></tr></thead>
-            <tbody>
-              <tr><td>علی رضایی</td><td>۱۲</td><td>۱۸.۲</td><td><span class="badge badge-green">ثبت شد</span></td></tr>
-              <tr><td>نیلوفر احمدی</td><td>۸</td><td>۱۵.۶</td><td><span class="badge badge-green">ثبت شد</span></td></tr>
-              <tr><td>رضا کریمی</td><td>۵</td><td>۱۲.۴</td><td><span class="badge badge-gold">در انتظار</span></td></tr>
+            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>تاریخ</th></tr></thead>
+            <tbody id="recent-scores-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>
             </tbody>
           </table></div>
         </div>
@@ -549,16 +554,24 @@ tr:hover td{background:var(--bg3);}
 
     <!-- TEACHER: STUDENTS -->
     <div class="page" id="page-students">
-      <div class="page-header"><div><div class="page-title">لیست هنرجویان</div></div></div>
-      <div class="card"><div class="table-wrap"><table>
-        <thead><tr><th>نام</th><th>سطح</th><th>جلسات</th><th>میانگین</th><th>آخرین تمرین</th><th>وضعیت</th></tr></thead>
-        <tbody>
-          <tr><td>علی رضایی</td><td><span class="badge badge-teal">متوسط</span></td><td>۱۲</td><td>۱۸.۵</td><td>دیروز</td><td><span class="badge badge-green">فعال</span></td></tr>
-          <tr><td>نیلوفر احمدی</td><td><span class="badge badge-purple">مبتدی</span></td><td>۸</td><td>۱۵.۶</td><td>۳ روز پیش</td><td><span class="badge badge-gold">نیاز به توجه</span></td></tr>
-          <tr><td>رضا کریمی</td><td><span class="badge badge-purple">مبتدی</span></td><td>۵</td><td>۱۲.۴</td><td>۵ روز پیش</td><td><span class="badge badge-red">غیرفعال</span></td></tr>
-          <tr><td>سارا محمدی</td><td><span class="badge badge-gold">پیشرفته</span></td><td>۲۴</td><td>۱۹.۱</td><td>امروز</td><td><span class="badge badge-green">فعال</span></td></tr>
-        </tbody>
-      </table></div></div>
+      <div class="page-header">
+        <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان فعال و آرشیو</div></div>
+        <button class="btn-sm" style="background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600" onclick="showAddStudent()">+ هنرجوی جدید</button>
+      </div>
+
+      <!-- هنرجوهای فعال -->
+      <div class="section-header" style="margin-bottom:10px">
+        <div class="section-title">🟢 هنرجویان فعال</div>
+        <span id="active-count" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <div id="students-list" style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;"></div>
+
+      <!-- آرشیو -->
+      <div class="section-header" style="margin-bottom:10px;margin-top:8px;">
+        <div class="section-title" style="color:var(--text3)">🗂 آرشیو (غیرفعال)</div>
+        <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
     </div>
 
     <!-- PARENT -->
@@ -817,6 +830,7 @@ function navigate(id){
   const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
   const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
   if(id==='students') loadStudents();
+  if(id==='scores'){ loadScoreStudents(); loadRecentScores(); }
 }
 
 
@@ -1054,30 +1068,30 @@ async function loadScoreStudents(){
   const sel = document.getElementById('score-student');
   if(!sel) return;
 
-  // هنرجوهایی که از طریق ثبت‌نام اومدن (جدول profiles)
+  // فقط هنرجوهای فعال از جدول students
+  const {data: manualStudents} = await sb.from('students')
+    .select('id, name')
+    .eq('teacher_id', currentUser.id)
+    .neq('status', 'inactive')
+    .order('name');
+
+  // هنرجوهایی که از طریق ثبت‌نام اومدن (profiles)
   const {data: profileStudents} = await sb.from('profiles')
     .select('id, name')
     .eq('teacher_id', currentUser.id)
     .eq('role', 'student');
 
-  // هنرجوهایی که مربی دستی اضافه کرده (جدول students)
-  const {data: manualStudents} = await sb.from('students')
-    .select('id, name')
-    .eq('teacher_id', currentUser.id);
-
-  // ترکیب هر دو لیست
   const all = [
-    ...(profileStudents || []).map(s => ({id: s.id, name: s.name, type: 'registered'})),
-    ...(manualStudents  || []).map(s => ({id: s.id, name: s.name, type: 'manual'})),
+    ...(manualStudents  || []).map(s => ({id:s.id, name:s.name})),
+    ...(profileStudents || []).map(s => ({id:s.id, name:s.name+' ✓'})),
   ];
 
   if(all.length === 0){
-    sel.innerHTML = '<option value="">-- هنوز هنرجویی ندارید --</option>';
+    sel.innerHTML = '<option value="">-- هنوز هنرجوی فعالی ندارید --</option>';
     return;
   }
-
   sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
-    all.map(s => `<option value="${s.id}">${s.name}${s.type==='registered'?' ✓':''}</option>`).join('');
+    all.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
 }
 
 function copyInviteCode(){
@@ -1140,33 +1154,89 @@ async function saveStudent(){
 }
 
 async function loadStudents(){
-  const {data,error}=await sb.from('students').select('*').eq('teacher_id',currentUser.id).order('created_at',{ascending:false});
-  if(error||!data)return;
-  const levelMap={beginner:'مبتدی',intermediate:'متوسط',advanced:'پیشرفته'};
-  const payMap={paid:'badge-green',pending:'badge-gold',overdue:'badge-red'};
-  const payLabel={paid:'پرداخت شده',pending:'در انتظار',overdue:'معوق'};
-  document.getElementById('students-list').innerHTML=data.length===0?
-    '<div class="card" style="text-align:center;color:var(--text3);padding:40px;">هنوز هنرجویی اضافه نشده</div>':
-    data.map(s=>`
-    <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+  const {data,error} = await sb.from('students')
+    .select('*')
+    .eq('teacher_id', currentUser.id)
+    .order('created_at', {ascending:false});
+
+  if(error) return;
+
+  const levelMap = {beginner:'مبتدی', intermediate:'متوسط', advanced:'پیشرفته'};
+  const payMap   = {paid:'badge-green', pending:'badge-gold', overdue:'badge-red'};
+  const payLabel = {paid:'پرداخت شده', pending:'در انتظار', overdue:'معوق'};
+
+  const active   = (data||[]).filter(s => s.status !== 'inactive');
+  const inactive = (data||[]).filter(s => s.status === 'inactive');
+
+  document.getElementById('active-count').textContent   = active.length + ' نفر';
+  document.getElementById('inactive-count').textContent = inactive.length + ' نفر';
+
+  function renderCard(s, isInactive){
+    return `
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;${isInactive?'filter:grayscale(0.4)':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div style="font-size:15px;font-weight:700;">${s.name}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <span class="badge badge-teal">${s.instrument||'—'}</span>
-          <span class="badge badge-purple">${levelMap[s.level]||s.level}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          ${s.instrument?`<span class="badge badge-teal">${s.instrument}</span>`:''}
+          <span class="badge badge-purple">${levelMap[s.level]||s.level||'—'}</span>
           <span class="badge ${payMap[s.payment_status]||'badge-gold'}">${payLabel[s.payment_status]||'—'}</span>
+          ${isInactive
+            ? `<button onclick="setStudentStatus('${s.id}','active')" style="padding:3px 10px;background:var(--green-dim);border:1px solid rgba(74,222,128,0.3);border-radius:5px;font-size:11px;color:var(--green);cursor:pointer;font-family:inherit;">فعال‌سازی</button>`
+            : `<button onclick="setStudentStatus('${s.id}','inactive')" style="padding:3px 10px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:5px;font-size:11px;color:var(--red);cursor:pointer;font-family:inherit;">غیرفعال</button>`
+          }
         </div>
       </div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);">
-        ${s.phone?`<span>📞 ${s.phone}</span>`:''}
-        ${s.age?`<span>🎂 ${s.age} سال</span>`:''}
-        ${s.class_time?`<span>🕐 ${s.class_time}</span>`:''}
-        ${s.class_days?.length?`<span>📅 ${s.class_days.join('، ')}</span>`:''}
-        ${s.class_duration?`<span>⏱ ${s.class_duration} دقیقه</span>`:''}
-        ${s.class_type==='online'?`<span>💻 آنلاین</span>`:`<span>🏫 حضوری</span>`}
+        ${s.phone        ? `<span>📞 ${s.phone}</span>`:''}
+        ${s.age          ? `<span>🎂 ${s.age} سال</span>`:''}
+        ${s.class_time   ? `<span>🕐 ${s.class_time}</span>`:''}
+        ${s.class_days?.length ? `<span>📅 ${s.class_days.join('، ')}</span>`:''}
+        ${s.class_duration ? `<span>⏱ ${s.class_duration} دقیقه</span>`:''}
+        ${s.class_type==='online' ? `<span>💻 آنلاین</span>`:`<span>🏫 حضوری</span>`}
       </div>
-      ${s.notes?`<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg3);border-radius:6px;">${s.notes}</div>`:''}
-    </div>`).join('');
+      ${s.notes ? `<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg3);border-radius:6px;">${s.notes}</div>`:''}
+    </div>`;
+  }
+
+  const activeEl = document.getElementById('students-list');
+  activeEl.innerHTML = active.length === 0
+    ? '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">هنوز هنرجوی فعالی ندارید</div>'
+    : active.map(s => renderCard(s, false)).join('');
+
+  const archiveEl = document.getElementById('students-archive');
+  archiveEl.innerHTML = inactive.length === 0
+    ? '<div style="text-align:center;color:var(--text3);padding:12px;font-size:12px;">آرشیوی وجود ندارد</div>'
+    : inactive.map(s => renderCard(s, true)).join('');
+}
+
+async function setStudentStatus(id, status){
+  const {error} = await sb.from('students').update({status}).eq('id', id);
+  if(error){ showNotif('❌ خطا: '+error.message); return; }
+  showNotif(status==='active' ? '✅ هنرجو فعال شد' : '📦 هنرجو به آرشیو رفت');
+  loadStudents();
+  loadScoreStudents();
+}
+
+async function loadRecentScores(){
+  const {data} = await sb.from('scores')
+    .select('*, students(name)')
+    .eq('teacher_id', currentUser.id)
+    .order('created_at', {ascending:false})
+    .limit(10);
+
+  const tbody = document.getElementById('recent-scores-tbody');
+  if(!tbody) return;
+  if(!data || data.length===0){
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(s=>`
+    <tr>
+      <td style="font-weight:600">${s.students?.name||'—'}</td>
+      <td>${s.session_number}</td>
+      <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
+      <td style="color:var(--text3);font-size:11px">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+    </tr>`).join('');
 }
 
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
