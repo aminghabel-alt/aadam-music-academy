@@ -230,20 +230,11 @@ tr:hover td{background:var(--bg3);}
           <option value="parent">والدین</option>
         </select>
       </div>
-
-      <!-- فقط برای هنرجو و والدین نشان داده می‌شه -->
-      <div id="invite-field" class="form-group">
-        <label>کد دعوت مربی</label>
-        <input type="text" id="reg-invite" placeholder="مثلاً: AHMAD-4829" dir="ltr" style="text-transform:uppercase;letter-spacing:2px;">
-        <div style="font-size:11px;color:var(--text3);margin-top:5px;">این کد را از مربی خود بگیرید</div>
-      </div>
-
-      <!-- فقط برای مربی: کد دعوت خودش رو می‌بینه بعد از ثبت -->
+      <!-- فقط مربی این رو می‌بینه -->
       <div id="teacher-note" style="display:none;padding:12px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius-sm);margin-bottom:12px;">
         <p style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:4px">📌 به عنوان مربی ثبت می‌شوید</p>
-        <p style="font-size:12px;color:var(--text2)">بعد از ثبت‌نام، کد دعوت اختصاصی شما نمایش داده می‌شود. این کد را به هنرجویانتان بدهید.</p>
+        <p style="font-size:12px;color:var(--text2)">بعد از ثبت‌نام، کد دعوت اختصاصی شما نمایش داده می‌شود.</p>
       </div>
-
       <button class="btn-primary" onclick="doRegister()">ساخت حساب</button>
     </div>
     <div class="auth-demo">
@@ -389,7 +380,29 @@ tr:hover td{background:var(--bg3);}
 
     </div>
 
-    <!-- REPORT -->
+    <!-- صفحه اتصال به استاد — فقط هنرجوهای بدون استاد می‌بینن -->
+    <div class="page" id="page-connect">
+      <div style="max-width:440px;margin:60px auto;text-align:center;padding:0 20px;">
+        <div style="font-size:48px;margin-bottom:16px">🔗</div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px">اتصال به استاد</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:32px;line-height:1.7">
+          برای دسترسی به کارنامه، سرفصل‌ها و ارتباط با استادت،<br>کد دعوت استادت رو وارد کن.
+        </div>
+        <div class="card" style="text-align:right;">
+          <div class="form-group">
+            <label>کد دعوت استاد</label>
+            <input type="text" id="connect-code" placeholder="مثلاً: AHMAD-4829" dir="ltr"
+              style="text-transform:uppercase;letter-spacing:3px;font-size:18px;text-align:center;"
+              oninput="this.value=this.value.toUpperCase()">
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">این کد را از استادت بگیر</div>
+          </div>
+          <button class="btn-primary" onclick="connectToTeacher()">اتصال به استاد</button>
+          <div style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">
+            هنوز کد نداری؟ از استادت بخواه کدش رو بهت بده
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="page" id="page-report">
       <div class="page-header"><div><div class="page-title">کارنامه تفصیلی</div><div class="page-sub">تمام جلسات این ترم</div></div></div>
       <div class="card"><div class="table-wrap"><table>
@@ -715,67 +728,63 @@ async function doLogin(){
   enterApp();
 }
 function onRoleChange(role){
-  document.getElementById('invite-field').style.display = (role==='teacher') ? 'none' : 'block';
   document.getElementById('teacher-note').style.display = (role==='teacher') ? 'block' : 'none';
 }
 
 function generateInviteCode(name){
-  // مثلاً: AHMAD-4829
   const part1 = name.trim().split(' ')[0].toUpperCase().replace(/[^A-Z\u0600-\u06FF]/g,'').substring(0,6);
   const part2 = Math.floor(1000+Math.random()*9000);
   return part1+'-'+part2;
 }
 
 async function doRegister(){
-  const name   = document.getElementById('reg-name').value.trim();
-  const email  = document.getElementById('reg-email').value.trim();
-  const pass   = document.getElementById('reg-pass').value;
-  const role   = document.getElementById('reg-role').value;
-  const invite = document.getElementById('reg-invite')?.value.trim().toUpperCase();
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const role  = document.getElementById('reg-role').value;
 
   if(!name||!email||!pass){ showNotif('⚠️ تمام فیلدها را پر کن'); return; }
+  showNotif('⏳ در حال ثبت‌نام...');
 
-  // هنرجو و والدین باید کد دعوت وارد کنند
-  if(role !== 'teacher'){
-    if(!invite){ showNotif('⚠️ کد دعوت مربی را وارد کن'); return; }
-    // پیدا کردن مربی با این کد
-    const {data:teacher, error:te} = await sb.from('profiles')
-      .select('id,name')
-      .eq('invite_code', invite)
-      .eq('role','teacher')
-      .single();
-    if(te || !teacher){ showNotif('❌ کد دعوت نامعتبر است'); return; }
+  const {data,error} = await sb.auth.signUp({email, password:pass});
+  if(error){ showNotif('❌ '+error.message); return; }
 
-    showNotif('⏳ در حال ثبت‌نام...');
-    const {data,error} = await sb.auth.signUp({email, password:pass});
-    if(error){ showNotif('❌ '+error.message); return; }
+  const profile = { id:data.user.id, name, role };
+  if(role === 'teacher') profile.invite_code = generateInviteCode(name);
 
-    await sb.from('profiles').insert({
-      id: data.user.id,
-      name,
-      role,
-      teacher_id: teacher.id   // ← اینجا ارتباط برقرار میشه
-    });
+  await sb.from('profiles').insert(profile);
 
-    showNotif('✅ ثبت‌نام موفق! مربی: '+teacher.name+' — ایمیلت را تأیید کن');
-
+  if(role === 'teacher'){
+    showInviteModal(name, profile.invite_code);
   } else {
-    // ثبت‌نام مربی — کد دعوت اختصاصی می‌گیره
-    showNotif('⏳ در حال ثبت‌نام...');
-    const {data,error} = await sb.auth.signUp({email, password:pass});
-    if(error){ showNotif('❌ '+error.message); return; }
-
-    const inviteCode = generateInviteCode(name);
-    await sb.from('profiles').insert({
-      id: data.user.id,
-      name,
-      role,
-      invite_code: inviteCode
-    });
-
-    // نمایش کد به مربی
-    showInviteModal(name, inviteCode);
+    showNotif('✅ ثبت‌نام موفق — وارد شو و کد استادت رو وارد کن');
   }
+}
+
+async function connectToTeacher(){
+  const code = document.getElementById('connect-code').value.trim().toUpperCase();
+  if(!code){ showNotif('⚠️ کد دعوت را وارد کن'); return; }
+  showNotif('⏳ در حال بررسی کد...');
+
+  const {data:teacher, error} = await sb.from('profiles')
+    .select('id,name')
+    .eq('invite_code', code)
+    .eq('role','teacher')
+    .single();
+
+  if(error || !teacher){ showNotif('❌ کد دعوت نامعتبر است'); return; }
+
+  const {error:ue} = await sb.from('profiles')
+    .update({ teacher_id: teacher.id })
+    .eq('id', currentUser.id);
+
+  if(ue){ showNotif('❌ خطا: '+ue.message); return; }
+
+  currentUser.teacher_id = teacher.id;
+  currentUser.teacher_name = teacher.name;
+  showNotif('✅ به استاد '+teacher.name+' متصل شدی!');
+
+  setTimeout(()=>{ navigate('dashboard'); loadStudentDashboard(); }, 1000);
 }
 
 function showInviteModal(name, code){
@@ -805,6 +814,12 @@ function enterApp(){
   document.getElementById('screen-app').classList.add('active');
   setupUserUI();
   showNotif('👋 خوش آمدی، '+(currentUser.name||'')+'!');
+
+  // هنرجو یا والدین بدون استاد → صفحه اتصال
+  const role = currentUser.role;
+  if((role==='student'||role==='parent') && !currentUser.teacher_id && !currentUser.pass){
+    setTimeout(()=> navigate('connect'), 300);
+  }
 }
 function loginAs(user){currentUser=user;enterApp();}
 async function doLogout(){
@@ -1242,6 +1257,7 @@ function renderStrengths(containerId, scores){
 }
 
 
+async function loadScoreStudents(){
   const sel = document.getElementById('score-student');
   if(!sel) return;
 
