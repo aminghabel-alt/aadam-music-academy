@@ -1050,6 +1050,36 @@ async function saveScore(){
 }
 
 
+async function loadScoreStudents(){
+  const sel = document.getElementById('score-student');
+  if(!sel) return;
+
+  // هنرجوهایی که از طریق ثبت‌نام اومدن (جدول profiles)
+  const {data: profileStudents} = await sb.from('profiles')
+    .select('id, name')
+    .eq('teacher_id', currentUser.id)
+    .eq('role', 'student');
+
+  // هنرجوهایی که مربی دستی اضافه کرده (جدول students)
+  const {data: manualStudents} = await sb.from('students')
+    .select('id, name')
+    .eq('teacher_id', currentUser.id);
+
+  // ترکیب هر دو لیست
+  const all = [
+    ...(profileStudents || []).map(s => ({id: s.id, name: s.name, type: 'registered'})),
+    ...(manualStudents  || []).map(s => ({id: s.id, name: s.name, type: 'manual'})),
+  ];
+
+  if(all.length === 0){
+    sel.innerHTML = '<option value="">-- هنوز هنرجویی ندارید --</option>';
+    return;
+  }
+
+  sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
+    all.map(s => `<option value="${s.id}">${s.name}${s.type==='registered'?' ✓':''}</option>`).join('');
+}
+
 function copyInviteCode(){
   const code = currentUser?.invite_code;
   if(!code) return;
