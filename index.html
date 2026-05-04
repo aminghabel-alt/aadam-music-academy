@@ -1092,36 +1092,64 @@ async function sendMsg(){
   const txt = document.getElementById('msg-text').value.trim();
   if(!txt){showNotif('⚠️ پیام خالی است');return;}
 
+  // دمو mode
+  if(currentUser.pass){
+    MESSAGES.unshift({from:currentUser.name,time:'همین الان',body:txt,unread:false,sent:true});
+    fillMessages();
+    document.getElementById('msg-text').value='';
+    showNotif('✅ پیام ارسال شد (دمو)');
+    return;
+  }
+
+  // to_id = استاد هنرجو
+  const toId = currentUser.teacher_id || null;
+  if(!toId && currentUser.role==='student'){
+    showNotif('⚠️ ابتدا به استاد وصل شو');
+    return;
+  }
+
   const {error} = await sb.from('messages').insert({
     from_id: currentUser.id,
-    body: txt
+    to_id:   toId,
+    body:    txt,
+    role:    currentUser.role
   });
 
-  if(error) showNotif('❌ خطا: '+error.message);
-  else {
-    document.getElementById('msg-text').value='';
-    showNotif('✅ پیام ارسال شد');
-    loadMessages();
-  }
+  if(error){ showNotif('❌ خطا: '+error.message); return; }
+  document.getElementById('msg-text').value='';
+  showNotif('✅ پیام ارسال شد');
+  loadMessages();
 }
+
 async function loadMessages(){
   const {data,error} = await sb.from('messages')
-    .select('*')
-    .eq('from_id', currentUser.id)
-    .order('created_at',{ascending:false});
+    .select('*, from_profile:from_id(name)')
+    .or(`from_id.eq.${currentUser.id},to_id.eq.${currentUser.id}`)
+    .order('created_at',{ascending:false})
+    .limit(30);
 
-  if(error||!data) return;
+  if(error){ console.error(error); return; }
 
   const list = document.getElementById('msg-list');
-  list.innerHTML = data.map(m=>`
-    <div class="msg-item">
+  if(!list) return;
+
+  if(!data || data.length===0){
+    list.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px;">هنوز پیامی وجود ندارد</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(m=>{
+    const isMine = m.from_id === currentUser.id;
+    const senderName = isMine ? 'شما' : (m.from_profile?.name || 'استاد');
+    return `
+    <div class="msg-item${!isMine?' msg-unread':''}">
       <div class="msg-header">
-        <span class="msg-from">شما</span>
+        <span class="msg-from">${senderName}</span>
         <span class="msg-time">${new Date(m.created_at).toLocaleDateString('fa-IR')}</span>
       </div>
       <div class="msg-body">${m.body}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 
@@ -1354,6 +1382,23 @@ async function loadScoreStudents(){
   }
   sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
     all.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+async function sendParentMsg(){
+  const txt = document.getElementById('parent-msg').value.trim();
+  if(!txt){ showNotif('⚠️ پیام خالی است'); return; }
+  if(currentUser.pass){ showNotif('✅ پیام ارسال شد (دمو)'); document.getElementById('parent-msg').value=''; return; }
+
+  const toId = currentUser.teacher_id || null;
+  const {error} = await sb.from('messages').insert({
+    from_id: currentUser.id,
+    to_id:   toId,
+    body:    txt,
+    role:    currentUser.role
+  });
+  if(error){ showNotif('❌ خطا: '+error.message); return; }
+  document.getElementById('parent-msg').value='';
+  showNotif('✅ پیام برای مربی ارسال شد');
 }
 
 function copyInviteCode(){
