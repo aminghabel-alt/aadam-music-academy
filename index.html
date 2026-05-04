@@ -353,7 +353,14 @@ tr:hover td{background:var(--bg3);}
           <div><div class="page-title">داشبورد</div><div class="page-sub" id="dash-greeting-s"></div></div>
         </div>
 
-        <div class="stats-grid">
+        <!-- کارت استاد -->
+        <div id="s-teacher-card" style="display:none;margin-bottom:20px;padding:16px 20px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius);display:flex;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🎸</div>
+          <div>
+            <div style="font-size:11px;color:var(--purple);font-weight:600;margin-bottom:2px;">استاد شما</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text)" id="s-teacher-name">—</div>
+          </div>
+        </div>
           <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value" id="s-avg">—</div><div class="stat-label">میانگین نمرات</div></div>
           <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value" id="s-sessions">—</div><div class="stat-label">جلسات این ترم</div></div>
           <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value" id="s-practice">—</div><div class="stat-label">دقیقه تمرین امروز</div></div>
@@ -1121,50 +1128,82 @@ async function loadMessages(){
 
 /* SCORE */
 async function saveScore(){
-  const student = document.getElementById('score-student').value;
+  const sel     = document.getElementById('score-student');
+  const studentId = sel.value;
+  const studentName = sel.options[sel.selectedIndex]?.text || '';
+  if(!studentId){ showNotif('⚠️ یک هنرجو انتخاب کن'); return; }
+
   const session = document.getElementById('score-session').value;
-  const tech = +document.getElementById('sc-tech').value;
-  const rhythm = +document.getElementById('sc-rhythm').value;
-  const melody = +document.getElementById('sc-melody').value;
-  const fret = +document.getElementById('sc-fret').value;
-  const ear = +document.getElementById('sc-ear').value;
-  const avg = ((tech+rhythm+melody+fret+ear)/5).toFixed(1);
+  if(!session){ showNotif('⚠️ شماره جلسه را وارد کن'); return; }
+
+  const tech    = +document.getElementById('sc-tech').value;
+  const rhythm  = +document.getElementById('sc-rhythm').value;
+  const melody  = +document.getElementById('sc-melody').value;
+  const fret    = +document.getElementById('sc-fret').value;
+  const ear     = +document.getElementById('sc-ear').value;
+  const comment = document.getElementById('sc-comment').value;
+  const average = +((tech+rhythm+melody+fret+ear)/5).toFixed(1);
 
   const {error} = await sb.from('scores').insert({
-    teacher_id: currentUser.id,
+    teacher_id:     currentUser.id,
+    student_id:     studentId,
     session_number: +session,
-    technique: tech,
-    rhythm: rhythm,
-    melody: melody,
-    fretboard: fret,
-    ear: ear
+    technique:      tech,
+    rhythm:         rhythm,
+    melody:         melody,
+    fretboard:      fret,
+    ear:            ear,
+    average:        average,
+    comment:        comment
   });
 
-  if(error) showNotif('❌ خطا: '+error.message);
-  else showNotif('✅ نمره جلسه '+session+' ثبت شد — میانگین: '+avg);
+  if(error){ showNotif('❌ خطا: '+error.message); return; }
+
+  showNotif('✅ نمره جلسه '+session+' برای '+studentName+' ثبت شد — میانگین: '+average);
+  // آپدیت فوری جدول آخرین ثبت‌ها
+  loadRecentScores();
 }
 
 
 async function loadTeacherDashboard(){
-  // آمار کلی
-  const {data:students} = await sb.from('students').select('id,name').eq('teacher_id',currentUser.id).neq('status','inactive');
-  const {data:scores}   = await sb.from('scores').select('average').eq('teacher_id',currentUser.id);
+  // هنرجوهای فعال (جدول students)
+  const {data:activeStudents} = await sb.from('students')
+    .select('id,name,profile_id')
+    .eq('teacher_id',currentUser.id)
+    .neq('status','inactive');
 
-  const totalStudents = (students||[]).length;
+  // هنرجوهای pending (از profiles که teacher_id دارن ولی هنوز توی students نیستن)
+  const {data:profileStudents} = await sb.from('profiles')
+    .select('id,name')
+    .eq('teacher_id', currentUser.id)
+    .eq('role','student');
+
+  const activeProfileIds = new Set((activeStudents||[]).map(s=>s.profile_id).filter(Boolean));
+  const pendingStudents = (profileStudents||[]).filter(p => !activeProfileIds.has(p.id));
+
+  // همه هنرجوها برای select (فعال + pending)
+  const allForSelect = [
+    ...(activeStudents||[]).map(s=>({id:s.id, name:s.name, type:'active'})),
+    ...(pendingStudents||[]).map(s=>({id:s.id, name:s.name+' (در انتظار)', type:'pending'})),
+  ];
+
+  const {data:scores} = await sb.from('scores').select('average').eq('teacher_id',currentUser.id);
+
+  const totalStudents = (activeStudents||[]).length;
+  const totalPending  = pendingStudents.length;
   const totalScores   = (scores||[]).length;
-  const avgScore      = totalScores > 0
-    ? ((scores||[]).reduce((s,r)=>s+(+r.average||0),0)/totalScores).toFixed(1)
-    : '—';
+  const avgScore = totalScores > 0
+    ? ((scores||[]).reduce((s,r)=>s+(+r.average||0),0)/totalScores).toFixed(1) : '—';
 
   document.getElementById('t-total-students').textContent = totalStudents;
-  document.getElementById('t-total-scores').textContent   = totalScores;
+  document.getElementById('t-total-scores').textContent   = totalScores + (totalPending>0 ? ` (+${totalPending} pending)`:'');
   document.getElementById('t-avg-score').textContent      = avgScore;
 
-  // پر کردن select هنرجو در داشبورد
+  // پر کردن select
   const sel = document.getElementById('t-select-student');
-  if(sel && students && students.length > 0){
+  if(sel){
     sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
-      students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+      allForSelect.map(s=>`<option value="${s.id}" data-type="${s.type}">${s.name}</option>`).join('');
   }
 }
 
@@ -1205,10 +1244,32 @@ async function loadStudentDetail(studentId){
 }
 
 async function loadStudentDashboard(){
-  // نمرات هنرجوی لاگین‌کرده از طریق profiles.id
+  // اسم استاد
+  if(currentUser.teacher_id){
+    const {data:teacher} = await sb.from('profiles')
+      .select('name')
+      .eq('id', currentUser.teacher_id)
+      .single();
+    if(teacher){
+      const card = document.getElementById('s-teacher-card');
+      const nameEl = document.getElementById('s-teacher-name');
+      if(card) card.style.display = 'flex';
+      if(nameEl) nameEl.textContent = teacher.name;
+    }
+  }
+
+  // پیدا کردن student_id از جدول students (بر اساس profile_id)
+  let studentId = currentUser.id;
+  const {data:studentRow} = await sb.from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .single();
+  if(studentRow) studentId = studentRow.id;
+
+  // نمرات
   const {data:scores} = await sb.from('scores')
     .select('*')
-    .eq('student_id', currentUser.id)
+    .eq('student_id', studentId)
     .order('session_number', {ascending:false})
     .limit(8);
 
@@ -1217,11 +1278,10 @@ async function loadStudentDashboard(){
     ? (list.reduce((s,r)=>s+(+r.average||0),0)/list.length).toFixed(1) : '—';
 
   document.getElementById('s-avg').textContent      = avg;
-  document.getElementById('s-sessions').textContent = list.length;
+  document.getElementById('s-sessions').textContent = list.length || '۰';
   document.getElementById('s-practice').textContent = '—';
   document.getElementById('s-chapters').textContent = '—';
 
-  // جدول نمرات
   document.getElementById('s-scores-tbody').innerHTML = list.length===0
     ? '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>'
     : list.map(s=>`<tr>
