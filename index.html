@@ -283,6 +283,25 @@ tr:hover td{background:var(--bg3);}
         <div><div class="page-title">داشبورد</div><div class="page-sub" id="dash-greeting">خوش آمدی!</div></div>
         <button class="btn-sm" onclick="showNotif('📚 جلسه بعدی: شنبه ساعت ۱۶')">یادآوری</button>
       </div>
+
+      <!-- کارت کد دعوت — فقط مربی می‌بینه -->
+      <div id="invite-card" style="display:none;margin-bottom:20px;">
+        <div style="background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.3);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px;letter-spacing:0.05em">🔑 کد دعوت اختصاصی شما</div>
+            <div id="invite-code-display" style="font-size:32px;font-weight:700;color:var(--gold);letter-spacing:5px;line-height:1;">—</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">این کد را به هنرجویان خود بدهید تا در اپ ثبت‌نام کنند</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="copyInviteCode()" style="padding:10px 20px;background:var(--gold);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;">
+              📋 کپی کد
+            </button>
+            <button onclick="shareInviteCode()" style="padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s;">
+              📤 اشتراک‌گذاری
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="stats-grid">
         <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value">۱۸.۵</div><div class="stat-label">میانگین نمرات</div><div class="stat-change up">↑ ۰.۸ این ماه</div></div>
         <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value">۱۲</div><div class="stat-label">جلسات این ترم</div><div class="stat-change neutral">از ۱۶ جلسه</div></div>
@@ -776,7 +795,20 @@ function setupUserUI(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+nav[0].id).classList.add('active');
   fillReport();fillChapters();fillMessages();buildBeats(4);buildWeekGrid();
-  if(u.role==='teacher'){loadStudents();loadScoreStudents();}
+  if(u.role==='teacher'){
+    loadStudents();
+    loadScoreStudents();
+    // نمایش کد دعوت توی داشبورد
+    const inviteCard = document.getElementById('invite-card');
+    const inviteDisplay = document.getElementById('invite-code-display');
+    if(inviteCard && u.invite_code){
+      inviteCard.style.display = 'block';
+      inviteDisplay.textContent = u.invite_code;
+    }
+  } else {
+    const inviteCard = document.getElementById('invite-card');
+    if(inviteCard) inviteCard.style.display = 'none';
+  }
 }
 
 function navigate(id){
@@ -1017,6 +1049,24 @@ async function saveScore(){
   else showNotif('✅ نمره جلسه '+session+' ثبت شد — میانگین: '+avg);
 }
 
+
+function copyInviteCode(){
+  const code = currentUser?.invite_code;
+  if(!code) return;
+  navigator.clipboard.writeText(code).then(()=> showNotif('✅ کد دعوت کپی شد: '+code));
+}
+
+function shareInviteCode(){
+  const code = currentUser?.invite_code;
+  const name = currentUser?.name || 'مربی';
+  if(!code) return;
+  const text = `سلام! برای ثبت‌نام در اپ آکادمی موسیقی استاد ${name}، این کد دعوت رو موقع ثبت‌نام وارد کن:\n\n🔑 ${code}\n\nآدرس اپ: https://aminghabel-alt.github.io/music-academy`;
+  if(navigator.share){
+    navigator.share({ title:'کد دعوت آکادمی موسیقی', text });
+  } else {
+    navigator.clipboard.writeText(text).then(()=> showNotif('✅ متن اشتراک‌گذاری کپی شد'));
+  }
+}
 
 /* NOTIF */
 let notifTimer=null;
