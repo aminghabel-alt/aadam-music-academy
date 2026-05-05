@@ -902,6 +902,7 @@ function setupUserUI(){
     loadStudents();
     loadScoreStudents();
     loadTeacherDashboard();
+    loadRecentScores();
   } else {
     document.getElementById('teacher-dashboard').style.display='none';
     document.getElementById('student-dashboard').style.display='block';
@@ -1156,39 +1157,59 @@ async function loadMessages(){
 
 /* SCORE */
 async function saveScore(){
-  const sel     = document.getElementById('score-student');
-  const studentId = sel.value;
-  const studentName = sel.options[sel.selectedIndex]?.text || '';
-  if(!studentId){ showNotif('⚠️ یک هنرجو انتخاب کن'); return; }
+  const sel       = document.getElementById('score-student');
+  const selectedId = sel.value;
+  const studentName = sel.options[sel.selectedIndex]?.text?.replace(' ✓','') || '';
+  if(!selectedId){ showNotif('⚠️ یک هنرجو انتخاب کن'); return; }
 
   const session = document.getElementById('score-session').value;
   if(!session){ showNotif('⚠️ شماره جلسه را وارد کن'); return; }
 
-  const tech    = +document.getElementById('sc-tech').value;
-  const rhythm  = +document.getElementById('sc-rhythm').value;
-  const melody  = +document.getElementById('sc-melody').value;
-  const fret    = +document.getElementById('sc-fret').value;
-  const ear     = +document.getElementById('sc-ear').value;
-  const comment = document.getElementById('sc-comment').value;
+  const tech    = +document.getElementById('sc-tech').value   || 0;
+  const rhythm  = +document.getElementById('sc-rhythm').value || 0;
+  const melody  = +document.getElementById('sc-melody').value || 0;
+  const fret    = +document.getElementById('sc-fret').value   || 0;
+  const ear     = +document.getElementById('sc-ear').value    || 0;
+  const comment = document.getElementById('sc-comment').value || '';
   const average = +((tech+rhythm+melody+fret+ear)/5).toFixed(1);
+
+  // چک کن student_id از کدوم جدوله
+  // اگه از جدول students باشه مستقیم استفاده کن
+  // اگه از profiles باشه، اول از students پیداش کن
+  let studentId = selectedId;
+  const {data: stRow} = await sb.from('students')
+    .select('id')
+    .eq('profile_id', selectedId)
+    .single();
+  if(stRow) studentId = stRow.id;
+
+  // اگه هنوز توی students نیست (pending هست) → خطا
+  const {data: stCheck} = await sb.from('students')
+    .select('id')
+    .eq('id', studentId)
+    .single();
+
+  if(!stCheck){
+    showNotif('⚠️ این هنرجو هنوز فعال نشده — ابتدا اطلاعات کلاس را تکمیل کن');
+    return;
+  }
 
   const {error} = await sb.from('scores').insert({
     teacher_id:     currentUser.id,
     student_id:     studentId,
     session_number: +session,
     technique:      tech,
-    rhythm:         rhythm,
-    melody:         melody,
+    rhythm,
+    melody,
     fretboard:      fret,
-    ear:            ear,
-    average:        average,
-    comment:        comment
+    ear,
+    average,
+    comment
   });
 
-  if(error){ showNotif('❌ خطا: '+error.message); return; }
+  if(error){ showNotif('❌ '+error.message); return; }
 
   showNotif('✅ نمره جلسه '+session+' برای '+studentName+' ثبت شد — میانگین: '+average);
-  // آپدیت فوری جدول آخرین ثبت‌ها
   loadRecentScores();
 }
 
@@ -1272,27 +1293,49 @@ async function loadStudentDetail(studentId){
 }
 
 async function loadStudentDashboard(){
-  // اسم استاد
-  if(currentUser.teacher_id){
-    const {data:teacher} = await sb.from('profiles')
-      .select('name')
-      .eq('id', currentUser.teacher_id)
-      .single();
-    if(teacher){
-      const card = document.getElementById('s-teacher-card');
-      const nameEl = document.getElementById('s-teacher-name');
-      if(card) card.style.display = 'flex';
-      if(nameEl) nameEl.textContent = teacher.name;
+  // اسم استاد — مستقیم از currentUser.teacher_id
+  const teacherCard = document.getElementById('s-teacher-card');
+  const teacherNameEl = document.getElementById('s-teacher-name');
+
+  if(currentUser.teacher_id && teacherCard && teacherNameEl){
+    teacherCard.style.display = 'flex';
+    // اگه قبلاً teacher_name داریم، همونو نشون بده
+    if(currentUser.teacher_name){
+      teacherNameEl.textContent = currentUser.teacher_name;
+    } else {
+      const {data:teacher} = await sb.from('profiles')
+        .select('name')
+        .eq('id', currentUser.teacher_id)
+        .single();
+      if(teacher){
+        teacherNameEl.textContent = teacher.name;
+        currentUser.teacher_name = teacher.name;
+      }
     }
+  } else if(teacherCard){
+    teacherCard.style.display = 'none';
   }
 
-  // پیدا کردن student_id از جدول students (بر اساس profile_id)
-  let studentId = currentUser.id;
-  const {data:studentRow} = await sb.from('students')
+  // پیدا کردن student_id از جدول students
+  let studentId = null;
+  const {data:stRow} = await sb.from('students')
     .select('id')
     .eq('profile_id', currentUser.id)
-    .single();
-  if(studentRow) studentId = studentRow.id;
+    .maybeSingle();
+  if(stRow) studentId = stRow.id;
+
+  if(!studentId){
+    // هنوز فعال نشده — فقط وضعیت pending نشون بده
+    document.getElementById('s-avg').textContent      = '—';
+    document.getElementById('s-sessions').textContent = '۰';
+    document.getElementById('s-practice').textContent = '—';
+    document.getElementById('s-chapters').textContent = '—';
+    document.getElementById('s-scores-tbody').innerHTML =
+      '<tr><td colspan="5" style="text-align:center;color:var(--text3)">منتظر تأیید استاد هستید</td></tr>';
+    document.getElementById('s-strengths').innerHTML =
+      '<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px;">بعد از تأیید استاد فعال می‌شود</div>';
+    return;
+  }
 
   // نمرات
   const {data:scores} = await sb.from('scores')
@@ -1314,10 +1357,10 @@ async function loadStudentDashboard(){
     ? '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>'
     : list.map(s=>`<tr>
         <td>جلسه ${s.session_number}</td>
-        <td>${s.technique||'—'}</td>
-        <td>${s.rhythm||'—'}</td>
-        <td>${s.melody||'—'}</td>
-        <td><span class="badge ${(s.average>=17)?'badge-green':(s.average>=14)?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
+        <td>${s.technique??'—'}</td>
+        <td>${s.rhythm??'—'}</td>
+        <td>${s.melody??'—'}</td>
+        <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':'badge-gold'}">${s.average??'—'}</span></td>
       </tr>`).join('');
 
   renderStrengths('s-strengths', list);
