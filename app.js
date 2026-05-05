@@ -506,25 +506,23 @@ async function saveScore(){
   const comment = document.getElementById('sc-comment').value || (isAbsent ? 'غیبت' : '');
   const average = isAbsent ? null : +((tech+rhythm+melody+fret+ear)/5).toFixed(1);
 
-  // چک کن student_id از کدوم جدوله
-  // اگه از جدول students باشه مستقیم استفاده کن
-  // اگه از profiles باشه، اول از students پیداش کن
+  // تشخیص source: آیا از جدول students هست یا profiles
+  const selectedOpt = sel.options[sel.selectedIndex];
+  const source = selectedOpt?.dataset?.source || 'students';
+
   let studentId = selectedId;
-  const {data: stRow} = await sb.from('students')
-    .select('id')
-    .eq('profile_id', selectedId)
-    .single();
-  if(stRow) studentId = stRow.id;
 
-  // اگه هنوز توی students نیست (pending هست) → خطا
-  const {data: stCheck} = await sb.from('students')
-    .select('id')
-    .eq('id', studentId)
-    .single();
-
-  if(!stCheck){
-    showNotif('⚠️ این هنرجو هنوز فعال نشده — ابتدا اطلاعات کلاس را تکمیل کن');
-    return;
+  if(source === 'profiles'){
+    // هنرجو هنوز فعال نشده (فقط ثبت‌نام کرده)
+    const {data: stRow} = await sb.from('students')
+      .select('id')
+      .eq('profile_id', selectedId)
+      .single();
+    if(!stRow){
+      showNotif('⚠️ این هنرجو هنوز فعال نشده — ابتدا در صفحه هنرجویان فعال‌سازی کن');
+      return;
+    }
+    studentId = stRow.id;
   }
 
   const {error} = await sb.from('scores').insert({
@@ -537,8 +535,7 @@ async function saveScore(){
     fretboard:      fret,
     ear,
     average,
-    comment,
-    is_absent:      isAbsent
+    comment
   });
 
   if(error){ showNotif('❌ '+error.message); return; }
@@ -817,7 +814,7 @@ async function loadScoreStudents(){
     return;
   }
   sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
-    all.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    all.map(s=>`<option value="${s.id}" data-source="${s.fromStudents?'students':'profiles'}">${s.name}</option>`).join('');
 
   // وقتی هنرجو انتخاب می‌شه، شماره جلسه بعدی رو پر کن
   sel.onchange = async function(){
