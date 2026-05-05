@@ -14,6 +14,8 @@
 
 <!-- AUTH -->
 <div id="screen-auth" class="screen active">
+  <div class="auth-deco auth-deco-1"></div>
+  <div class="auth-deco auth-deco-2"></div>
   <div class="auth-box">
     <div class="auth-logo">
       <div class="logo-icon">🎸</div>
@@ -61,6 +63,22 @@
 
 <!-- APP -->
 <div id="screen-app" class="screen">
+
+  <!-- Mobile Top Bar -->
+  <div class="mobile-header" id="mobile-header">
+    <button class="hamburger" id="btn-hamburger" onclick="toggleSidebar()" aria-label="منو">
+      <span></span><span></span><span></span>
+    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;">🎸</div>
+      <span style="font-size:14px;font-weight:700;color:var(--text);">آکادمی موسیقی</span>
+    </div>
+    <div style="width:40px;"></div>
+  </div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div class="s-icon">🎸</div>

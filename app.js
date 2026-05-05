@@ -234,6 +234,24 @@ function navigate(id){
   const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
   if(id==='students') loadStudents();
   if(id==='scores'){ loadScoreStudents(); loadRecentScores(); }
+  closeSidebar();
+}
+
+function toggleSidebar(){
+  const sidebar=document.getElementById('sidebar');
+  const overlay=document.getElementById('sidebar-overlay');
+  const btn=document.getElementById('btn-hamburger');
+  const isOpen=sidebar.classList.contains('open');
+  sidebar.classList.toggle('open',!isOpen);
+  overlay.classList.toggle('show',!isOpen);
+  if(btn) btn.classList.toggle('open',!isOpen);
+}
+
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+  const btn=document.getElementById('btn-hamburger');
+  if(btn) btn.classList.remove('open');
 }
 
 
