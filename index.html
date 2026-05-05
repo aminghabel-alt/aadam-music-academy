@@ -84,33 +84,15 @@
     <!-- داشبورد مربی                           -->
     <!-- ══════════════════════════════════════ -->
     <div class="page active" id="page-dashboard">
-
-      <!-- کد دعوت -->
-      <div id="invite-card" style="display:none;margin-bottom:20px;">
-        <div style="background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.3);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-          <div>
-            <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px">🔑 کد دعوت اختصاصی شما</div>
-            <div id="invite-code-display" style="font-size:32px;font-weight:700;color:var(--gold);letter-spacing:5px;line-height:1;">—</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px">این کد را به هنرجویان خود بدهید تا در اپ ثبت‌نام کنند</div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="copyInviteCode()" style="padding:10px 20px;background:var(--gold);color:#0a0a0f;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">📋 کپی کد</button>
-            <button onclick="shareInviteCode()" style="padding:10px 20px;background:transparent;border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;">📤 اشتراک‌گذاری</button>
-          </div>
-        </div>
-      </div>
-
       <!-- داشبورد مربی -->
       <div id="teacher-dashboard" style="display:none;">
-        <div class="page-header">
-          <div><div class="page-title">داشبورد مربی</div><div class="page-sub" id="dash-greeting"></div></div>
-        </div>
 
-        <!-- آمار کلی مربی -->
+                <!-- آمار کلی مربی -->
         <div class="stats-grid" style="margin-bottom:20px;">
-          <div class="stat-card teal"><div class="stat-icon">👥</div><div class="stat-value" id="t-total-students">—</div><div class="stat-label">هنرجوی فعال</div></div>
-          <div class="stat-card gold"><div class="stat-icon">📝</div><div class="stat-value" id="t-total-scores">—</div><div class="stat-label">نمره ثبت‌شده</div></div>
-          <div class="stat-card purple"><div class="stat-icon">⭐</div><div class="stat-value" id="t-avg-score">—</div><div class="stat-label">میانگین کلاس</div></div>
+          <div class="stat-card gold clickable-stat" onclick="openStatModal('pending')" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-value" id="t-stat-pending">—</div><div class="stat-label">در انتظار تأیید</div></div>
+          <div class="stat-card teal clickable-stat" onclick="openStatModal('active')" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-value" id="t-stat-active">—</div><div class="stat-label">هنرجوی فعال</div></div>
+          <div class="stat-card purple clickable-stat" onclick="openStatModal('inactive')" style="cursor:pointer;"><div class="stat-icon">📦</div><div class="stat-value" id="t-stat-inactive">—</div><div class="stat-label">غیرفعال</div></div>
+          <div class="stat-card green clickable-stat" onclick="openStatModal('scores')" style="cursor:pointer;"><div class="stat-icon">📝</div><div class="stat-value" id="t-stat-scores">—</div><div class="stat-label">کل نمرات</div></div>
         </div>
 
         <!-- انتخاب هنرجو برای مشاهده جزئیات -->
@@ -324,6 +306,13 @@
             <div class="score-row" style="align-items:flex-start"><label>نظر مربی</label>
               <textarea class="score-input" style="min-height:70px;resize:vertical;direction:rtl;text-align:right" id="sc-comment" placeholder="نکات جلسه..."></textarea>
             </div>
+            <div class="score-row" style="align-items:center;padding:10px 0;background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:10px 14px;">
+              <label style="color:var(--red);font-weight:600;">🚫 غیبت</label>
+              <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;">
+                <span style="font-size:12px;color:var(--text2);">در صورت غیبت هنرجو فعال کنید</span>
+                <input type="checkbox" id="sc-absent" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer;" onchange="toggleAbsent(this.checked)">
+              </div>
+            </div>
             <button class="btn-primary" style="margin-top:4px" onclick="saveScore()">ثبت نمره</button>
           </div>
         </div>
@@ -370,6 +359,20 @@
           <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
         </div>
         <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
+      </div>
+    </div>
+
+
+    <!-- MODAL: آمار کارت‌های داشبورد -->
+    <div id="modal-stat" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:540px;max-height:85vh;overflow-y:auto;margin:20px;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:16px;font-weight:700;" id="stat-modal-title">لیست</div>
+          <button onclick="document.getElementById('modal-stat').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <input type="text" id="stat-modal-search" placeholder="🔍 جستجو..." oninput="filterStatModal()"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;direction:rtl;">
+        <div id="stat-modal-list" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </div>
 
