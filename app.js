@@ -202,17 +202,22 @@ function setupUserUI(){
   });
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+nav[0].id).classList.add('active');
-  fillReport();fillChapters();fillMessages();buildBeats(4);buildWeekGrid();
+  try{ fillReport(); }catch(e){ console.warn('fillReport',e); }
+  try{ fillChapters(); }catch(e){ console.warn('fillChapters',e); }
+  try{ fillMessages(); }catch(e){ console.warn('fillMessages',e); }
+  try{ buildBeats(4); }catch(e){ console.warn('buildBeats',e); }
+  try{ buildWeekGrid(); }catch(e){ console.warn('buildWeekGrid',e); }
 
   if(u.role==='teacher'){
     document.getElementById('teacher-dashboard').style.display='block';
     document.getElementById('student-dashboard').style.display='none';
-    // greeting در داشبورد مربی حذف شده
+    const greet = document.getElementById('dash-greeting');
+    if(greet) greet.textContent = 'خوش آمدی '+u.name.split(' ')[0]+' 👋';
     // کد دعوت فقط در sidebar نمایش داده می‌شه
-    loadStudents();
-    loadScoreStudents();
-    loadTeacherDashboard();
-    loadRecentScores();
+    try{ loadStudents(); }catch(e){ console.warn(e); }
+    try{ loadScoreStudents(); }catch(e){ console.warn(e); }
+    loadTeacherDashboard().catch(e=>console.warn('loadTeacherDashboard',e));
+    try{ loadRecentScores(); }catch(e){ console.warn(e); }
   } else {
     document.getElementById('teacher-dashboard').style.display='none';
     document.getElementById('student-dashboard').style.display='block';
