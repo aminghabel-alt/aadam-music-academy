@@ -86,13 +86,6 @@
     <div class="page active" id="page-dashboard">
       <!-- داشبورد مربی -->
       <div id="teacher-dashboard" style="display:none;">
-        <div class="page-header" style="margin-bottom:20px;">
-          <div>
-            <div class="page-title">📊 داشبورد</div>
-            <div class="page-sub" id="dash-greeting"></div>
-          </div>
-        </div>
-
         <!-- آمار کلی مربی -->
         <div class="stats-grid" style="margin-bottom:20px;">
           <div class="stat-card gold clickable-stat" onclick="openStatModal('pending')" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-value" id="t-stat-pending">—</div><div class="stat-label">در انتظار تأیید</div></div>
@@ -326,7 +319,7 @@
         <div class="card">
           <div class="section-title" style="margin-bottom:14px">آخرین ثبت‌ها</div>
           <div class="table-wrap"><table>
-            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>تاریخ</th></tr></thead>
+            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>نظر</th><th>تاریخ</th></tr></thead>
             <tbody id="recent-scores-tbody">
               <tr><td colspan="4" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>
             </tbody>
@@ -336,36 +329,36 @@
     </div>
 
     <!-- TEACHER: STUDENTS -->
-    <div class="page" id="page-students">
+    <div class="page" id="page-students" style="padding:20px 28px;">
       <div class="page-header">
-        <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان</div></div>
+        <div><div class="page-title">هنرجویان</div></div>
       </div>
 
       <!-- ۱. هنرجوهای جدید (pending) -->
-      <div id="section-pending" style="margin-bottom:28px;">
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--teal)">🔔 هنرجوهای جدید — منتظر تأیید</div>
-          <span id="pending-count" style="font-size:12px;color:var(--text3)"></span>
+      <div id="section-pending" style="margin-bottom:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--teal)">🔔 منتظر تأیید</div>
+          <span id="pending-count" style="font-size:12px;color:var(--text3);background:var(--teal-dim);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-pending" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="students-pending" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
       </div>
 
       <!-- ۲. هنرجوهای فعال -->
-      <div style="margin-bottom:28px;">
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--green)">🟢 هنرجویان فعال</div>
-          <span id="active-count" style="font-size:12px;color:var(--text3)"></span>
+      <div style="margin-bottom:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--green)">🟢 هنرجویان فعال</div>
+          <span id="active-count" style="font-size:12px;color:var(--text3);background:var(--green-dim);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+        <div id="students-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
       </div>
 
       <!-- ۳. آرشیو (inactive) -->
       <div>
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--text3)">🗂 آرشیو — غیرفعال</div>
-          <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--text3)">🗂 آرشیو</div>
+          <span id="inactive-count" style="font-size:12px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
+        <div id="students-archive" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;opacity:0.6;"></div>
       </div>
     </div>
 
