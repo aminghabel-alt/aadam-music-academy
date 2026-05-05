@@ -1401,22 +1401,20 @@ async function loadScoreStudents(){
   const sel = document.getElementById('score-student');
   if(!sel) return;
 
-  // فقط هنرجوهای فعال از جدول students
   const {data: manualStudents} = await sb.from('students')
     .select('id, name')
     .eq('teacher_id', currentUser.id)
     .neq('status', 'inactive')
     .order('name');
 
-  // هنرجوهایی که از طریق ثبت‌نام اومدن (profiles)
   const {data: profileStudents} = await sb.from('profiles')
     .select('id, name')
     .eq('teacher_id', currentUser.id)
     .eq('role', 'student');
 
   const all = [
-    ...(manualStudents  || []).map(s => ({id:s.id, name:s.name})),
-    ...(profileStudents || []).map(s => ({id:s.id, name:s.name+' ✓'})),
+    ...(manualStudents  || []).map(s => ({id:s.id, name:s.name, fromStudents:true})),
+    ...(profileStudents || []).map(s => ({id:s.id, name:s.name+' ✓', fromStudents:false})),
   ];
 
   if(all.length === 0){
@@ -1425,6 +1423,19 @@ async function loadScoreStudents(){
   }
   sel.innerHTML = '<option value="">-- انتخاب هنرجو --</option>' +
     all.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+
+  // وقتی هنرجو انتخاب می‌شه، شماره جلسه بعدی رو پر کن
+  sel.onchange = async function(){
+    const id = this.value;
+    if(!id) return;
+    const {data} = await sb.from('scores')
+      .select('session_number')
+      .eq('student_id', id)
+      .order('session_number', {ascending:false})
+      .limit(1);
+    const next = data && data.length > 0 ? data[0].session_number + 1 : 1;
+    document.getElementById('score-session').value = next;
+  };
 }
 
 async function sendParentMsg(){
