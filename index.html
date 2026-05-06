@@ -14,8 +14,6 @@
 
 <!-- AUTH -->
 <div id="screen-auth" class="screen active">
-  <div class="auth-deco auth-deco-1"></div>
-  <div class="auth-deco auth-deco-2"></div>
   <div class="auth-box">
     <div class="auth-logo">
       <div class="logo-icon">🎸</div>
@@ -63,22 +61,6 @@
 
 <!-- APP -->
 <div id="screen-app" class="screen">
-
-  <!-- Mobile Top Bar -->
-  <div class="mobile-header" id="mobile-header">
-    <button class="hamburger" id="btn-hamburger" onclick="toggleSidebar()" aria-label="منو">
-      <span></span><span></span><span></span>
-    </button>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;">🎸</div>
-      <span style="font-size:14px;font-weight:700;color:var(--text);">آکادمی موسیقی</span>
-    </div>
-    <div style="width:40px;"></div>
-  </div>
-
-  <!-- Sidebar Overlay (mobile) -->
-  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div class="s-icon">🎸</div>
@@ -104,13 +86,6 @@
     <div class="page active" id="page-dashboard">
       <!-- داشبورد مربی -->
       <div id="teacher-dashboard" style="display:none;">
-        <div class="page-header" style="margin-bottom:20px;">
-          <div>
-            <div class="page-title">📊 داشبورد</div>
-            <div class="page-sub" id="dash-greeting"></div>
-          </div>
-        </div>
-
         <!-- آمار کلی مربی -->
         <div class="stats-grid" style="margin-bottom:20px;">
           <div class="stat-card gold clickable-stat" onclick="openStatModal('pending')" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-value" id="t-stat-pending">—</div><div class="stat-label">در انتظار تأیید</div></div>
@@ -230,9 +205,16 @@
     </div>
     <div class="page" id="page-report">
       <div class="page-header"><div><div class="page-title">کارنامه تفصیلی</div><div class="page-sub">تمام جلسات این ترم</div></div></div>
+      <!-- فقط مربی می‌بینه -->
+      <div id="report-student-selector" style="display:none;margin-bottom:16px;">
+        <select id="report-select-student" onchange="fillReport()"
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;width:100%;max-width:320px;">
+          <option value="">-- انتخاب هنرجو --</option>
+        </select>
+      </div>
       <div class="card"><div class="table-wrap"><table>
         <thead><tr><th>جلسه</th><th>تاریخ</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>فرت‌برد</th><th>گوش</th><th>میانگین</th><th>نظر مربی</th></tr></thead>
-        <tbody id="report-tbody"></tbody>
+        <tbody id="report-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr></tbody>
       </table></div></div>
     </div>
 
@@ -344,7 +326,7 @@
         <div class="card">
           <div class="section-title" style="margin-bottom:14px">آخرین ثبت‌ها</div>
           <div class="table-wrap"><table>
-            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>تاریخ</th></tr></thead>
+            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>نظر</th><th>تاریخ</th></tr></thead>
             <tbody id="recent-scores-tbody">
               <tr><td colspan="4" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>
             </tbody>
@@ -354,36 +336,36 @@
     </div>
 
     <!-- TEACHER: STUDENTS -->
-    <div class="page" id="page-students">
+    <div class="page" id="page-students" style="padding:20px 28px;">
       <div class="page-header">
-        <div><div class="page-title">هنرجویان</div><div class="page-sub">مدیریت هنرجویان</div></div>
+        <div><div class="page-title">هنرجویان</div></div>
       </div>
 
       <!-- ۱. هنرجوهای جدید (pending) -->
-      <div id="section-pending" style="margin-bottom:28px;">
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--teal)">🔔 هنرجوهای جدید — منتظر تأیید</div>
-          <span id="pending-count" style="font-size:12px;color:var(--text3)"></span>
+      <div id="section-pending" style="margin-bottom:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--teal)">🔔 منتظر تأیید</div>
+          <span id="pending-count" style="font-size:12px;color:var(--text3);background:var(--teal-dim);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-pending" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="students-pending" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
       </div>
 
       <!-- ۲. هنرجوهای فعال -->
-      <div style="margin-bottom:28px;">
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--green)">🟢 هنرجویان فعال</div>
-          <span id="active-count" style="font-size:12px;color:var(--text3)"></span>
+      <div style="margin-bottom:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--green)">🟢 هنرجویان فعال</div>
+          <span id="active-count" style="font-size:12px;color:var(--text3);background:var(--green-dim);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+        <div id="students-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
       </div>
 
       <!-- ۳. آرشیو (inactive) -->
       <div>
-        <div class="section-header" style="margin-bottom:10px;">
-          <div class="section-title" style="color:var(--text3)">🗂 آرشیو — غیرفعال</div>
-          <span id="inactive-count" style="font-size:12px;color:var(--text3)"></span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:var(--text3)">🗂 آرشیو</div>
+          <span id="inactive-count" style="font-size:12px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:20px;"></span>
         </div>
-        <div id="students-archive" style="display:flex;flex-direction:column;gap:10px;opacity:0.6;"></div>
+        <div id="students-archive" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;opacity:0.6;"></div>
       </div>
     </div>
 

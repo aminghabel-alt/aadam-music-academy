@@ -166,7 +166,7 @@ function setupUserUI(){
   document.getElementById('role-badge').textContent={student:'هنرجو',teacher:'مربی',parent:'والدین'}[u.role];
   document.getElementById('user-name-display').textContent=u.name;
   document.getElementById('user-sub-display').textContent=u.sub||u.role;
-  document.getElementById('dash-greeting').textContent='سلام '+u.name.split(' ')[0]+' 👋';
+  // greeting در داشبورد هنرجو/مربی جداگانه set می‌شه
 
   // نمایش کد دعوت مربی در sidebar
   const existingChip = document.getElementById('invite-chip');
@@ -202,7 +202,7 @@ function setupUserUI(){
   });
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+nav[0].id).classList.add('active');
-  try{ fillReport(); }catch(e){ console.warn('fillReport',e); }
+  try{ fillReport().catch(e=>console.warn('fillReport',e)); }catch(e){ console.warn('fillReport',e); }
   try{ fillChapters(); }catch(e){ console.warn('fillChapters',e); }
   try{ fillMessages(); }catch(e){ console.warn('fillMessages',e); }
   try{ buildBeats(4); }catch(e){ console.warn('buildBeats',e); }
@@ -211,9 +211,6 @@ function setupUserUI(){
   if(u.role==='teacher'){
     document.getElementById('teacher-dashboard').style.display='block';
     document.getElementById('student-dashboard').style.display='none';
-    const greet = document.getElementById('dash-greeting');
-    if(greet) greet.textContent = 'خوش آمدی '+u.name.split(' ')[0]+' 👋';
-    // کد دعوت فقط در sidebar نمایش داده می‌شه
     try{ loadStudents(); }catch(e){ console.warn(e); }
     try{ loadScoreStudents(); }catch(e){ console.warn(e); }
     loadTeacherDashboard().catch(e=>console.warn('loadTeacherDashboard',e));
@@ -234,34 +231,90 @@ function navigate(id){
   const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
   if(id==='students') loadStudents();
   if(id==='scores'){ loadScoreStudents(); loadRecentScores(); }
-  closeSidebar();
-}
-
-function toggleSidebar(){
-  const sidebar=document.getElementById('sidebar');
-  const overlay=document.getElementById('sidebar-overlay');
-  const btn=document.getElementById('btn-hamburger');
-  const isOpen=sidebar.classList.contains('open');
-  sidebar.classList.toggle('open',!isOpen);
-  overlay.classList.toggle('show',!isOpen);
-  if(btn) btn.classList.toggle('open',!isOpen);
-}
-
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
-  const btn=document.getElementById('btn-hamburger');
-  if(btn) btn.classList.remove('open');
+  if(id==='report') fillReport();
 }
 
 
 function avg(s){return((s.tech+s.rhythm+s.melody+s.fret+s.ear)/5).toFixed(1);}
 function gc(v){return v>=17?'badge-green':v>=14?'badge-teal':v>=12?'badge-gold':'badge-red';}
 
-function fillReport(){
-  document.getElementById('report-tbody').innerHTML=SESSIONS.map(s=>{
-    const a=avg(s);
-    return`<tr><td style="font-weight:600">${s.n}</td><td>${s.date}</td><td>${s.tech}</td><td>${s.rhythm}</td><td>${s.melody}</td><td>${s.fret}</td><td>${s.ear}</td><td><span class="badge ${gc(+a)}">${a}</span></td><td style="color:var(--text2);font-size:12px">${s.comment}</td></tr>`;
+async function fillReport(){
+  const tbody = document.getElementById('report-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>';
+
+  let studentId = null;
+
+  if(currentUser.role === 'teacher'){
+    // مربی: selector نمایش داده می‌شه
+    const selector = document.getElementById('report-student-selector');
+    if(selector) selector.style.display = 'block';
+
+    // پر کردن select اگه خالیه
+    const sel = document.getElementById('report-select-student');
+    if(sel && sel.options.length <= 1){
+      const {data:students} = await sb.from('students')
+        .select('id,name')
+        .eq('teacher_id', currentUser.id)
+        .neq('status','inactive')
+        .order('name');
+      if(students){
+        students.forEach(s=>{
+          const opt = document.createElement('option');
+          opt.value = s.id; opt.textContent = s.name;
+          sel.appendChild(opt);
+        });
+      }
+    }
+    studentId = sel?.value || null;
+    if(!studentId){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">یک هنرجو انتخاب کنید</td></tr>';
+      return;
+    }
+
+  } else {
+    // هنرجو: student_id از جدول students
+    const {data:stRow} = await sb.from('students')
+      .select('id')
+      .eq('profile_id', currentUser.id)
+      .maybeSingle();
+    studentId = stRow?.id || null;
+    if(!studentId){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">منتظر تأیید استاد هستید</td></tr>';
+      return;
+    }
+  }
+
+  const {data:scores, error} = await sb.from('scores')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('session_number', {ascending:false});
+
+  if(error){ tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--red)">خطا در بارگذاری</td></tr>'; return; }
+  if(!scores || scores.length === 0){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = scores.map(s => {
+    if(s.is_absent) return `<tr style="opacity:0.6">
+      <td style="font-weight:600">جلسه ${s.session_number}</td>
+      <td style="font-size:11px;color:var(--text3)">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      <td colspan="5" style="color:var(--red);font-size:12px;">🚫 غیبت</td>
+      <td><span class="badge badge-red">غیبت</span></td>
+      <td style="color:var(--text2);font-size:12px">${s.comment||''}</td>
+    </tr>`;
+    return `<tr>
+      <td style="font-weight:600">جلسه ${s.session_number}</td>
+      <td style="font-size:11px;color:var(--text3)">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      <td>${s.technique??'—'}</td>
+      <td>${s.rhythm??'—'}</td>
+      <td>${s.melody??'—'}</td>
+      <td>${s.fretboard??'—'}</td>
+      <td>${s.ear??'—'}</td>
+      <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':s.average>=12?'badge-gold':'badge-red'}">${s.average??'—'}</span></td>
+      <td style="color:var(--text2);font-size:12px">${s.comment||''}</td>
+    </tr>`;
   }).join('');
 }
 
@@ -672,34 +725,66 @@ async function loadStudentDetail(studentId){
   if(!studentId){ detail.style.display='none'; empty.style.display='block'; return; }
   detail.style.display='block'; empty.style.display='none';
 
-  // نمرات این هنرجو
+  // اطلاعات هنرجو از students
+  const {data:student} = await sb.from('students')
+    .select('*')
+    .eq('id', studentId)
+    .maybeSingle();
+
+  // نمرات
   const {data:scores} = await sb.from('scores')
     .select('*')
     .eq('student_id', studentId)
     .order('session_number', {ascending:false})
-    .limit(8);
+    .limit(10);
 
   const list = scores||[];
-  const avg  = list.length > 0
-    ? (list.reduce((s,r)=>s+(+r.average||0),0)/list.length).toFixed(1) : '—';
+  const validScores = list.filter(s=>!s.is_absent);
+  const avgVal = validScores.length > 0
+    ? (validScores.reduce((s,r)=>s+(+r.average||0),0)/validScores.length).toFixed(1) : '—';
 
-  document.getElementById('sd-avg').textContent      = avg;
+  document.getElementById('sd-avg').textContent      = avgVal;
   document.getElementById('sd-sessions').textContent = list.length;
   document.getElementById('sd-practice').textContent = '—';
 
-  // جدول نمرات
+  // اطلاعات کلاس هنرجو
+  const levelMap = {beginner:'مبتدی',intermediate:'متوسط',advanced:'پیشرفته'};
+  const payMap   = {paid:'badge-green',pending:'badge-gold',overdue:'badge-red'};
+  const payLabel = {paid:'پرداخت شده',pending:'در انتظار',overdue:'معوق'};
+
+  // اطلاعات کلاس را زیر stats نشون بده
+  let infoEl = document.getElementById('sd-class-info');
+  if(!infoEl){
+    infoEl = document.createElement('div');
+    infoEl.id = 'sd-class-info';
+    infoEl.style.cssText = 'margin-bottom:16px;padding:12px 16px;background:var(--bg3);border-radius:var(--radius-sm);display:flex;flex-wrap:wrap;gap:12px;';
+    detail.querySelector('.stats-grid').insertAdjacentElement('afterend', infoEl);
+  }
+  if(student){
+    infoEl.innerHTML = [
+      student.instrument   ? `<span style="font-size:12px;color:var(--text2)">🎸 ${student.instrument}</span>` : '',
+      student.level        ? `<span style="font-size:12px;color:var(--text2)">📊 ${levelMap[student.level]||student.level}</span>` : '',
+      student.class_time   ? `<span style="font-size:12px;color:var(--text2)">🕐 ${student.class_time}</span>` : '',
+      student.class_days?.length ? `<span style="font-size:12px;color:var(--text2)">📅 ${student.class_days.join('، ')}</span>` : '',
+      student.class_duration ? `<span style="font-size:12px;color:var(--text2)">⏱ ${student.class_duration} دقیقه</span>` : '',
+      student.payment_status ? `<span class="badge ${payMap[student.payment_status]||'badge-gold'}">${payLabel[student.payment_status]||'—'}</span>` : '',
+    ].filter(Boolean).join('');
+  }
+
+  // جدول نمرات با غیبت
   document.getElementById('sd-scores-tbody').innerHTML = list.length===0
     ? '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>'
-    : list.map(s=>`<tr>
-        <td>جلسه ${s.session_number}</td>
-        <td>${s.technique||'—'}</td>
-        <td>${s.rhythm||'—'}</td>
-        <td>${s.melody||'—'}</td>
-        <td><span class="badge ${(s.average>=17)?'badge-green':(s.average>=14)?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
-      </tr>`).join('');
+    : list.map(s=> s.is_absent
+        ? `<tr style="opacity:0.6"><td>جلسه ${s.session_number}</td><td colspan="3" style="color:var(--red);font-size:12px;">🚫 غیبت</td><td><span class="badge badge-red">غیبت</span></td></tr>`
+        : `<tr>
+          <td>جلسه ${s.session_number}</td>
+          <td>${s.technique??'—'}</td>
+          <td>${s.rhythm??'—'}</td>
+          <td>${s.melody??'—'}</td>
+          <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':'badge-gold'}">${s.average??'—'}</span></td>
+        </tr>`).join('');
 
-  // نقاط قوت و ضعف
-  renderStrengths('sd-strengths', list);
+  renderStrengths('sd-strengths', validScores);
 }
 
 async function loadStudentDashboard(){
@@ -949,22 +1034,26 @@ async function loadStudents(){
   document.getElementById('active-count').textContent   = active.length   + ' نفر';
   document.getElementById('inactive-count').textContent = inactive.length + ' نفر';
 
-  // section pending
+  // section pending — همیشه نمایش داده می‌شه
   const pendingEl = document.getElementById('students-pending');
   const sectionPending = document.getElementById('section-pending');
-  sectionPending.style.display = pending.length > 0 ? 'block' : 'none';
-  pendingEl.innerHTML = pending.map(p=>`
-    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-right:3px solid var(--teal);">
-      <div>
-        <div style="font-size:15px;font-weight:700;">${p.name}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${p.email||''}</div>
-        <div style="font-size:11px;color:var(--teal);margin-top:4px;">ثبت‌نام کرده — منتظر تکمیل اطلاعات</div>
+  sectionPending.style.display = 'block';
+  pendingEl.innerHTML = pending.length === 0
+    ? '<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:20px;font-size:13px;background:var(--bg3);border-radius:var(--radius);">هیچ هنرجوی جدیدی در انتظار تأیید نیست</div>'
+    : pending.map(p=>`
+    <div class="card" style="border-right:3px solid var(--teal);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:15px;font-weight:700;">${p.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${p.email||''}</div>
+          <div style="font-size:11px;color:var(--teal);margin-top:6px;background:var(--teal-dim);display:inline-block;padding:2px 8px;border-radius:10px;">ثبت‌نام کرده — منتظر تأیید</div>
+        </div>
+        <button onclick="openStudentModal('${p.id}','${p.name.replace(/'/g,"\\'")}','${p.email||''}')"
+          style="padding:8px 16px;background:var(--teal);border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:700;color:#0a0a0f;cursor:pointer;font-family:inherit;white-space:nowrap;">
+          فعال‌سازی ←
+        </button>
       </div>
-      <button onclick="openStudentModal('${p.id}','${p.name.replace(/'/g,"\\'")}','${p.email||''}')"
-        style="padding:8px 18px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:var(--teal);cursor:pointer;font-family:inherit;white-space:nowrap;">
-        تکمیل اطلاعات و فعال‌سازی
-      </button>
-    </div>`).join('') || '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px;">هنرجوی جدیدی وجود ندارد</div>';
+    </div>`).join('');
 
   // section active
   const levelMap = {beginner:'مبتدی',intermediate:'متوسط',advanced:'پیشرفته'};
@@ -1079,21 +1168,28 @@ async function loadRecentScores(){
     .select('*, students(name)')
     .eq('teacher_id', currentUser.id)
     .order('created_at', {ascending:false})
-    .limit(10);
+    .limit(15);
 
   const tbody = document.getElementById('recent-scores-tbody');
   if(!tbody) return;
   if(!data || data.length===0){
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(s=>`
-    <tr>
-      <td style="font-weight:600">${s.students?.name||'—'}</td>
-      <td>${s.session_number}</td>
-      <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':'badge-gold'}">${s.average||'—'}</span></td>
-      <td style="color:var(--text3);font-size:11px">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
-    </tr>`).join('');
+  tbody.innerHTML = data.map(s=> s.is_absent
+    ? `<tr style="opacity:0.65">
+        <td style="font-weight:600">${s.students?.name||'—'}</td>
+        <td>${s.session_number}</td>
+        <td colspan="2" style="color:var(--red);font-size:12px;">🚫 غیبت</td>
+        <td style="color:var(--text3);font-size:11px">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      </tr>`
+    : `<tr>
+        <td style="font-weight:600">${s.students?.name||'—'}</td>
+        <td>${s.session_number}</td>
+        <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':'badge-gold'}">${s.average??'—'}</span></td>
+        <td style="font-size:12px;color:var(--text3)">${s.comment||''}</td>
+        <td style="color:var(--text3);font-size:11px">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      </tr>`).join('');
 }
 
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
