@@ -166,7 +166,7 @@ function setupUserUI(){
   document.getElementById('role-badge').textContent={student:'هنرجو',teacher:'مربی',parent:'والدین'}[u.role];
   document.getElementById('user-name-display').textContent=u.name;
   document.getElementById('user-sub-display').textContent=u.sub||u.role;
-  document.getElementById('dash-greeting').textContent='سلام '+u.name.split(' ')[0]+' 👋';
+  // greeting در داشبورد هنرجو/مربی جداگانه set می‌شه
 
   // نمایش کد دعوت مربی در sidebar
   const existingChip = document.getElementById('invite-chip');
@@ -202,7 +202,7 @@ function setupUserUI(){
   });
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+nav[0].id).classList.add('active');
-  try{ fillReport(); }catch(e){ console.warn('fillReport',e); }
+  try{ fillReport().catch(e=>console.warn('fillReport',e)); }catch(e){ console.warn('fillReport',e); }
   try{ fillChapters(); }catch(e){ console.warn('fillChapters',e); }
   try{ fillMessages(); }catch(e){ console.warn('fillMessages',e); }
   try{ buildBeats(4); }catch(e){ console.warn('buildBeats',e); }
@@ -231,34 +231,90 @@ function navigate(id){
   const ni=document.getElementById('nav-'+id);if(ni)ni.classList.add('active');
   if(id==='students') loadStudents();
   if(id==='scores'){ loadScoreStudents(); loadRecentScores(); }
-  closeSidebar();
-}
-
-function toggleSidebar(){
-  const sidebar=document.getElementById('sidebar');
-  const overlay=document.getElementById('sidebar-overlay');
-  const btn=document.getElementById('btn-hamburger');
-  const isOpen=sidebar.classList.contains('open');
-  sidebar.classList.toggle('open',!isOpen);
-  overlay.classList.toggle('show',!isOpen);
-  if(btn) btn.classList.toggle('open',!isOpen);
-}
-
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
-  const btn=document.getElementById('btn-hamburger');
-  if(btn) btn.classList.remove('open');
+  if(id==='report') fillReport();
 }
 
 
 function avg(s){return((s.tech+s.rhythm+s.melody+s.fret+s.ear)/5).toFixed(1);}
 function gc(v){return v>=17?'badge-green':v>=14?'badge-teal':v>=12?'badge-gold':'badge-red';}
 
-function fillReport(){
-  document.getElementById('report-tbody').innerHTML=SESSIONS.map(s=>{
-    const a=avg(s);
-    return`<tr><td style="font-weight:600">${s.n}</td><td>${s.date}</td><td>${s.tech}</td><td>${s.rhythm}</td><td>${s.melody}</td><td>${s.fret}</td><td>${s.ear}</td><td><span class="badge ${gc(+a)}">${a}</span></td><td style="color:var(--text2);font-size:12px">${s.comment}</td></tr>`;
+async function fillReport(){
+  const tbody = document.getElementById('report-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>';
+
+  let studentId = null;
+
+  if(currentUser.role === 'teacher'){
+    // مربی: selector نمایش داده می‌شه
+    const selector = document.getElementById('report-student-selector');
+    if(selector) selector.style.display = 'block';
+
+    // پر کردن select اگه خالیه
+    const sel = document.getElementById('report-select-student');
+    if(sel && sel.options.length <= 1){
+      const {data:students} = await sb.from('students')
+        .select('id,name')
+        .eq('teacher_id', currentUser.id)
+        .neq('status','inactive')
+        .order('name');
+      if(students){
+        students.forEach(s=>{
+          const opt = document.createElement('option');
+          opt.value = s.id; opt.textContent = s.name;
+          sel.appendChild(opt);
+        });
+      }
+    }
+    studentId = sel?.value || null;
+    if(!studentId){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">یک هنرجو انتخاب کنید</td></tr>';
+      return;
+    }
+
+  } else {
+    // هنرجو: student_id از جدول students
+    const {data:stRow} = await sb.from('students')
+      .select('id')
+      .eq('profile_id', currentUser.id)
+      .maybeSingle();
+    studentId = stRow?.id || null;
+    if(!studentId){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">منتظر تأیید استاد هستید</td></tr>';
+      return;
+    }
+  }
+
+  const {data:scores, error} = await sb.from('scores')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('session_number', {ascending:false});
+
+  if(error){ tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--red)">خطا در بارگذاری</td></tr>'; return; }
+  if(!scores || scores.length === 0){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3)">هنوز نمره‌ای ثبت نشده</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = scores.map(s => {
+    if(s.is_absent) return `<tr style="opacity:0.6">
+      <td style="font-weight:600">جلسه ${s.session_number}</td>
+      <td style="font-size:11px;color:var(--text3)">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      <td colspan="5" style="color:var(--red);font-size:12px;">🚫 غیبت</td>
+      <td><span class="badge badge-red">غیبت</span></td>
+      <td style="color:var(--text2);font-size:12px">${s.comment||''}</td>
+    </tr>`;
+    return `<tr>
+      <td style="font-weight:600">جلسه ${s.session_number}</td>
+      <td style="font-size:11px;color:var(--text3)">${new Date(s.created_at).toLocaleDateString('fa-IR')}</td>
+      <td>${s.technique??'—'}</td>
+      <td>${s.rhythm??'—'}</td>
+      <td>${s.melody??'—'}</td>
+      <td>${s.fretboard??'—'}</td>
+      <td>${s.ear??'—'}</td>
+      <td><span class="badge ${s.average>=17?'badge-green':s.average>=14?'badge-teal':s.average>=12?'badge-gold':'badge-red'}">${s.average??'—'}</span></td>
+      <td style="color:var(--text2);font-size:12px">${s.comment||''}</td>
+    </tr>`;
   }).join('');
 }
 
