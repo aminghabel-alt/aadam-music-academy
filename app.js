@@ -3,30 +3,7 @@ const DEMO_USERS={
   teacher:{name:'استاد محمدی',email:'teacher@demo.com',pass:'1234',role:'teacher',sub:'مربی ارشد'},
   parent:{name:'آقای رضایی',email:'parent@demo.com',pass:'1234',role:'parent',sub:'والدین علی'}
 };
-const SESSIONS=[
-  {n:'جلسه ۱۲',date:'۱۴۰۳/۰۹/۱۵',tech:18,rhythm:19,melody:17,fret:15,ear:18,comment:'پیشرفت خوب'},
-  {n:'جلسه ۱۱',date:'۱۴۰۳/۰۹/۰۸',tech:17,rhythm:18,melody:16,fret:14,ear:17,comment:'ریتم بهتر شد'},
-  {n:'جلسه ۱۰',date:'۱۴۰۳/۰۹/۰۱',tech:15,rhythm:16,melody:18,fret:13,ear:16,comment:'ملودی عالی'},
-  {n:'جلسه ۹',date:'۱۴۰۳/۰۸/۲۴',tech:14,rhythm:15,melody:15,fret:12,ear:15,comment:'نیاز به تمرین بیشتر'},
-  {n:'جلسه ۸',date:'۱۴۰۳/۰۸/۱۷',tech:13,rhythm:14,melody:14,fret:11,ear:14,comment:'ادامه بده'},
-  {n:'جلسه ۷',date:'۱۴۰۳/۰۸/۱۰',tech:12,rhythm:13,melody:13,fret:10,ear:13,comment:'خوب بود'},
-];
-const CHAPTERS=[
-  {id:1,title:'آشنایی با گیتار',sub:'معرفی، نت‌خوانی پایه، نگه‌داری',done:true,req:0,score:18.5},
-  {id:2,title:'آکوردهای پایه',sub:'Am, Em, G, C, D',done:true,req:14,score:17.2},
-  {id:3,title:'ضرب‌های اولیه',sub:'ضرب ۴/۴ و ۳/۴',done:true,req:14,score:16.8},
-  {id:4,title:'پنتاتونیک',sub:'گام پنتاتونیک مینور',done:false,req:15,score:null},
-  {id:5,title:'ارپژ و فینگرپیک',sub:'تکنیک راست‌دست',done:false,req:16,score:null},
-  {id:6,title:'بار آکورد',sub:'بار آکورد F و Bm',done:false,req:16,score:null},
-  {id:7,title:'موزیک تئوری',sub:'مقام‌ها و گام‌ها',done:false,req:17,score:null},
-  {id:8,title:'بداهه‌نوازی',sub:'ایمپرووایزیشن پیشرفته',done:false,req:18,score:null},
-];
-const MESSAGES=[
-  {from:'استاد محمدی',time:'دیروز ۱۶:۳۰',body:'علی جان، برای جلسه بعد لطفاً روی آکورد Bm بیشتر تمرین کن. ۲۰ دقیقه در روز کافیه.',unread:true},
-  {from:'استاد محمدی',time:'هفته پیش',body:'عالی بود! ملودی سه‌گانه‌ات خیلی خوب شده. ادامه بده.',unread:false},
-  {from:'سیستم',time:'۵ روز پیش',body:'یادآوری: فردا ساعت ۱۶ جلسه داری. آماده باش!',unread:false},
-];
-const WEEK_DATA=[{d:'ش',min:45},{d:'ی',min:30},{d:'د',min:0},{d:'س',min:55},{d:'چ',min:20},{d:'پ',min:40},{d:'ج',min:0}];
+
 let currentUser=null;
 
 function switchAuthTab(tab){
@@ -320,34 +297,55 @@ async function fillReport(){
 
 function fillChapters(){
   const list=document.getElementById('chapter-list');
-  const uAvg=17.2;
-  list.innerHTML=CHAPTERS.map(c=>{
-    const unlocked=c.done||c.req===0||uAvg>=c.req;
-    const locked=!unlocked;
-    const nc=c.done?'done':unlocked?'current':'locked';
-    const ni=c.done?'✓':unlocked?c.id:'🔒';
-    return`<div class="chapter-item${locked?' locked':''}" onclick="${locked?`showNotif('🔒 نیاز به میانگین ${c.req}')`:` showNotif('📖 فصل ${c.id} — ${c.title}')`}">
-      <div class="chapter-num ${nc}">${ni}</div>
-      <div class="chapter-info">
-        <div class="chapter-title">${c.title}</div>
-        <div class="chapter-sub">${c.sub}</div>
-        ${c.done&&c.score?`<div style="margin-top:6px"><div class="progress-bar"><div class="progress-fill" style="width:${(c.score/20)*100}%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">نمره امتحان: ${c.score}</div></div>`:''}
-      </div>
-      ${locked?`<span class="badge badge-red">نیاز ${c.req}</span>`:c.done?'<span class="badge badge-green">کامل</span>':'<span class="badge badge-gold">جاری</span>'}
-    </div>`;
-  }).join('');
+  if(!list) return;
+  // TODO: فاز بعدی — از Supabase (جدول chapters) بخونه
+  list.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px;">محتوای درسی به زودی...</div>';
 }
 
 function fillMessages(){ loadMessages();
 }
 
 
-function buildWeekGrid(){
-  document.getElementById('week-grid').innerHTML=WEEK_DATA.map((d,i)=>`
-    <div class="day-block ${d.min>0?'has-practice':'no-practice'}${i===6?' today':''}">
-      <span class="day-name">${d.d}</span>
-      <span class="day-min">${d.min>0?d.min+'′':'—'}</span>
-    </div>`).join('');
+async function buildWeekGrid(){
+  const grid = document.getElementById('week-grid');
+  if(!grid) return;
+
+  // پیدا کردن student_id
+  const {data:stRow} = await sb.from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .maybeSingle();
+  const studentId = stRow?.id || null;
+
+  // هفت روز گذشته
+  const days = ['ش','ی','د','س','چ','پ','ج'];
+  const today = new Date();
+  const weekDates = Array.from({length:7},(_,i)=>{
+    const d = new Date(today);
+    d.setDate(today.getDate() - (6-i));
+    return d.toISOString().split('T')[0];
+  });
+
+  let logs = [];
+  if(studentId){
+    const {data} = await sb.from('practice_logs')
+      .select('date,duration_seconds')
+      .eq('student_id', studentId)
+      .gte('date', weekDates[0])
+      .lte('date', weekDates[6]);
+    logs = data || [];
+  }
+
+  grid.innerHTML = weekDates.map((date,i)=>{
+    const dayLogs = logs.filter(l=>l.date===date);
+    const totalSec = dayLogs.reduce((sum,l)=>sum+l.duration_seconds,0);
+    const min = Math.round(totalSec/60);
+    const isToday = i===6;
+    return `<div class="day-block ${min>0?'has-practice':'no-practice'}${isToday?' today':''}">
+      <span class="day-name">${days[i]}</span>
+      <span class="day-min">${min>0?min+'′':'—'}</span>
+    </div>`;
+  }).join('');
 }
 
 /* TUNER */
@@ -477,15 +475,6 @@ function resetPractice(){
 async function sendMsg(){
   const txt = document.getElementById('msg-text').value.trim();
   if(!txt){showNotif('⚠️ پیام خالی است');return;}
-
-  // دمو mode
-  if(currentUser.pass){
-    MESSAGES.unshift({from:currentUser.name,time:'همین الان',body:txt,unread:false,sent:true});
-    fillMessages();
-    document.getElementById('msg-text').value='';
-    showNotif('✅ پیام ارسال شد (دمو)');
-    return;
-  }
 
   // to_id = استاد هنرجو
   const toId = currentUser.teacher_id || null;
