@@ -4,9 +4,9 @@
 ═══════════════════════════════════════════════════════ */
 
 // ── Supabase Init ──
-const SUPABASE_URL = 'https://qatzmmbnmnispcufgcio.supabase.co';
+const SUPABASE_URL = 'https://qatzmmbnmnispcufgcio.db.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdHptbWJubW5pc3BjdWZnY2lvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjkzNDgsImV4cCI6MjA5MzgwNTM0OH0.fPzBxeR9ssrdhQbAbgQvBsYPWPH87976bQSnOoQaA0c';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.db.createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // ── State ──
 let currentUser = null;
@@ -28,8 +28,8 @@ function showNotif(msg, type = '') {
 
 async function logError(error, context = '') {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('error_logs').insert({
+    const { data: { user } } = await db.auth.getUser();
+    await db.from('error_logs').insert({
       user_id: user?.id ?? null,
       error: error?.message ?? String(error),
       context
@@ -81,7 +81,7 @@ function paymentLabel(status) {
 // ════════════════════════════════
 
 async function login(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
   if (error) { showNotif('ایمیل یا رمز اشتباه است', 'error'); logError(error, 'login'); return; }
   await afterAuth(data.user);
 }
@@ -100,7 +100,7 @@ async function register(name, email, password, role, inviteCode) {
     teacherProfile = tp;
   }
 
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await db.auth.signUp({ email, password });
   if (error) { showNotif(error.message, 'error'); logError(error, 'register'); return; }
 
   const profileData = {
@@ -112,7 +112,7 @@ async function register(name, email, password, role, inviteCode) {
     invite_code: role === 'teacher' ? generateInviteCode() : null
   };
 
-  const { error: pe } = await supabase.from('profiles').insert(profileData);
+  const { error: pe } = await db.from('profiles').insert(profileData);
   if (pe) { showNotif('خطا در ذخیره پروفایل', 'error'); logError(pe, 'register-profile'); return; }
 
   showNotif('ثبت‌نام موفق!', 'success');
@@ -120,7 +120,7 @@ async function register(name, email, password, role, inviteCode) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await db.auth.signOut();
   currentUser = null;
   currentProfile = null;
   showScreen('screen-auth');
@@ -199,7 +199,7 @@ function populateStudentSelects(students) {
 }
 
 async function addStudent(data) {
-  const { error } = await supabase.from('students').insert({
+  const { error } = await db.from('students').insert({
     teacher_id: currentProfile.id,
     ...data
   });
@@ -250,7 +250,7 @@ async function saveScore() {
     payload.average = calcAverage() ? parseFloat(calcAverage()) : null;
   }
 
-  const { error } = await supabase.from('scores').insert(payload);
+  const { error } = await db.from('scores').insert(payload);
   if (error) { showNotif('خطا در ذخیره نمره', 'error'); logError(error, 'saveScore'); return; }
   showNotif('نمره ذخیره شد ✓', 'success');
 }
@@ -354,7 +354,7 @@ async function loadMessages(toId) {
 
 async function sendMessage(toId, body, listId = 'messages-list') {
   if (!body.trim()) { showNotif('پیام خالی است', 'error'); return; }
-  const { error } = await supabase.from('messages').insert({
+  const { error } = await db.from('messages').insert({
     from_id: currentProfile.id,
     to_id: toId,
     body: body.trim(),
@@ -418,7 +418,7 @@ async function stopTimer() {
   if (!studentRec) { showNotif('پروفایل هنرجو پیدا نشد', 'error'); return; }
 
   const note = document.getElementById('practice-note').value || null;
-  const { error } = await supabase.from('practice_logs').insert({
+  const { error } = await db.from('practice_logs').insert({
     student_id: studentRec.id,
     duration_seconds: timerSeconds,
     note
@@ -436,7 +436,7 @@ async function stopTimer() {
 document.addEventListener('DOMContentLoaded', async () => {
 
   // Check existing session
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
     await afterAuth(session.user);
   }
