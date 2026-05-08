@@ -86,6 +86,7 @@ a { color: var(--gold); text-decoration: none; }
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 .auth-glow {
   position: absolute;
