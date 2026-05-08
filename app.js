@@ -4,9 +4,9 @@
 ═══════════════════════════════════════════════════════ */
 
 // ── Supabase Init ──
-const SUPABASE_URL = 'https://qatzmmbnmnispcufgcio.db.co';
+const SUPABASE_URL = 'https://qatzmmbnmnispcufgcio.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdHptbWJubW5pc3BjdWZnY2lvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjkzNDgsImV4cCI6MjA5MzgwNTM0OH0.fPzBxeR9ssrdhQbAbgQvBsYPWPH87976bQSnOoQaA0c';
-const db = window.db.createClient(SUPABASE_URL, SUPABASE_KEY);
+let db;
 
 // ── State ──
 let currentUser = null;
@@ -434,6 +434,7 @@ async function stopTimer() {
 // ════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', async () => {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
