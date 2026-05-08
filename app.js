@@ -433,8 +433,8 @@ async function stopTimer() {
 // EVENT LISTENERS
 // ════════════════════════════════
 
+db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.addEventListener('DOMContentLoaded', async () => {
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
