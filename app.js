@@ -38,13 +38,8 @@ async function logError(error, context = '') {
 }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  const el = document.getElementById(id);
-  el.style.display = 'block';
-  el.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
 function showPanel(panelId, navEl) {
@@ -119,6 +114,16 @@ async function register(name, email, password, role, inviteCode) {
 
   const { error: pe } = await db.from('profiles').insert(profileData);
   if (pe) { showNotif('خطا در ذخیره پروفایل', 'error'); logError(pe, 'register-profile'); return; }
+
+  // Auto-add to students table
+  if (role === 'student' && teacherProfile) {
+    await db.from('students').insert({
+      teacher_id: teacherProfile.id,
+      profile_id: data.user.id,
+      name: name,
+      status: 'active'
+    });
+  }
 
   showNotif('ثبت‌نام موفق!', 'success');
   await afterAuth(data.user);
@@ -438,8 +443,8 @@ async function stopTimer() {
 // EVENT LISTENERS
 // ════════════════════════════════
 
-db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.addEventListener('DOMContentLoaded', async () => {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
