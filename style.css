@@ -48,6 +48,7 @@ a { color: var(--gold); text-decoration: none; }
 .screen.active .auth-bg { display: block; }
 .screen.active { display: block; }
 .screen.active#screen-auth { display: flex; }
+.screen.active#screen-auth { display: flex; }
 
 /* ── Notification ── */
 .notif {
