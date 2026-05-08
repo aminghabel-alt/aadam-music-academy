@@ -42,7 +42,10 @@ button { cursor: pointer; border: none; background: none; }
 a { color: var(--gold); text-decoration: none; }
 
 /* ── Screens ── */
-.screen { display: none; min-height: 100vh; }
+.screen { display: none; min-height: 100vh; position: relative; }
+#screen-auth { position: relative; }
+.auth-bg { display: none; }
+.screen.active .auth-bg { display: block; }
 .screen.active { display: block; }
 
 /* ── Notification ── */
