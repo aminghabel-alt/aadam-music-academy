@@ -1,511 +1,343 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>آکادمی موسیقی</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>آدام — آکادمی موسیقی</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a0a0f" />
 </head>
 <body>
 
-<!-- AUTH -->
-<div id="screen-auth" class="screen active">
-  <div class="auth-box">
-    <div class="auth-logo">
-      <div class="logo-icon">🎸</div>
-      <h1>آکادمی موسیقی</h1>
-      <p>سیستم آموزش حرفه‌ای گیتار</p>
+  <!-- ═══════════════════════════════ NOTIFICATION ═══════════════════════════════ -->
+  <div id="notif" class="notif hidden"></div>
+
+  <!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-bg">
+      <div class="auth-glow"></div>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">ورود</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">ثبت‌نام</button>
-    </div>
-    <div id="login-form">
-      <div class="form-group"><label>ایمیل</label><input type="email" id="login-email" placeholder="example@email.com" dir="ltr"></div>
-      <div class="form-group"><label>رمز عبور</label><input type="password" id="login-pass" placeholder="••••••••" dir="ltr"></div>
-      <button class="btn-primary" onclick="doLogin()">ورود به حساب</button>
-    </div>
-    <div id="register-form" style="display:none">
-      <div class="form-group"><label>نام کامل</label><input type="text" id="reg-name" placeholder="نام و نام‌خانوادگی"></div>
-      <div class="form-group"><label>ایمیل</label><input type="email" id="reg-email" placeholder="example@email.com" dir="ltr"></div>
-      <div class="form-group"><label>رمز عبور</label><input type="password" id="reg-pass" placeholder="••••••••" dir="ltr"></div>
-      <div class="form-group">
-        <label>نقش شما</label>
-        <select id="reg-role" onchange="onRoleChange(this.value)">
-          <option value="student">هنرجو</option>
-          <option value="teacher">مربی</option>
-          <option value="parent">والدین</option>
-        </select>
+    <div class="auth-container">
+      <div class="auth-logo">
+        <span class="logo-symbol">𝄞</span>
+        <h1 class="logo-title">آدام</h1>
+        <p class="logo-sub">آکادمی موسیقی</p>
       </div>
-      <!-- فقط مربی این رو می‌بینه -->
-      <div id="teacher-note" style="display:none;padding:12px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius-sm);margin-bottom:12px;">
-        <p style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:4px">📌 به عنوان مربی ثبت می‌شوید</p>
-        <p style="font-size:12px;color:var(--text2)">بعد از ثبت‌نام، کد دعوت اختصاصی شما نمایش داده می‌شود.</p>
+
+      <!-- Tab Switch -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">ورود</button>
+        <button class="auth-tab" data-tab="register">ثبت‌نام</button>
       </div>
-      <button class="btn-primary" onclick="doRegister()">ساخت حساب</button>
-    </div>
-    <div class="auth-demo">
-      <p>ورود سریع (دمو)</p>
-      <div class="demo-btns">
-        <button class="demo-btn" onclick="demoLogin('student')">هنرجو</button>
-        <button class="demo-btn" onclick="demoLogin('teacher')">مربی</button>
-        <button class="demo-btn" onclick="demoLogin('parent')">والدین</button>
-      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" class="auth-form active">
+        <div class="field">
+          <label>ایمیل</label>
+          <input type="email" id="login-email" placeholder="example@email.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>رمز عبور</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-primary">ورود</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="auth-form">
+        <div class="field">
+          <label>نام کامل</label>
+          <input type="text" id="reg-name" placeholder="نام و نام خانوادگی" />
+        </div>
+        <div class="field">
+          <label>ایمیل</label>
+          <input type="email" id="reg-email" placeholder="example@email.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>رمز عبور</label>
+          <input type="password" id="reg-password" placeholder="حداقل ۶ کاراکتر" autocomplete="new-password" />
+        </div>
+
+        <!-- Role Selection -->
+        <div class="field">
+          <label>نقش شما</label>
+          <div class="role-selector">
+            <label class="role-option">
+              <input type="radio" name="role" value="teacher" />
+              <span class="role-card">
+                <span class="role-icon">🎸</span>
+                <span class="role-label">مربی</span>
+              </span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="role" value="student" />
+              <span class="role-card">
+                <span class="role-icon">🎵</span>
+                <span class="role-label">هنرجو</span>
+              </span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="role" value="parent" />
+              <span class="role-card">
+                <span class="role-icon">👪</span>
+                <span class="role-label">والدین</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Invite Code (student/parent) -->
+        <div class="field" id="field-invite" style="display:none">
+          <label>کد دعوت استاد</label>
+          <input type="text" id="reg-invite" placeholder="کد ۶ رقمی استاد" maxlength="10" />
+        </div>
+
+        <button type="submit" class="btn-primary">ثبت‌نام</button>
+      </form>
     </div>
   </div>
-</div>
 
-<!-- APP -->
-<div id="screen-app" class="screen">
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="s-icon">🎸</div>
-      <span>آکادمی موسیقی</span>
-    </div>
-    <div class="user-chip" id="user-chip">
-      <div class="role-badge" id="role-badge">هنرجو</div>
-      <div class="user-name-d" id="user-name-display">کاربر</div>
-      <div class="user-sub-d" id="user-sub-display">سطح مبتدی</div>
-    </div>
-    <div class="nav-section" id="nav-items"></div>
-    <div class="sidebar-bottom">
-      <button class="btn-logout" onclick="doLogout()">خروج از حساب</button>
+  <!-- ═══════════════════════════════ DASHBOARD — TEACHER ═══════════════════════════════ -->
+  <div id="screen-teacher" class="screen">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-right">
+        <span class="header-logo">𝄞</span>
+        <span class="header-title">آدام</span>
+      </div>
+      <div class="header-left">
+        <span id="teacher-name-display" class="header-user"></span>
+        <button id="btn-logout" class="btn-icon" title="خروج">⏻</button>
+      </div>
+    </header>
+
+    <!-- Nav -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-panel="panel-students">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">هنرجوها</span>
+      </button>
+      <button class="nav-item" data-panel="panel-scores">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">نمرات</span>
+      </button>
+      <button class="nav-item" data-panel="panel-messages">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">پیام‌ها</span>
+      </button>
+      <button class="nav-item" data-panel="panel-settings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">تنظیمات</span>
+      </button>
+    </nav>
+
+    <!-- Panels -->
+    <main class="panels">
+
+      <!-- Panel: Students -->
+      <div id="panel-students" class="panel active">
+        <div class="panel-header">
+          <h2>هنرجوها</h2>
+          <button id="btn-add-student" class="btn-gold">+ افزودن</button>
+        </div>
+        <div id="students-list" class="students-list">
+          <div class="empty-state">در حال بارگذاری...</div>
+        </div>
+      </div>
+
+      <!-- Panel: Scores -->
+      <div id="panel-scores" class="panel">
+        <div class="panel-header">
+          <h2>ثبت نمره</h2>
+        </div>
+        <div class="field">
+          <label>انتخاب هنرجو</label>
+          <select id="score-student-select">
+            <option value="">— انتخاب کنید —</option>
+          </select>
+        </div>
+        <div id="score-form-wrap" style="display:none">
+          <div class="field">
+            <label>شماره جلسه</label>
+            <input type="number" id="score-session" min="1" placeholder="مثلاً ۵" />
+          </div>
+          <div class="field absent-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="score-absent" />
+              <span class="toggle-track"></span>
+              <span>غیبت</span>
+            </label>
+          </div>
+          <div id="score-fields">
+            <div class="score-grid">
+              <div class="field">
+                <label>تکنیک <span class="score-max">/۲۰</span></label>
+                <input type="number" id="score-technique" min="0" max="20" />
+              </div>
+              <div class="field">
+                <label>ریتم <span class="score-max">/۲۰</span></label>
+                <input type="number" id="score-rhythm" min="0" max="20" />
+              </div>
+              <div class="field">
+                <label>ملودی <span class="score-max">/۲۰</span></label>
+                <input type="number" id="score-melody" min="0" max="20" />
+              </div>
+              <div class="field">
+                <label>دانش دسته <span class="score-max">/۲۰</span></label>
+                <input type="number" id="score-fretboard" min="0" max="20" />
+              </div>
+              <div class="field">
+                <label>شنیداری <span class="score-max">/۲۰</span></label>
+                <input type="number" id="score-ear" min="0" max="20" />
+              </div>
+            </div>
+            <div class="score-average-display">
+              میانگین: <span id="score-avg-display">—</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>نظر مربی</label>
+            <textarea id="score-comment" placeholder="نکات جلسه..." rows="3"></textarea>
+          </div>
+          <button id="btn-save-score" class="btn-primary">ذخیره نمره</button>
+        </div>
+      </div>
+
+      <!-- Panel: Messages -->
+      <div id="panel-messages" class="panel">
+        <div class="panel-header">
+          <h2>پیام‌ها</h2>
+        </div>
+        <div class="field">
+          <label>ارسال به</label>
+          <select id="msg-to-select">
+            <option value="">— انتخاب هنرجو —</option>
+          </select>
+        </div>
+        <div id="messages-list" class="messages-list"></div>
+        <div class="message-input-wrap">
+          <textarea id="msg-body" placeholder="پیام خود را بنویسید..." rows="2"></textarea>
+          <button id="btn-send-msg" class="btn-gold">ارسال</button>
+        </div>
+      </div>
+
+      <!-- Panel: Settings -->
+      <div id="panel-settings" class="panel">
+        <div class="panel-header">
+          <h2>تنظیمات</h2>
+        </div>
+        <div class="settings-card">
+          <div class="setting-row">
+            <span>کد دعوت شما</span>
+            <span id="invite-code-display" class="invite-code">—</span>
+          </div>
+          <button id="btn-copy-invite" class="btn-outline">کپی کد دعوت</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════ DASHBOARD — STUDENT ═══════════════════════════════ -->
+  <div id="screen-student" class="screen">
+    <header class="app-header">
+      <div class="header-right">
+        <span class="header-logo">𝄞</span>
+        <span class="header-title">آدام</span>
+      </div>
+      <div class="header-left">
+        <span id="student-name-display" class="header-user"></span>
+        <button id="btn-logout-student" class="btn-icon">⏻</button>
+      </div>
+    </header>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-panel="panel-my-scores">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">کارنامه</span>
+      </button>
+      <button class="nav-item" data-panel="panel-practice">
+        <span class="nav-icon">⏱️</span>
+        <span class="nav-label">تمرین</span>
+      </button>
+      <button class="nav-item" data-panel="panel-student-msgs">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">پیام‌ها</span>
+      </button>
+    </nav>
+
+    <main class="panels">
+      <div id="panel-my-scores" class="panel active">
+        <div class="panel-header"><h2>کارنامه من</h2></div>
+        <div id="my-scores-list" class="scores-list"></div>
+      </div>
+      <div id="panel-practice" class="panel">
+        <div class="panel-header"><h2>تمرین امروز</h2></div>
+        <div class="practice-timer">
+          <div id="timer-display" class="timer-display">۰۰:۰۰</div>
+          <div class="timer-buttons">
+            <button id="btn-timer-start" class="btn-gold">شروع</button>
+            <button id="btn-timer-stop" class="btn-outline" style="display:none">توقف و ذخیره</button>
+          </div>
+          <div class="field" style="margin-top:1rem">
+            <label>یادداشت</label>
+            <textarea id="practice-note" placeholder="چی تمرین کردی؟" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="panel-student-msgs" class="panel">
+        <div class="panel-header"><h2>پیام‌ها</h2></div>
+        <div id="student-messages-list" class="messages-list"></div>
+        <div class="message-input-wrap">
+          <textarea id="student-msg-body" placeholder="پیام به استاد..." rows="2"></textarea>
+          <button id="btn-student-send-msg" class="btn-gold">ارسال</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — ADD STUDENT ═══════════════════════════════ -->
+  <div id="modal-add-student" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>افزودن هنرجو</h3>
+        <button class="modal-close" data-modal="modal-add-student">✕</button>
+      </div>
+      <form id="form-add-student">
+        <div class="field"><label>نام کامل *</label><input type="text" id="st-name" required /></div>
+        <div class="field"><label>تلفن</label><input type="tel" id="st-phone" /></div>
+        <div class="field"><label>سن</label><input type="number" id="st-age" min="4" max="80" /></div>
+        <div class="field"><label>ساز</label><input type="text" id="st-instrument" placeholder="گیتار، پیانو، ..." /></div>
+        <div class="field">
+          <label>سطح</label>
+          <select id="st-level">
+            <option value="">— انتخاب —</option>
+            <option value="beginner">مبتدی</option>
+            <option value="intermediate">متوسط</option>
+            <option value="advanced">پیشرفته</option>
+          </select>
+        </div>
+        <div class="field"><label>شهریه ماهانه (تومان)</label><input type="number" id="st-fee" /></div>
+        <div class="field">
+          <label>نوع کلاس</label>
+          <select id="st-class-type">
+            <option value="in-person">حضوری</option>
+            <option value="online">آنلاین</option>
+          </select>
+        </div>
+        <div class="field"><label>ساعت کلاس</label><input type="text" id="st-time" placeholder="مثلاً ۱۷:۰۰" /></div>
+        <div class="field"><label>یادداشت</label><textarea id="st-notes" rows="2"></textarea></div>
+        <button type="submit" class="btn-primary">ذخیره هنرجو</button>
+      </form>
     </div>
   </div>
 
-  <div class="main-content">
-
-    <!-- DASHBOARD -->
-    <!-- ══════════════════════════════════════ -->
-    <!-- داشبورد مربی                           -->
-    <!-- ══════════════════════════════════════ -->
-    <div class="page active" id="page-dashboard">
-      <!-- داشبورد مربی -->
-      <div id="teacher-dashboard" style="display:none;">
-        <!-- آمار کلی مربی -->
-        <div class="stats-grid" style="margin-bottom:20px;">
-          <div class="stat-card gold clickable-stat" onclick="openStatModal('pending')" style="cursor:pointer;"><div class="stat-icon">⏳</div><div class="stat-value" id="t-stat-pending">—</div><div class="stat-label">در انتظار تأیید</div></div>
-          <div class="stat-card teal clickable-stat" onclick="openStatModal('active')" style="cursor:pointer;"><div class="stat-icon">✅</div><div class="stat-value" id="t-stat-active">—</div><div class="stat-label">هنرجوی فعال</div></div>
-          <div class="stat-card purple clickable-stat" onclick="openStatModal('inactive')" style="cursor:pointer;"><div class="stat-icon">📦</div><div class="stat-value" id="t-stat-inactive">—</div><div class="stat-label">غیرفعال</div></div>
-          <div class="stat-card green clickable-stat" onclick="openStatModal('scores')" style="cursor:pointer;"><div class="stat-icon">📝</div><div class="stat-value" id="t-stat-scores">—</div><div class="stat-label">کل نمرات</div></div>
-        </div>
-
-        <!-- انتخاب هنرجو برای مشاهده جزئیات -->
-        <div class="card" style="margin-bottom:16px;">
-          <div class="section-header">
-            <div class="section-title">📊 وضعیت هنرجو</div>
-            <select id="t-select-student" onchange="loadStudentDetail(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;">
-              <option value="">-- انتخاب هنرجو --</option>
-            </select>
-          </div>
-
-          <!-- جزئیات هنرجوی انتخاب‌شده -->
-          <div id="student-detail" style="display:none;">
-            <div class="stats-grid" style="margin-bottom:16px;">
-              <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value" id="sd-avg">—</div><div class="stat-label">میانگین نمرات</div></div>
-              <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value" id="sd-sessions">—</div><div class="stat-label">جلسات</div></div>
-              <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value" id="sd-practice">—</div><div class="stat-label">دقیقه تمرین امروز</div></div>
-            </div>
-
-            <div class="grid-2">
-              <!-- آخرین نمرات هنرجو -->
-              <div>
-                <div class="section-title" style="margin-bottom:10px;">آخرین جلسات</div>
-                <div class="table-wrap"><table>
-                  <thead><tr><th>جلسه</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>میانگین</th></tr></thead>
-                  <tbody id="sd-scores-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3)">انتخاب کنید</td></tr></tbody>
-                </table></div>
-              </div>
-
-              <!-- نقاط قوت و ضعف -->
-              <div>
-                <div class="section-title" style="margin-bottom:10px;">نقاط قوت و ضعف</div>
-                <div id="sd-strengths" style="display:flex;flex-direction:column;gap:10px;">
-                  <div style="text-align:center;color:var(--text3);font-size:13px;padding:20px;">یک هنرجو انتخاب کنید</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div id="student-detail-empty" style="text-align:center;color:var(--text3);padding:28px;font-size:13px;">
-            یک هنرجو از لیست بالا انتخاب کنید
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════════ -->
-      <!-- داشبورد هنرجو                          -->
-      <!-- ══════════════════════════════════════ -->
-      <div id="student-dashboard" style="display:none;">
-        <div class="page-header">
-          <div><div class="page-title">داشبورد</div><div class="page-sub" id="dash-greeting-s"></div></div>
-        </div>
-
-        <!-- کارت استاد -->
-        <div id="s-teacher-card" style="display:none;margin-bottom:20px;padding:16px 20px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius);align-items:center;gap:14px;">
-          <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🎸</div>
-          <div>
-            <div style="font-size:11px;color:var(--purple);font-weight:600;margin-bottom:2px;">استاد شما</div>
-            <div style="font-size:16px;font-weight:700;color:var(--text)" id="s-teacher-name">—</div>
-          </div>
-        </div>
-        <div class="stats-grid" style="margin-bottom:20px;">
-          <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value" id="s-avg">—</div><div class="stat-label">میانگین نمرات</div></div>
-          <div class="stat-card teal"><div class="stat-icon">📅</div><div class="stat-value" id="s-sessions">—</div><div class="stat-label">جلسات این ترم</div></div>
-          <div class="stat-card purple"><div class="stat-icon">⏱</div><div class="stat-value" id="s-practice">—</div><div class="stat-label">دقیقه تمرین امروز</div></div>
-          <div class="stat-card green"><div class="stat-icon">🎯</div><div class="stat-value" id="s-chapters">—</div><div class="stat-label">فصل‌های کامل</div></div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <div class="section-header"><div class="section-title">آخرین نمرات جلسات</div><button class="btn-sm" onclick="navigate('report')">همه</button></div>
-            <div class="table-wrap"><table>
-              <thead><tr><th>جلسه</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>میانگین</th></tr></thead>
-              <tbody id="s-scores-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr></tbody>
-            </table></div>
-          </div>
-
-          <div class="card">
-            <div class="section-header"><div class="section-title">نقاط قوت و ضعف</div></div>
-            <div id="s-strengths" style="display:flex;flex-direction:column;gap:12px;">
-              <div style="text-align:center;color:var(--text3);font-size:13px;padding:20px;">در حال بارگذاری...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- صفحه اتصال به استاد — فقط هنرجوهای بدون استاد می‌بینن -->
-    <div class="page" id="page-connect">
-      <div style="max-width:440px;margin:60px auto;text-align:center;padding:0 20px;">
-        <div style="font-size:48px;margin-bottom:16px">🔗</div>
-        <div style="font-size:20px;font-weight:700;margin-bottom:8px">اتصال به استاد</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:32px;line-height:1.7">
-          برای دسترسی به کارنامه، سرفصل‌ها و ارتباط با استادت،<br>کد دعوت استادت رو وارد کن.
-        </div>
-        <div class="card" style="text-align:right;">
-          <div class="form-group">
-            <label>کد دعوت استاد</label>
-            <input type="text" id="connect-code" placeholder="مثلاً: AHMAD-4829" dir="ltr"
-              style="text-transform:uppercase;letter-spacing:3px;font-size:18px;text-align:center;"
-              oninput="this.value=this.value.toUpperCase()">
-            <div style="font-size:11px;color:var(--text3);margin-top:6px">این کد را از استادت بگیر</div>
-          </div>
-          <button class="btn-primary" onclick="connectToTeacher()">اتصال به استاد</button>
-          <div style="margin-top:12px;font-size:12px;color:var(--text3);text-align:center;">
-            هنوز کد نداری؟ از استادت بخواه کدش رو بهت بده
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="page" id="page-report">
-      <div class="page-header"><div><div class="page-title">کارنامه تفصیلی</div><div class="page-sub">تمام جلسات این ترم</div></div></div>
-      <!-- فقط مربی می‌بینه -->
-      <div id="report-student-selector" style="display:none;margin-bottom:16px;">
-        <select id="report-select-student" onchange="fillReport()"
-          style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;width:100%;max-width:320px;">
-          <option value="">-- انتخاب هنرجو --</option>
-        </select>
-      </div>
-      <div class="card"><div class="table-wrap"><table>
-        <thead><tr><th>جلسه</th><th>تاریخ</th><th>تکنیک</th><th>ریتم</th><th>ملودی</th><th>فرت‌برد</th><th>گوش</th><th>میانگین</th><th>نظر مربی</th></tr></thead>
-        <tbody id="report-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr></tbody>
-      </table></div></div>
-    </div>
-
-    <!-- CURRICULUM -->
-    <div class="page" id="page-curriculum">
-      <div class="page-header"><div><div class="page-title">سرفصل دوره</div><div class="page-sub">فصل‌ها بر اساس نمره امتحان باز می‌شوند</div></div></div>
-      <div class="chapter-list" id="chapter-list"></div>
-    </div>
-
-    <!-- TOOLS -->
-    <div class="page" id="page-tools">
-      <div class="page-header"><div><div class="page-title">ابزارهای موسیقی</div></div></div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="section-header"><div class="section-title">🎵 تیونر کروماتیک</div></div>
-          <div class="tuner-container">
-            <div class="tuner-note" id="tuner-note">—</div>
-            <div class="tuner-freq" id="tuner-freq">میکروفون را فعال کن</div>
-            <div class="tuner-meter"><div class="tuner-center"></div><div class="tuner-needle" id="tuner-needle"></div></div>
-            <div class="tuner-indicator" id="tuner-indicator">آماده</div>
-            <button class="btn-tuner" id="btn-tuner" onclick="toggleTuner()">شروع تیونر</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="section-header"><div class="section-title">⏱ مترونوم</div></div>
-          <div class="metro-container">
-            <div class="metro-bpm" id="metro-bpm">120</div>
-            <div class="metro-bpm-label">BPM</div>
-            <input type="range" class="metro-slider" id="metro-slider" min="40" max="220" value="120" oninput="updateBPM(this.value)">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:-12px;margin-bottom:14px;padding:0 2px"><span>۴۰</span><span>۱۲۰</span><span>۲۲۰</span></div>
-            <div class="metro-time-sigs">
-              <button class="time-sig-btn active" onclick="setTimeSig(this,4)">۴/۴</button>
-              <button class="time-sig-btn" onclick="setTimeSig(this,3)">۳/۴</button>
-              <button class="time-sig-btn" onclick="setTimeSig(this,6)">۶/۸</button>
-              <button class="time-sig-btn" onclick="setTimeSig(this,2)">۲/۴</button>
-            </div>
-            <div class="metro-beats" id="metro-beats"></div>
-            <div class="metro-ctrl"><button class="btn-metro start" id="btn-metro" onclick="toggleMetro()">شروع</button></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRACTICE -->
-    <div class="page" id="page-practice">
-      <div class="page-header"><div><div class="page-title">ثبت تمرین روزانه</div></div></div>
-      <div class="practice-today">
-        <div><div class="practice-timer" id="practice-timer">۰۰:۰۰</div><div class="practice-timer-label">زمان تمرین امروز</div></div>
-        <div class="practice-btns">
-          <button class="btn-practice start" id="btn-practice" onclick="togglePractice()">شروع تمرین</button>
-          <button class="btn-practice reset" onclick="resetPractice()">ریست</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-header"><div class="section-title">تمرین این هفته</div><span style="font-size:12px;color:var(--text3)">هدف: ۳۰ دقیقه/روز</span></div>
-        <div class="week-grid" id="week-grid"></div>
-      </div>
-      <div class="card" style="margin-top:16px">
-        <div class="section-header"><div class="section-title">یادداشت امروز</div></div>
-        <textarea class="msg-textarea" id="practice-note" placeholder="چی تمرین کردی؟ چه مشکلی داشتی؟"></textarea>
-        <div style="text-align:left;margin-top:8px"><button class="btn-sm" onclick="showNotif('✅ یادداشت ذخیره شد')">ذخیره</button></div>
-      </div>
-    </div>
-
-    <!-- MESSAGES -->
-    <div class="page" id="page-messages">
-      <div class="page-header"><div><div class="page-title">پیام به استاد</div></div></div>
-      <div class="msg-compose">
-        <div class="section-title" style="margin-bottom:10px;font-size:14px">پیام جدید</div>
-        <textarea class="msg-textarea" id="msg-text" placeholder="سوال یا پیشنهادت رو بنویس..."></textarea>
-        <div style="text-align:left;margin-top:10px"><button class="btn-sm" style="background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600" onclick="sendMsg()">ارسال پیام</button></div>
-      </div>
-      <div class="section-title" style="margin-bottom:12px">پیام‌های دریافتی</div>
-      <div class="msg-list" id="msg-list"></div>
-    </div>
-
-    <!-- TEACHER: SCORES -->
-    <div class="page" id="page-scores">
-      <div class="page-header"><div><div class="page-title">ثبت نمره جلسه</div></div></div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="section-title" style="margin-bottom:16px">اطلاعات جلسه</div>
-          <div class="score-form">
-            <div class="score-row">
-              <label>هنرجو</label>
-              <select class="score-input" id="score-student">
-                <option value="">-- انتخاب هنرجو --</option>
-              </select>
-            </div>
-            <div class="score-row"><label>شماره جلسه</label><input type="number" class="score-input" value="" id="score-session" placeholder="۱"></div>
-            <div class="score-row"><label>تکنیک (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-tech"></div>
-            <div class="score-row"><label>ریتم (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-rhythm"></div>
-            <div class="score-row"><label>ملودی (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-melody"></div>
-            <div class="score-row"><label>فرت‌برد (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-fret"></div>
-            <div class="score-row"><label>گوش (۲۰)</label><input type="number" class="score-input" min="0" max="20" placeholder="۰-۲۰" id="sc-ear"></div>
-            <div class="score-row" style="align-items:flex-start"><label>نظر مربی</label>
-              <textarea class="score-input" style="min-height:70px;resize:vertical;direction:rtl;text-align:right" id="sc-comment" placeholder="نکات جلسه..."></textarea>
-            </div>
-            <div class="score-row" style="align-items:center;padding:10px 0;background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:10px 14px;">
-              <label style="color:var(--red);font-weight:600;">🚫 غیبت</label>
-              <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;">
-                <span style="font-size:12px;color:var(--text2);">در صورت غیبت هنرجو فعال کنید</span>
-                <input type="checkbox" id="sc-absent" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer;" onchange="toggleAbsent(this.checked)">
-              </div>
-            </div>
-            <button class="btn-primary" style="margin-top:4px" onclick="saveScore()">ثبت نمره</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="section-title" style="margin-bottom:14px">آخرین ثبت‌ها</div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>هنرجو</th><th>جلسه</th><th>میانگین</th><th>نظر</th><th>تاریخ</th></tr></thead>
-            <tbody id="recent-scores-tbody">
-              <tr><td colspan="4" style="text-align:center;color:var(--text3)">در حال بارگذاری...</td></tr>
-            </tbody>
-          </table></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TEACHER: STUDENTS -->
-    <div class="page" id="page-students" style="padding:20px 28px;">
-      <div class="page-header">
-        <div><div class="page-title">هنرجویان</div></div>
-      </div>
-
-      <!-- ۱. هنرجوهای جدید (pending) -->
-      <div id="section-pending" style="margin-bottom:32px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <div style="font-size:15px;font-weight:700;color:var(--teal)">🔔 منتظر تأیید</div>
-          <span id="pending-count" style="font-size:12px;color:var(--text3);background:var(--teal-dim);padding:2px 8px;border-radius:20px;"></span>
-        </div>
-        <div id="students-pending" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
-      </div>
-
-      <!-- ۲. هنرجوهای فعال -->
-      <div style="margin-bottom:32px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <div style="font-size:15px;font-weight:700;color:var(--green)">🟢 هنرجویان فعال</div>
-          <span id="active-count" style="font-size:12px;color:var(--text3);background:var(--green-dim);padding:2px 8px;border-radius:20px;"></span>
-        </div>
-        <div id="students-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;"></div>
-      </div>
-
-      <!-- ۳. آرشیو (inactive) -->
-      <div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <div style="font-size:15px;font-weight:700;color:var(--text3)">🗂 آرشیو</div>
-          <span id="inactive-count" style="font-size:12px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:20px;"></span>
-        </div>
-        <div id="students-archive" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;opacity:0.6;"></div>
-      </div>
-    </div>
-
-
-    <!-- MODAL: آمار کارت‌های داشبورد -->
-    <div id="modal-stat" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;">
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:540px;max-height:85vh;overflow-y:auto;margin:20px;display:flex;flex-direction:column;gap:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div style="font-size:16px;font-weight:700;" id="stat-modal-title">لیست</div>
-          <button onclick="document.getElementById('modal-stat').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
-        </div>
-        <input type="text" id="stat-modal-search" placeholder="🔍 جستجو..." oninput="filterStatModal()"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;direction:rtl;">
-        <div id="stat-modal-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-    </div>
-
-    <!-- MODAL: تکمیل اطلاعات هنرجو توسط استاد -->
-    <div id="modal-student" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;">
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;margin:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-          <div style="font-size:16px;font-weight:700;" id="modal-student-title">اطلاعات کلاس هنرجو</div>
-          <button onclick="closeStudentModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
-        </div>
-        <!-- نام هنرجو (فقط نمایش) -->
-        <div style="padding:10px 14px;background:var(--teal-dim);border:1px solid rgba(45,212,191,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
-          <div style="font-size:11px;color:var(--teal);margin-bottom:2px;">هنرجو</div>
-          <div style="font-size:15px;font-weight:700;" id="modal-student-name">—</div>
-        </div>
-        <input type="hidden" id="st-profile-id">
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="grid-2">
-            <div class="form-group"><label>شماره تماس</label><input id="st-phone" type="tel" placeholder="09xx" dir="ltr"></div>
-            <div class="form-group"><label>سن</label><input id="st-age" type="number" placeholder="۱۵" dir="ltr"></div>
-          </div>
-          <div class="grid-2">
-            <div class="form-group"><label>ساز تخصصی</label>
-              <select id="st-instrument">
-                <option value="گیتار کلاسیک">گیتار کلاسیک</option>
-                <option value="گیتار الکتریک">گیتار الکتریک</option>
-                <option value="گیتار باس">گیتار باس</option>
-                <option value="پیانو">پیانو</option>
-                <option value="ویولن">ویولن</option>
-                <option value="درامز">درامز</option>
-                <option value="آواز">آواز</option>
-              </select>
-            </div>
-            <div class="form-group"><label>سطح</label>
-              <select id="st-level">
-                <option value="beginner">مبتدی</option>
-                <option value="intermediate">متوسط</option>
-                <option value="advanced">پیشرفته</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group"><label>هدف هنرجو</label>
-            <select id="st-goal">
-              <option value="تفریحی">تفریحی</option>
-              <option value="حرفه‌ای">حرفه‌ای</option>
-              <option value="کنکور هنر">کنکور هنر</option>
-              <option value="ضبط و استودیو">ضبط و استودیو</option>
-            </select>
-          </div>
-          <div class="form-group"><label>روزهای کلاس</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="شنبه"    class="day-check" style="accent-color:var(--gold)"> شنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="یکشنبه"  class="day-check" style="accent-color:var(--gold)"> یکشنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="دوشنبه"  class="day-check" style="accent-color:var(--gold)"> دوشنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="سه‌شنبه" class="day-check" style="accent-color:var(--gold)"> سه‌شنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="چهارشنبه" class="day-check" style="accent-color:var(--gold)"> چهارشنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="پنجشنبه" class="day-check" style="accent-color:var(--gold)"> پنجشنبه</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;"><input type="checkbox" value="جمعه"    class="day-check" style="accent-color:var(--gold)"> جمعه</label>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="form-group"><label>ساعت کلاس</label><input id="st-time" type="time" dir="ltr"></div>
-            <div class="form-group"><label>مدت جلسه</label>
-              <select id="st-duration">
-                <option value="30">۳۰ دقیقه</option>
-                <option value="45">۴۵ دقیقه</option>
-                <option value="60" selected>۶۰ دقیقه</option>
-                <option value="90">۹۰ دقیقه</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="form-group"><label>نوع کلاس</label>
-              <select id="st-type">
-                <option value="in-person">حضوری</option>
-                <option value="online">آنلاین</option>
-              </select>
-            </div>
-            <div class="form-group"><label>شهریه ماهانه (تومان)</label><input id="st-fee" type="number" placeholder="500000" dir="ltr"></div>
-          </div>
-          <div class="form-group"><label>وضعیت پرداخت</label>
-            <select id="st-payment">
-              <option value="pending">در انتظار</option>
-              <option value="paid">پرداخت شده</option>
-              <option value="overdue">معوق</option>
-            </select>
-          </div>
-          <div class="form-group"><label>یادداشت مربی</label>
-            <textarea id="st-notes" class="msg-textarea" placeholder="نقاط قوت، ضعف، توضیحات..." style="min-height:70px;"></textarea>
-          </div>
-          <button class="btn-primary" onclick="activateStudent()">✅ فعال‌سازی هنرجو</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PARENT -->
-    <div class="page" id="page-parent">
-      <div class="page-header"><div><div class="page-title">داشبورد والدین</div></div></div>
-      <div class="stats-grid">
-        <div class="stat-card gold"><div class="stat-icon">⭐</div><div class="stat-value">۱۸.۵</div><div class="stat-label">میانگین این ماه</div><div class="stat-change up">↑ بهتر شده</div></div>
-        <div class="stat-card teal"><div class="stat-icon">⏱</div><div class="stat-value">۳۵</div><div class="stat-label">میانگین تمرین روزانه</div><div class="stat-change up">↑ دقیقه</div></div>
-        <div class="stat-card purple"><div class="stat-icon">📅</div><div class="stat-value">۱۲</div><div class="stat-label">جلسات این ترم</div><div class="stat-change neutral">از ۱۶ جلسه</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="section-title" style="margin-bottom:14px">روند پیشرفت فرزند</div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">ملودی‌نوازی</span><span style="color:var(--green);font-weight:600">عالی ۸۹%</span></div><div class="progress-bar"><div class="progress-fill" style="width:89%;background:linear-gradient(90deg,var(--green),#6ee7b7)"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">فرت‌برد</span><span style="color:var(--red);font-weight:600">نیاز به تمرین ۴۱%</span></div><div class="progress-bar"><div class="progress-fill" style="width:41%;background:linear-gradient(90deg,var(--red),#fca5a5)"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--text2)">ریتم</span><span style="color:var(--gold);font-weight:600">متوسط ۶۲%</span></div><div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="section-title" style="margin-bottom:14px">پیام به مربی</div>
-          <textarea class="msg-textarea" id="parent-msg" placeholder="سوال یا نظرتون رو بنویسید..."></textarea>
-          <div style="text-align:left;margin-top:8px"><button class="btn-sm" style="background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600" onclick="sendParentMsg()">ارسال</button></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div class="notif-banner" id="notif-banner"></div>
-
-<script src="app.js"></script>
-
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
 </body>
 </html>
