@@ -74,11 +74,14 @@ a { color: var(--gold); text-decoration: none; }
    AUTH SCREEN
 ════════════════════════════════ */
 #screen-auth {
-  display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   position: relative;
+}
+
+.screen.active#screen-auth {
+  display: flex;
 }
 
 .auth-bg {
