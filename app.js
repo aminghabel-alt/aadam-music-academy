@@ -219,6 +219,41 @@ async function addStudent(data) {
   loadStudents();
 }
 
+async function loadLessons() {
+  const { data: lessons, error } = await db
+    .from('lessons')
+    .select('*')
+    .eq('teacher_id', currentProfile.id)
+    .order('created_at', { ascending: false });
+
+  if (error) { logError(error, 'loadLessons'); return; }
+
+  const list = document.getElementById('lessons-list');
+  if (!lessons.length) {
+    list.innerHTML = '<div class="empty-state">هنوز درسی اضافه نشده</div>';
+    return;
+  }
+
+  list.innerHTML = lessons.map(l => `
+    <div class="student-card">
+      <div class="student-info">
+        <span class="student-name">${l.title}</span>
+        <span class="student-meta">${l.level || '—'} · جلسه ${l.session_number || '—'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function addLesson(data) {
+  const { error } = await db.from('lessons').insert({
+    teacher_id: currentProfile.id,
+    ...data
+  });
+  if (error) { showNotif('خطا در ذخیره درس', 'error'); logError(error, 'addLesson'); return; }
+  showNotif('درس اضافه شد ✓', 'success');
+  closeModal('modal-add-lesson');
+  loadLessons();
+}
+
 // ════════════════════════════════
 // SCORES (Teacher)
 // ════════════════════════════════
