@@ -91,7 +91,7 @@ async function register(name, email, password, role, inviteCode) {
   let teacherProfile = null;
   if (role === 'student' || role === 'parent') {
     if (!inviteCode) { showNotif('کد دعوت الزامی است', 'error'); return; }
-    const { data: tp, error: te } = await supabase
+    const { data: tp, error: te } = await db
       .from('profiles')
       .select('id, name')
       .eq('invite_code', inviteCode.toUpperCase())
@@ -128,7 +128,7 @@ async function logout() {
 
 async function afterAuth(user) {
   currentUser = user;
-  const { data: profile, error } = await supabase
+  const { data: profile, error } = await db
     .from('profiles')
     .select('*')
     .eq('id', user.id)
@@ -159,7 +159,7 @@ async function afterAuth(user) {
 // ════════════════════════════════
 
 async function loadStudents() {
-  const { data: students, error } = await supabase
+  const { data: students, error } = await db
     .from('students')
     .select('*')
     .eq('teacher_id', currentProfile.id)
@@ -261,7 +261,7 @@ async function saveScore() {
 
 async function loadMyScores() {
   // Find student record linked to this profile
-  const { data: studentRec, error: se } = await supabase
+  const { data: studentRec, error: se } = await db
     .from('students')
     .select('id')
     .eq('profile_id', currentUser.id)
@@ -273,7 +273,7 @@ async function loadMyScores() {
     return;
   }
 
-  const { data: scores, error } = await supabase
+  const { data: scores, error } = await db
     .from('scores')
     .select('*')
     .eq('student_id', studentRec.id)
@@ -331,7 +331,7 @@ async function loadMyScores() {
 // ════════════════════════════════
 
 async function loadMessages(toId) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('messages')
     .select('*')
     .or(`and(from_id.eq.${currentProfile.id},to_id.eq.${toId}),and(from_id.eq.${toId},to_id.eq.${currentProfile.id})`)
@@ -366,7 +366,7 @@ async function sendMessage(toId, body, listId = 'messages-list') {
 
 async function loadStudentMessages() {
   if (!currentProfile?.teacher_id) return;
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('messages')
     .select('*')
     .or(`and(from_id.eq.${currentProfile.id},to_id.eq.${currentProfile.teacher_id}),and(from_id.eq.${currentProfile.teacher_id},to_id.eq.${currentProfile.id})`)
@@ -409,7 +409,7 @@ async function stopTimer() {
 
   if (timerSeconds < 10) { showNotif('تمرین خیلی کوتاه بود', 'error'); return; }
 
-  const { data: studentRec } = await supabase
+  const { data: studentRec } = await db
     .from('students')
     .select('id')
     .eq('profile_id', currentUser.id)
