@@ -156,6 +156,7 @@ async function afterAuth(user) {
     document.getElementById('invite-code-display').textContent = profile.invite_code || '—';
     showScreen('screen-teacher');
     loadStudents();
+    loadLessons();
   } else {
     document.getElementById('student-name-display').textContent = profile.name;
     showScreen('screen-student');
@@ -619,6 +620,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const code = currentProfile?.invite_code;
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
+  });
+
+  // ── Lessons ──
+  document.getElementById('btn-add-lesson').addEventListener('click', () => openModal('modal-add-lesson'));
+
+  document.getElementById('form-add-lesson').addEventListener('submit', async e => {
+    e.preventDefault();
+    await addLesson({
+      title: document.getElementById('lesson-title').value,
+      level: document.getElementById('lesson-level').value || null,
+      session_number: parseInt(document.getElementById('lesson-session').value) || null,
+      content: document.getElementById('lesson-content').value || null,
+      link: document.getElementById('lesson-link').value || null
+    });
   });
 
 });
