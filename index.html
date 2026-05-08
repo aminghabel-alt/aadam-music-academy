@@ -349,6 +349,45 @@
     </div>
   </div>
 
+  <!-- Modal: Add Lesson -->
+<div id="modal-add-lesson" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>درس جدید</h3>
+      <button class="modal-close" data-modal="modal-add-lesson">✕</button>
+    </div>
+    <form id="form-add-lesson">
+      <div class="field">
+        <label>عنوان درس *</label>
+        <input type="text" id="lesson-title" required />
+      </div>
+      <div class="field">
+        <label>سطح</label>
+        <select id="lesson-level">
+          <option value="">— انتخاب —</option>
+          <option value="beginner">مبتدی</option>
+          <option value="intermediate">متوسط</option>
+          <option value="advanced">پیشرفته</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>شماره جلسه</label>
+        <input type="number" id="lesson-session" min="1" />
+      </div>
+      <div class="field">
+        <label>توضیحات</label>
+        <textarea id="lesson-content" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>لینک (ویدیو / PDF / فایل)</label>
+        <input type="url" id="lesson-link" placeholder="https://..." />
+      </div>
+      <button type="submit" class="btn-primary">ذخیره درس</button>
+    </form>
+  </div>
+</div>
+
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
   <script src="app.js"></script>
