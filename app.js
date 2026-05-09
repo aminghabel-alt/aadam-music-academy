@@ -465,6 +465,7 @@ function openSessionDetail(session) {
   const linkEl = document.getElementById('session-detail-link');
   if (linkEl) linkEl.value = session.link || '';
   loadExercises(session.id);
+  loadSessionFiles(session.id);
   openModal('modal-session-detail');
 }
 
@@ -1132,6 +1133,65 @@ async function stopTimer() {
 
 
 
+
+// ════════════════════════════════
+// FILE UPLOAD (Teacher)
+// ════════════════════════════════
+
+async function loadSessionFiles(sessionId) {
+  const listEl = document.getElementById('session-files-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const { data: files, error } = await db.storage
+    .from('session-files')
+    .list(`sessions/${sessionId}`);
+
+  if (error || !files?.length) return;
+
+  listEl.innerHTML = files.map(f => {
+    const { data: urlData } = db.storage
+      .from('session-files')
+      .getPublicUrl(`sessions/${sessionId}/${f.name}`);
+    const url = urlData?.publicUrl || '#';
+    const icon = f.name.endsWith('.pdf') ? '📄' : f.name.match(/\.(mp3|m4a|aac)$/) ? '🎵' : '🎬';
+    return `
+      <div class="file-item">
+        <a href="${url}" target="_blank" class="file-link">${icon} ${f.name}</a>
+        <button class="btn-delete-file btn-xs" data-path="sessions/${sessionId}/${f.name}">🗑</button>
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('این فایل حذف شود؟')) return;
+      const { error } = await db.storage.from('session-files').remove([btn.dataset.path]);
+      if (error) { showNotif('خطا در حذف فایل', 'error'); return; }
+      showNotif('فایل حذف شد', 'success');
+      loadSessionFiles(sessionId);
+    });
+  });
+}
+
+async function uploadSessionFile(file) {
+  if (!currentSession) return;
+  if (file.size > 50 * 1024 * 1024) { showNotif('فایل بیشتر از ۵۰MB است', 'error'); return; }
+
+  const ext = file.name.split('.').pop();
+  const fileName = `${Date.now()}.${ext}`;
+  const path = `sessions/${currentSession.id}/${fileName}`;
+
+  showNotif('در حال آپلود...', '');
+  const { error } = await db.storage.from('session-files').upload(path, file);
+  if (error) { showNotif('خطا در آپلود: ' + error.message, 'error'); return; }
+  showNotif('فایل آپلود شد ✓', 'success');
+  loadSessionFiles(currentSession.id);
+
+  // Reset file input
+  const inputEl = document.getElementById('session-file-upload');
+  if (inputEl) inputEl.value = '';
+}
+
 // ════════════════════════════════
 // EXERCISES (Teacher)
 // ════════════════════════════════
@@ -1610,6 +1670,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const code = currentProfile?.invite_code;
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
+  });
+
+  // ── File Upload ──
+  document.addEventListener('change', e => {
+    if (e.target.id === 'session-file-upload' && e.target.files[0]) {
+      uploadSessionFile(e.target.files[0]);
+    }
   });
 
   // ── Apply Karname Button ──
