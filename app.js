@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modal) {
         modal.classList.add('hidden');
         if (modal.id === 'modal-add-term') openModal('modal-student-profile');
-        if (modal.id === 'modal-term-detail') openModal('modal-student-profile');
+        if (modal.id === 'modal-term-detail' && currentProfile?.role === 'teacher') openModal('modal-student-profile');
         if (modal.id === 'modal-session-detail') openModal('modal-term-detail');
       }
     });
