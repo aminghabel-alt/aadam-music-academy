@@ -778,25 +778,33 @@ async function loadExercises(sessionId) {
   if (!list) return;
   list.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
 
-  const { data: exercises, error } = await db
-    .from('exercises')
-    .select('*, skill_categories(name)')
-    .eq('session_id', sessionId)
-    .order('created_at', { ascending: true });
+  const [exercisesRes, scoresRes] = await Promise.all([
+    db.from('exercises').select('*, skill_categories(name)').eq('session_id', sessionId).order('created_at', { ascending: true }),
+    currentStudentForTerm ? db.from('exercise_scores').select('exercise_id, score').eq('student_id', currentStudentForTerm.id) : { data: [] }
+  ]);
 
-  if (error) { logError(error, 'loadExercises'); return; }
+  if (exercisesRes.error) { logError(exercisesRes.error, 'loadExercises'); return; }
+
+  const exercises = exercisesRes.data || [];
+  const scoreMap = {};
+  (scoresRes.data || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
 
   if (!exercises.length) {
     list.innerHTML = '<div class="empty-state">هنوز تمرینی اضافه نشده</div>';
     return;
   }
 
-  list.innerHTML = exercises.map(ex => `
+  list.innerHTML = exercises.map(ex => {
+    const studentScore = scoreMap[ex.id];
+    const scoreDisplay = studentScore !== undefined && studentScore !== null
+      ? `<span class="exercise-score-badge scored">${studentScore} / ${ex.max_score}</span>`
+      : `<span class="exercise-score-badge">${ex.max_score} نمره</span>`;
+    return `
     <div class="exercise-card" data-exercise-id="${ex.id}">
       <div class="exercise-header">
         <span class="exercise-title">${ex.title}</span>
         <div style="display:flex;gap:0.5rem;align-items:center">
-          <span class="exercise-score-badge">${ex.max_score} نمره</span>
+          ${scoreDisplay}
           <button class="btn-score-exercise btn-gold btn-xs" data-exercise-id="${ex.id}" data-title="${ex.title}" data-max="${ex.max_score}">نمره‌دهی</button>
           <button class="btn-delete-exercise btn-xs" data-exercise-id="${ex.id}">🗑</button>
         </div>
@@ -804,7 +812,8 @@ async function loadExercises(sessionId) {
       ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
       ${ex.description ? `<p class="exercise-desc">${ex.description}</p>` : ''}
       ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع</a>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // Score button
   list.querySelectorAll('.btn-score-exercise').forEach(btn => {

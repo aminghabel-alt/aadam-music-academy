@@ -958,3 +958,9 @@ a { color: var(--gold); text-decoration: none; }
   padding: 0.3rem 0.5rem;
   text-align: center;
 }
+
+.exercise-score-badge.scored {
+  background: rgba(201,168,76,0.2);
+  color: var(--gold);
+  font-weight: 700;
+}
