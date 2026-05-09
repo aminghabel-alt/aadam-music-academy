@@ -248,3 +248,21 @@ CREATE TABLE error_logs (
 - `profiles.id` همیشه برابر `auth.users.id` است
 - هنرجوهایی که از app ثبت‌نام کردند: هم توی `profiles` هستند هم (بعد از تأیید مربی) توی `students`
 - ارتباط هنرجو به مربی از دو طریق: `profiles.teacher_id` (قبل از تأیید) و `students.profile_id` (بعد از تأیید)
+
+### `lessons`
+محتوای آموزشی که مربی تعریف می‌کنه
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` |
+| `title` | TEXT | NO | — | عنوان درس |
+| `level` | TEXT | YES | NULL | `beginner` / `intermediate` / `advanced` |
+| `session_number` | INT | YES | NULL | شماره جلسه |
+| `content` | TEXT | YES | NULL | توضیحات درس |
+| `link` | TEXT | YES | NULL | لینک ویدیو |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+**RLS Policies:**
+- `teacher_own_lessons`: مربی فقط درس‌های خودش رو می‌بینه/مدیریت می‌کنه
+- `student_view_lessons`: هنرجو درس‌های استادش رو می‌بینه
