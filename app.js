@@ -903,6 +903,7 @@ async function saveExerciseScores() {
   showNotif('نمرات ذخیره شد ✓', 'success');
   closeModal('modal-score-exercise');
   openModal('modal-session-detail');
+  loadExercises(currentSession.id);
 }
 
 // ════════════════════════════════
