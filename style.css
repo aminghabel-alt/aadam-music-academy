@@ -864,3 +864,25 @@ a { color: var(--gold); text-decoration: none; }
   white-space: pre-wrap;
   min-height: 100px;
 }
+
+/* Fix student profile modal layout */
+.modal-box--wide {
+  max-width: 520px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-box--wide .modal-header h3 {
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.modal-box--wide .profile-tabs {
+  flex-shrink: 0;
+}
+
+.modal-box--wide .profile-tab-content.active {
+  flex: 1;
+  overflow-y: auto;
+}

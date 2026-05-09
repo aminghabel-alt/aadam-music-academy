@@ -283,6 +283,10 @@ function openStudentProfile(student) {
       <div class="info-row"><span class="info-label">نوع کلاس</span><span>${student.class_type === 'online' ? 'آنلاین' : 'حضوری'}</span></div>
     </div>`;
 
+  // Hide add-term button for non-teachers
+  const btnAddTerm = document.getElementById('btn-add-term');
+  if (btnAddTerm) btnAddTerm.style.display = currentProfile?.role === 'teacher' ? '' : 'none';
+
   // Switch to terms tab
   switchProfileTab('terms');
   loadTerms(student.id);
