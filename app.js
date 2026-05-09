@@ -162,6 +162,7 @@ async function afterAuth(user) {
     showScreen('screen-student');
     loadMyScores();
     loadStudentMessages();
+    loadStudentTerms();
   }
 }
 
@@ -736,6 +737,136 @@ async function stopTimer() {
   if (error) { showNotif('خطا در ذخیره تمرین', 'error'); logError(error, 'stopTimer'); return; }
   showNotif(`تمرین ${formatTime(timerSeconds)} ذخیره شد ✓`, 'success');
   document.getElementById('practice-note').value = '';
+}
+
+
+// ════════════════════════════════
+// TERMS (Student)
+// ════════════════════════════════
+
+async function loadStudentTerms() {
+  const list = document.getElementById('student-terms-list');
+  if (!list) return;
+
+  // Get student record
+  const { data: studentRec, error: se } = await db
+    .from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .single();
+
+  if (se || !studentRec) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const { data: terms, error } = await db
+    .from('terms')
+    .select('*, term_months(*)')
+    .eq('student_id', studentRec.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
+
+  if (error) { logError(error, 'loadStudentTerms'); return; }
+
+  if (!terms.length) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const levelLabel = {
+    moghadamati_1: 'مقدماتی ۱', moghadamati_2: 'مقدماتی ۲',
+    motevaset_1: 'متوسط ۱', motevaset_2: 'متوسط ۲',
+    pishrafte_1: 'پیشرفته ۱', pishrafte_2: 'پیشرفته ۲'
+  };
+
+  list.innerHTML = terms.map(t => {
+    const unlockedMonths = (t.term_months || [])
+      .filter(m => m.is_unlocked)
+      .map(m => m.month_number);
+    return `
+      <div class="term-card" data-term-id="${t.id}" data-student-id="${studentRec.id}" style="cursor:pointer">
+        <div class="term-header">
+          <span class="term-title">${t.title}</span>
+          <span class="term-level">${levelLabel[t.level] || t.level}</span>
+        </div>
+        <div class="term-unlocked-info">
+          ${unlockedMonths.length ? 
+            `<span class="unlocked-label">ماه‌های باز: ${unlockedMonths.map(m => `ماه ${m}`).join('، ')}</span>` :
+            '<span class="locked-label">هنوز ماهی باز نشده</span>'}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Click on term → show sessions
+  list.querySelectorAll('.term-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const term = terms.find(t => t.id === card.dataset.termId);
+      openStudentTermSessions(term, levelLabel);
+    });
+  });
+}
+
+async function openStudentTermSessions(term, levelLabel) {
+  const unlockedMonths = (term.term_months || [])
+    .filter(m => m.is_unlocked)
+    .map(m => m.month_number);
+
+  if (!unlockedMonths.length) {
+    showNotif('هنوز ماهی توسط استاد باز نشده', 'error');
+    return;
+  }
+
+  const { data: sessions, error } = await db
+    .from('sessions')
+    .select('*')
+    .eq('term_id', term.id)
+    .in('month_number', unlockedMonths)
+    .order('session_number', { ascending: true });
+
+  if (error) { logError(error, 'openStudentTermSessions'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Reuse modal-term-detail for student view (read-only)
+  document.getElementById('term-detail-title').textContent = term.title;
+  document.getElementById('term-detail-level').textContent = levelLabel[term.level] || term.level;
+  document.getElementById('term-detail-start').textContent = term.start_date
+    ? new Date(term.start_date).toLocaleDateString('fa-IR') : '—';
+
+  const sessionRows = (sessions || []).map(s => {
+    const isPast = s.session_date && s.session_date < today;
+    const isToday = s.session_date === today;
+    const statusClass = isToday ? 'session-today' : isPast ? 'session-past' : 'session-future';
+    const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
+    const hasContent = s.content_text ? '📝' : '';
+    return `
+      <div class="session-row ${statusClass}" data-session-id="${s.id}" data-content="${encodeURIComponent(s.content_text || '')}" data-date="${s.session_date || ''}" data-num="${s.session_number}" style="cursor:pointer">
+        <span class="session-num">جلسه ${s.session_number} ${hasContent}</span>
+        <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
+        <span class="session-status">${statusLabel}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('term-detail-sessions').innerHTML =
+    sessionRows || '<div class="empty-state">جلسه‌ای در ماه‌های باز وجود ندارد</div>';
+
+  // Click session → read-only view
+  document.querySelectorAll('#term-detail-sessions .session-row[data-session-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const content = decodeURIComponent(row.dataset.content);
+      const date = row.dataset.date;
+      const num = row.dataset.num;
+      document.getElementById('student-session-title').textContent = `جلسه ${num}`;
+      document.getElementById('student-session-date').textContent =
+        date ? new Date(date).toLocaleDateString('fa-IR') : '—';
+      document.getElementById('student-session-content').textContent =
+        content || 'محتوایی برای این جلسه ثبت نشده';
+      openModal('modal-student-session');
+    });
+  });
+
+  openModal('modal-term-detail');
 }
 
 // ════════════════════════════════

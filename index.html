@@ -279,7 +279,10 @@
         <span class="nav-icon">💬</span>
         <span class="nav-label">پیام‌ها</span>
       </button>
-      
+      <button class="nav-item" data-panel="panel-student-terms">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">ترم‌ها</span>
+      </button>
     </nav>
 
     <main class="panels">
@@ -308,6 +311,10 @@
           <textarea id="student-msg-body" placeholder="پیام به استاد..." rows="2"></textarea>
           <button id="btn-student-send-msg" class="btn-gold">ارسال</button>
         </div>
+      </div>
+      <div id="panel-student-terms" class="panel">
+        <div class="panel-header"><h2>ترم‌های من</h2></div>
+        <div id="student-terms-list"><div class="empty-state">در حال بارگذاری...</div></div>
       </div>
     </main>
   </div>
@@ -499,6 +506,20 @@
         <textarea id="session-detail-content" rows="6" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
       </div>
       <button id="btn-save-session-content" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره محتوا</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ MODAL — STUDENT SESSION VIEW ═══════════════════════════════ -->
+  <div id="modal-student-session" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="student-session-title">جلسه —</h3>
+        <button class="modal-close" data-modal="modal-student-session">✕</button>
+      </div>
+      <div class="student-session-date" id="student-session-date"></div>
+      <div id="student-session-content" class="student-session-content"></div>
     </div>
   </div>
 
