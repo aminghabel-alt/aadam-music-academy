@@ -347,6 +347,7 @@
       </div>
       <div class="profile-tabs">
         <button class="profile-tab active" data-tab="terms">ترم‌ها</button>
+        <button class="profile-tab" data-tab="karname">کارنامه</button>
         <button class="profile-tab" data-tab="info">اطلاعات</button>
       </div>
       <div id="profile-tab-terms" class="profile-tab-content active">
@@ -355,6 +356,18 @@
           <button id="btn-add-term" class="btn-gold">+ ترم جدید</button>
         </div>
         <div id="terms-list"><div class="empty-state">هنوز ترمی تعریف نشده</div></div>
+      </div>
+      <div id="profile-tab-karname" class="profile-tab-content">
+        <div class="field" style="margin-bottom:1rem;margin-top:0.75rem">
+          <select id="teacher-karname-term-select">
+            <option value="selected">ترم‌های منتخب</option>
+            <option value="all">همه ترم‌ها</option>
+          </select>
+        </div>
+        <div id="teacher-karname-skills"></div>
+        <div class="karname-section-title">نمودار جلسات</div>
+        <div id="teacher-karname-chart"></div>
+        <div id="teacher-karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
       <div id="profile-tab-info" class="profile-tab-content">
         <div id="student-info-display"></div>

@@ -298,6 +298,9 @@ function switchProfileTab(tabName) {
   document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
   document.getElementById(`profile-tab-${tabName}`).classList.add('active');
+  if (tabName === 'karname' && currentStudentForTerm) {
+    loadTeacherKarname('selected');
+  }
 }
 
 async function loadTerms(studentId) {
@@ -663,6 +666,154 @@ async function loadMyScores() {
         ${s.comment ? `<p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.75rem">${s.comment}</p>` : ''}
       </div>`;
   }).join('');
+}
+
+
+// ════════════════════════════════
+// KARNAME (Teacher view)
+// ════════════════════════════════
+
+async function loadTeacherKarname(mode) {
+  if (!currentStudentForTerm) return;
+  const studentId = currentStudentForTerm.id;
+
+  // Load student's terms
+  const { data: terms } = await db
+    .from('terms').select('*')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+
+  if (!terms?.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    document.getElementById('teacher-karname-chart').innerHTML = '';
+    return;
+  }
+
+  // Populate dropdown once
+  const sel = document.getElementById('teacher-karname-term-select');
+  if (sel && sel.options.length <= 2) {
+    terms.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.title;
+      sel.appendChild(opt);
+    });
+    sel.onchange = () => loadTeacherKarname(sel.value);
+  }
+
+  // Filter terms
+  let termIds = [];
+  if (mode === 'selected') termIds = terms.filter(t => t.include_in_report !== false).map(t => t.id);
+  else if (mode === 'all') termIds = terms.map(t => t.id);
+  else termIds = [mode];
+
+  if (!termIds.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هیچ ترمی انتخاب نشده</div>';
+    document.getElementById('teacher-karname-chart').innerHTML = '';
+    return;
+  }
+
+  const { data: sessions } = await db
+    .from('sessions').select('id, session_number, session_date, term_id')
+    .in('term_id', termIds).order('session_number', { ascending: true });
+
+  if (!sessions?.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هنوز جلسه‌ای ثبت نشده</div>';
+    document.getElementById('teacher-karname-chart').innerHTML = '';
+    return;
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+  const { data: exercises } = await db
+    .from('exercises').select('id, session_id, max_score, title, skill_categories(name)')
+    .in('session_id', sessionIds);
+
+  const { data: scores } = await db
+    .from('exercise_scores').select('exercise_id, score')
+    .eq('student_id', studentId)
+    .in('exercise_id', (exercises || []).map(e => e.id));
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  // Skill summary
+  const skillMap = {};
+  (exercises || []).forEach(ex => {
+    const cat = ex.skill_categories?.name || 'سایر';
+    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0, count: 0 };
+    const score = scoreMap[ex.id];
+    if (score !== null && score !== undefined) {
+      skillMap[cat].total += score;
+      skillMap[cat].max += ex.max_score;
+      skillMap[cat].count++;
+    }
+  });
+
+  const skillsEl = document.getElementById('teacher-karname-skills');
+  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.count > 0);
+  if (skillEntries.length) {
+    skillsEl.innerHTML = `
+      <div class="karname-section-title">خلاصه مهارت‌ها</div>
+      ${skillEntries.map(([name, v]) => {
+        const pct = Math.round((v.total / v.max) * 100);
+        return `<div class="skill-summary-row">
+          <span class="skill-name">${name}</span>
+          <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${pct}%"></div></div>
+          <span class="skill-score">${v.total} / ${v.max}</span>
+        </div>`;
+      }).join('')}`;
+  } else {
+    skillsEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای ثبت نشده</div>';
+  }
+
+  // Session chart
+  const exBySession = {};
+  (exercises || []).forEach(ex => {
+    if (!exBySession[ex.session_id]) exBySession[ex.session_id] = [];
+    exBySession[ex.session_id].push(ex);
+  });
+
+  const sessionData = sessions.map(s => {
+    const exs = exBySession[s.id] || [];
+    const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+    if (!scored.length) return null;
+    const total = scored.reduce((a, e) => a + scoreMap[e.id], 0);
+    const max = scored.reduce((a, e) => a + e.max_score, 0);
+    return { ...s, pct: Math.round((total / max) * 100), total, max, exs: scored };
+  }).filter(Boolean);
+
+  const chartEl = document.getElementById('teacher-karname-chart');
+  if (!sessionData.length) {
+    chartEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای در جلسات ثبت نشده</div>';
+    return;
+  }
+
+  chartEl.innerHTML = `<div class="session-bars">
+    ${sessionData.map(s => `
+      <div class="session-bar-col" data-session-id="${s.id}" data-total="${s.total}" data-max="${s.max}" data-num="${s.session_number}" data-date="${s.session_date || ''}">
+        <div class="session-bar-wrap">
+          <div class="session-bar-inner" style="height:${s.pct}%"></div>
+        </div>
+        <span class="session-bar-label">ج${s.session_number}</span>
+      </div>`).join('')}
+  </div>`;
+
+  chartEl.querySelectorAll('.session-bar-col').forEach(col => {
+    col.addEventListener('click', () => {
+      const s = sessionData.find(s => s.id === col.dataset.sessionId);
+      if (!s) return;
+      const detailEl = document.getElementById('teacher-karname-session-detail');
+      detailEl.classList.remove('hidden');
+      detailEl.innerHTML = `
+        <div class="karname-detail-header">جلسه ${s.session_number}${s.session_date ? ' — ' + new Date(s.session_date).toLocaleDateString('fa-IR') : ''}</div>
+        ${s.exs.map(e => `
+          <div class="karname-detail-row">
+            <span>${e.skill_categories?.name || 'سایر'} — ${e.title}</span>
+            <span class="karname-detail-score">${scoreMap[e.id]} / ${e.max_score}</span>
+          </div>`).join('')}
+        <div class="karname-detail-total">جمع: ${s.total} / ${s.max}</div>`;
+    });
+  });
 }
 
 
