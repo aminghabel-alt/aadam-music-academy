@@ -336,7 +336,7 @@ Hala **DATA_SCHEMA.md ro update konim** — in jadval haro ezafe kon:
 | `created_at` | TIMESTAMPTZ | NO | NOW() | — |
 
 ---
-## Faz B — Baadi (Defer Shod)
+## Faz B — Baadii (Defer Shod)
 - `skill_categories` — دسته‌بندی مهارت‌ها
 - `classes` — کلاس‌های گروهی
 ```
