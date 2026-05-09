@@ -1102,3 +1102,35 @@ a { color: var(--gold); text-decoration: none; }
   width: 16px;
   height: 16px;
 }
+
+/* File upload */
+.file-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  padding: 0.4rem 0;
+}
+
+.files-list { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.file-link { color: var(--gold); text-decoration: none; }
+.file-link:hover { text-decoration: underline; }
+
+.file-item-player {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.file-label { font-size: 0.82rem; color: var(--text-dim); }
