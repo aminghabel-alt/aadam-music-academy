@@ -796,12 +796,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── Add Term Button ──
-  const btnAddTerm = document.getElementById('btn-add-term');
-  if (btnAddTerm) btnAddTerm.addEventListener('click', () => {
-    document.getElementById('form-add-term').reset();
-    document.getElementById('term-sessions-preview').classList.add('hidden');
-    openModal('modal-add-term');
+  // ── Add Term Button (delegated) ──
+  document.addEventListener("click", e => {
+    if (e.target.id === "btn-add-term" || e.target.closest("#btn-add-term")) {
+      document.getElementById("form-add-term").reset();
+      document.getElementById("term-sessions-preview").classList.add("hidden");
+      openModal("modal-add-term");
+    }
   });
+
+
+
+
+
+
 
   // ── Preview sessions when date/days change ──
   function updatePreview() {
