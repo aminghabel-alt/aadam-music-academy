@@ -618,6 +618,36 @@
     </div>
   </div>
 
+
+  <!-- ═══════════════════════════════ MODAL — EXERCISE DETAIL ═══════════════════════════════ -->
+  <div id="modal-exercise-detail" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="exercise-detail-title">—</h3>
+        <button class="modal-close" data-modal="modal-exercise-detail">✕</button>
+      </div>
+      <div class="exercise-detail-meta">
+        <span id="exercise-detail-category" class="exercise-category"></span>
+        <span id="exercise-detail-score" class="exercise-score-badge"></span>
+      </div>
+      <div class="field" style="margin-top:0.75rem">
+        <label>توضیحات تمرین</label>
+        <textarea id="exercise-detail-desc" rows="4" placeholder="توضیحات، نکات اجرا..."></textarea>
+      </div>
+      <div class="field">
+        <label>لینک منبع</label>
+        <input type="url" id="exercise-detail-link" placeholder="https://..." />
+      </div>
+      <div class="field" id="exercise-file-upload-wrap">
+        <label>آپلود فایل (PDF / MP3 / ویدیو)</label>
+        <input type="file" id="exercise-file-upload" accept=".pdf,.mp3,.mp4,.m4a,.aac" class="file-input" />
+      </div>
+      <div id="exercise-files-list" class="files-list"></div>
+      <button id="btn-save-exercise-detail" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره</button>
+    </div>
+  </div>
+
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
   <script src="app.js"></script>

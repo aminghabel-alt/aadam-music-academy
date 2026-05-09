@@ -1241,7 +1241,7 @@ async function loadExercises(sessionId) {
       ? `<span class="exercise-score-badge scored">${studentScore} / ${ex.max_score}</span>`
       : `<span class="exercise-score-badge">${ex.max_score} نمره</span>`;
     return `
-    <div class="exercise-card" data-exercise-id="${ex.id}">
+    <div class="exercise-card" data-exercise-id="${ex.id}" data-title="${ex.title}" data-category="${ex.skill_categories?.name || ''}" data-max="${ex.max_score}" data-desc="${encodeURIComponent(ex.description || '')}" data-link="${ex.link || ''}" style="cursor:pointer">
       <div class="exercise-header">
         <span class="exercise-title">${ex.title}</span>
         <div style="display:flex;gap:0.5rem;align-items:center">
@@ -1256,9 +1256,17 @@ async function loadExercises(sessionId) {
     </div>`;
   }).join('');
 
+  // Click exercise card → open detail
+  list.querySelectorAll('.exercise-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.btn-score-exercise') || e.target.closest('.btn-delete-exercise')) return;
+      openExerciseDetail(card.dataset);
+    });
+  });
+
   // Score button
   list.querySelectorAll('.btn-score-exercise').forEach(btn => {
-    btn.addEventListener('click', () => openScoreExercise(btn.dataset.exerciseId, btn.dataset.title, parseInt(btn.dataset.max)));
+    btn.addEventListener('click', e => { e.stopPropagation(); openScoreExercise(btn.dataset.exerciseId, btn.dataset.title, parseInt(btn.dataset.max)); });
   });
 
   // Delete exercise
@@ -1345,6 +1353,106 @@ async function saveExerciseScores() {
   closeModal('modal-score-exercise');
   openModal('modal-session-detail');
   loadExercises(currentSession.id);
+}
+
+
+let currentExerciseForDetail = null;
+
+async function openExerciseDetail(data) {
+  currentExerciseForDetail = { id: data.exerciseId, sessionId: currentSession?.id };
+
+  document.getElementById('exercise-detail-title').textContent = data.title || '—';
+  document.getElementById('exercise-detail-category').textContent = data.category || '';
+  document.getElementById('exercise-detail-score').textContent = `${data.max} نمره`;
+  document.getElementById('exercise-detail-desc').value = decodeURIComponent(data.desc || '');
+  document.getElementById('exercise-detail-link').value = data.link || '';
+
+  // Show/hide upload based on role
+  const uploadWrap = document.getElementById('exercise-file-upload-wrap');
+  const saveBtn = document.getElementById('btn-save-exercise-detail');
+  if (uploadWrap) uploadWrap.style.display = currentProfile?.role === 'teacher' ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = currentProfile?.role === 'teacher' ? '' : 'none';
+  const descEl = document.getElementById('exercise-detail-desc');
+  if (descEl) descEl.readOnly = currentProfile?.role !== 'teacher';
+
+  // Load files
+  await loadExerciseFiles(data.exerciseId);
+
+  closeModal('modal-session-detail');
+  openModal('modal-exercise-detail');
+}
+
+async function loadExerciseFiles(exerciseId) {
+  const listEl = document.getElementById('exercise-files-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const { data: files, error } = await db.storage
+    .from('session-files')
+    .list(`exercises/${exerciseId}`);
+
+  if (error || !files?.length) return;
+
+  const isTeacher = currentProfile?.role === 'teacher';
+
+  listEl.innerHTML = '<div class="files-list">' + files.map(f => {
+    const { data: urlData } = db.storage
+      .from('session-files')
+      .getPublicUrl(`exercises/${exerciseId}/${f.name}`);
+    const url = urlData?.publicUrl || '#';
+    const name = f.name.toLowerCase();
+
+    if (name.match(/\.(mp3|m4a|aac)$/)) {
+      return `<div class="file-item-player">
+        <span class="file-label">🎵 ${f.name}</span>
+        ${isTeacher ? `<button class="btn-delete-file btn-xs" data-path="exercises/${exerciseId}/${f.name}" data-eid="${exerciseId}">🗑</button>` : ''}
+        <audio controls style="width:100%;margin-top:0.4rem"><source src="${url}" /></audio>
+      </div>`;
+    } else if (name.match(/\.(mp4|mov|webm)$/)) {
+      return `<div class="file-item-player">
+        <span class="file-label">🎬 ${f.name}</span>
+        ${isTeacher ? `<button class="btn-delete-file btn-xs" data-path="exercises/${exerciseId}/${f.name}" data-eid="${exerciseId}">🗑</button>` : ''}
+        <video controls style="width:100%;margin-top:0.4rem;border-radius:8px;max-height:200px"><source src="${url}" /></video>
+      </div>`;
+    } else {
+      return `<div class="file-item">
+        <a href="${url}" target="_blank" class="file-link">📄 ${f.name}</a>
+        ${isTeacher ? `<button class="btn-delete-file btn-xs" data-path="exercises/${exerciseId}/${f.name}" data-eid="${exerciseId}">🗑</button>` : ''}
+      </div>`;
+    }
+  }).join('') + '</div>';
+
+  listEl.querySelectorAll('.btn-delete-file').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('این فایل حذف شود؟')) return;
+      await db.storage.from('session-files').remove([btn.dataset.path]);
+      loadExerciseFiles(btn.dataset.eid);
+    });
+  });
+}
+
+async function saveExerciseDetail() {
+  if (!currentExerciseForDetail) return;
+  const desc = document.getElementById('exercise-detail-desc').value;
+  const link = document.getElementById('exercise-detail-link').value || null;
+  const { error } = await db.from('exercises').update({ description: desc, link }).eq('id', currentExerciseForDetail.id);
+  if (error) { showNotif('خطا در ذخیره', 'error'); return; }
+  showNotif('ذخیره شد ✓', 'success');
+  if (currentSession) loadExercises(currentSession.id);
+}
+
+async function uploadExerciseFile(file) {
+  if (!currentExerciseForDetail) return;
+  if (file.size > 50 * 1024 * 1024) { showNotif('فایل بیشتر از ۵۰MB است', 'error'); return; }
+  const ext = file.name.split('.').pop();
+  const path = `exercises/${currentExerciseForDetail.id}/${Date.now()}.${ext}`;
+  showNotif('در حال آپلود...', '');
+  const { error } = await db.storage.from('session-files').upload(path, file);
+  if (error) { showNotif('خطا در آپلود', 'error'); return; }
+  showNotif('فایل آپلود شد ✓', 'success');
+  loadExerciseFiles(currentExerciseForDetail.id);
+  const inputEl = document.getElementById('exercise-file-upload');
+  if (inputEl) inputEl.value = '';
 }
 
 // ════════════════════════════════
@@ -1500,7 +1608,7 @@ async function openStudentTermSessions(term, levelLabel) {
           const score = scoreMap[ex.id];
           const hasScore = score !== null && score !== undefined;
           return `
-            <div class="exercise-card">
+            <div class="exercise-card" data-exercise-id="${ex.id}" data-title="${ex.title}" data-category="${ex.skill_categories?.name || ''}" data-max="${ex.max_score}" data-desc="${encodeURIComponent(ex.description || '')}" data-link="${ex.link || ''}" style="cursor:pointer">
               <div class="exercise-header">
                 <span class="exercise-title">${ex.title}</span>
                 <span class="exercise-score-badge ${hasScore ? 'scored' : ''}">
@@ -1512,6 +1620,14 @@ async function openStudentTermSessions(term, levelLabel) {
               ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع تمرین</a>` : ''}
             </div>`;
         }).join('')}`;
+
+      // Student click on exercise → view detail
+      exEl.querySelectorAll('.exercise-card').forEach(card => {
+        card.addEventListener('click', e => {
+          if (e.target.closest('a')) return;
+          openExerciseDetail(card.dataset);
+        });
+      });
 
       // Load session files for student
       await loadStudentSessionFiles(sessionId, exEl);
@@ -1644,6 +1760,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modal.id === 'modal-session-detail') openModal('modal-term-detail');
         if (modal.id === 'modal-add-exercise') openModal('modal-session-detail');
         if (modal.id === 'modal-score-exercise') openModal('modal-session-detail');
+        if (modal.id === 'modal-exercise-detail') openModal('modal-session-detail');
       }
     });
   });
@@ -1718,9 +1835,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── File Upload ──
   document.addEventListener('change', e => {
-    if (e.target.id === 'session-file-upload' && e.target.files[0]) {
-      uploadSessionFile(e.target.files[0]);
-    }
+    if (e.target.id === 'session-file-upload' && e.target.files[0]) uploadSessionFile(e.target.files[0]);
+    if (e.target.id === 'exercise-file-upload' && e.target.files[0]) uploadExerciseFile(e.target.files[0]);
+  });
+
+  // ── Exercise Detail Save ──
+  document.addEventListener('click', e => {
+    if (e.target.id === 'btn-save-exercise-detail') saveExerciseDetail();
   });
 
   // ── Apply Karname Button ──
