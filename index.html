@@ -312,6 +312,81 @@
     </main>
   </div>
 
+
+  <!-- ═══════════════════════════════ MODAL — STUDENT PROFILE ═══════════════════════════════ -->
+  <div id="modal-student-profile" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h3 id="profile-student-name">—</h3>
+        <button class="modal-close" data-modal="modal-student-profile">✕</button>
+      </div>
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="terms">ترم‌ها</button>
+        <button class="profile-tab" data-tab="info">اطلاعات</button>
+      </div>
+      <div id="profile-tab-terms" class="profile-tab-content active">
+        <div class="panel-header" style="margin-bottom:1rem">
+          <span></span>
+          <button id="btn-add-term" class="btn-gold">+ ترم جدید</button>
+        </div>
+        <div id="terms-list"><div class="empty-state">هنوز ترمی تعریف نشده</div></div>
+      </div>
+      <div id="profile-tab-info" class="profile-tab-content">
+        <div id="student-info-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — ADD TERM ═══════════════════════════════ -->
+  <div id="modal-add-term" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>ترم جدید</h3>
+        <button class="modal-close" data-modal="modal-add-term">✕</button>
+      </div>
+      <form id="form-add-term">
+        <div class="field">
+          <label>عنوان ترم *</label>
+          <input type="text" id="term-title" required placeholder="مثلاً ترم پاییز ۱۴۰۴" />
+        </div>
+        <div class="field">
+          <label>سطح *</label>
+          <select id="term-level" required>
+            <option value="">— انتخاب —</option>
+            <option value="moghadamati_1">مقدماتی ۱</option>
+            <option value="moghadamati_2">مقدماتی ۲</option>
+            <option value="motevaset_1">متوسط ۱</option>
+            <option value="motevaset_2">متوسط ۲</option>
+            <option value="pishrafte_1">پیشرفته ۱</option>
+            <option value="pishrafte_2">پیشرفته ۲</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>تاریخ شروع *</label>
+          <input type="date" id="term-start-date" required />
+        </div>
+        <div class="field">
+          <label>روزهای کلاس *</label>
+          <div class="days-grid">
+            <label class="day-check"><input type="checkbox" name="class-day" value="شنبه" /><span>ش</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="یکشنبه" /><span>ی</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="دوشنبه" /><span>د</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="سه‌شنبه" /><span>س</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="چهارشنبه" /><span>چ</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="پنجشنبه" /><span>پ</span></label>
+          </div>
+        </div>
+        <div id="term-sessions-preview" class="sessions-preview hidden">
+          <p class="preview-label">پیش‌نمایش جلسات:</p>
+          <div id="preview-list"></div>
+        </div>
+        <button type="submit" class="btn-primary">ساختن ترم</button>
+      </form>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════════ MODAL — ADD STUDENT ═══════════════════════════════ -->
   <div id="modal-add-student" class="modal hidden">
     <div class="modal-backdrop"></div>
