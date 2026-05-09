@@ -1,24 +1,33 @@
 # PROGRESS — Adam Music Academy
 
 ## Vaziat Koli
-Akharin update: 1404/02/18
-Marhale felii: Tamam — push + RLS fix mande
+Akharin update: 1404/02/19
+Marhale felii: MVP kamel — GitHub Pages active
 
-## Marahel
-- [x] 1. Setup Paye
-- [x] 2. Auth — login / register / logout
-- [x] 3. Teacher Dashboard — ezafe + didan list hanajarjo
-- [x] 4. Sabt Namre — score + ghaybat
-- [x] 5. Karname — hanajarjo score ro mibihe
-- [x] 6. Mohtava — dars ezafe + list
+## Marahel Tamum Shode
+- [x] 1. Setup Paye — repo, branch, DB
+- [x] 2. Auth — login / register / logout (3 naghsh)
+- [x] 3. Teacher Dashboard — list + add hanajarjo
+- [x] 4. Sabt Namre — score + ghaybat (system ghadimi)
+- [x] 5. Karname ghadimi — hanajarjo score ro mibihe
+- [x] 6. Mohtava (lessons) — dars ezafe + list
+- [x] 7. Term System — DB + UI + auto-generate 12 session
+- [x] 8. Session Detail — edit date + content + link + file upload
+- [x] 9. Exercise System — add, score, delete, detail + file
+- [x] 10. Karname jadid — skill summary + nemodar + checkbox term/mah
+- [x] 11. Student view — term + jalase + exercise + nemorat + file
+- [x] 12. File upload — PDF/MP3/MP4 + inline player
+- [x] 13. GitHub Pages deploy — dev branch
 
-## Akharin Kari ke Shod
-- Hame 6 marhale MVP tamum shod
-- lessons + lesson_access jadval sakhte shod
-- Local kar mikone
+## Akharin Vaziat
+- Hame feature ha rooy local va GitHub Pages kar mikonan
+- DB: terms, term_months, sessions, exercises, exercise_scores, skill_categories
+- Storage: session-files bucket (PDF/MP3/MP4)
+- Karname: skill summary + nemodar clickable per jalase
 
-## Badie (farda)
-1. Hame file ha push konim be GitHub (app.js + index.html + style.css)
-2. RLS lessons fix konim
-3. Student side — dars ha ro bebihe
-4. Assign dars be hanajarjo
+## Queue Badie
+1. PWA kamel — manifest + icons + sw.js
+2. Mobile test kamel
+3. Monetization — Zarinpal integration
+4. Kelas grohi (classes table)
+5. Skill categories custom per teacher
