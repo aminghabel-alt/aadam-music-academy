@@ -321,7 +321,7 @@ async function loadTerms(studentId) {
   list.innerHTML = terms.map(t => {
     const months = (t.term_months || []).sort((a, b) => a.month_number - b.month_number);
     return `
-      <div class="term-card" data-term-id="${t.id}">
+      <div class="term-card" data-term-id="${t.id}" style="cursor:pointer">
         <div class="term-header">
           <span class="term-title">${t.title}</span>
           <div style="display:flex;align-items:center;gap:0.5rem">
@@ -342,8 +342,20 @@ async function loadTerms(studentId) {
               </label>
             </div>`).join('')}
         </div>
+        <div class="term-footer">
+          <span class="term-detail-hint">برای جزئیات کلیک کن ←</span>
+        </div>
       </div>`;
   }).join('');
+
+  // Click on term card → show detail
+  list.querySelectorAll('.term-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.btn-delete-term') || e.target.closest('.toggle-label')) return;
+      const term = terms.find(t => t.id === card.dataset.termId);
+      openTermDetail(term, levelLabel);
+    });
+  });
 
   // Toggle month lock
   list.querySelectorAll('.month-unlock-toggle').forEach(toggle => {
@@ -372,6 +384,41 @@ async function loadTerms(studentId) {
     });
   });
 }
+
+async function openTermDetail(term, levelLabel) {
+  const { data: sessions, error } = await db
+    .from('sessions')
+    .select('*')
+    .eq('term_id', term.id)
+    .order('session_number', { ascending: true });
+
+  if (error) { logError(error, 'openTermDetail'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const sessionRows = (sessions || []).map(s => {
+    const isPast = s.session_date && s.session_date < today;
+    const isToday = s.session_date === today;
+    const statusClass = isToday ? 'session-today' : isPast ? 'session-past' : 'session-future';
+    const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
+    return `
+      <div class="session-row ${statusClass}">
+        <span class="session-num">جلسه ${s.session_number}</span>
+        <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
+        <span class="session-status">${statusLabel}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('term-detail-title').textContent = term.title;
+  document.getElementById('term-detail-level').textContent = levelLabel[term.level] || term.level;
+  document.getElementById('term-detail-start').textContent = term.start_date
+    ? new Date(term.start_date).toLocaleDateString('fa-IR') : '—';
+  document.getElementById('term-detail-sessions').innerHTML =
+    sessionRows || '<div class="empty-state">جلسه‌ای ثبت نشده</div>';
+
+  openModal('modal-term-detail');
+}
+
 
 // Calculate 12 session dates from start date + class days
 function calcSessionDates(startDateStr, classDays) {
@@ -733,6 +780,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modal) {
         modal.classList.add('hidden');
         if (modal.id === 'modal-add-term') openModal('modal-student-profile');
+        if (modal.id === 'modal-term-detail') openModal('modal-student-profile');
       }
     });
   });

@@ -779,3 +779,38 @@ a { color: var(--gold); text-decoration: none; }
   line-height: 1;
 }
 .btn-delete-term:hover { opacity: 1; }
+
+/* Term detail */
+.term-detail-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.term-detail-sep { color: var(--border); }
+
+.sessions-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: rgba(255,255,255,0.03);
+}
+
+.session-past { opacity: 0.6; }
+.session-today { background: rgba(201,168,76,0.12); border: 1px solid var(--gold); }
+.session-future { opacity: 0.85; }
+
+.session-num { font-weight: 600; color: var(--text); }
+.session-date { color: var(--text-dim); }
+.session-status { font-size: 0.78rem; color: var(--gold); }
+
+/* Term footer hint */
+.term-footer { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+.term-detail-hint { font-size: 0.75rem; color: var(--text-dim); }
