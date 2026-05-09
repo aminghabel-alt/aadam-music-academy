@@ -1533,8 +1533,28 @@ async function loadStudentSessionFiles(sessionId, container) {
       .from('session-files')
       .getPublicUrl(`sessions/${sessionId}/${f.name}`);
     const url = urlData?.publicUrl || '#';
-    const icon = f.name.endsWith('.pdf') ? '📄' : f.name.match(/mp3|m4a|aac/) ? '🎵' : '🎬';
-    return `<div class="file-item"><a href="${url}" target="_blank" class="file-link">${icon} ${f.name}</a></div>`;
+    const name = f.name.toLowerCase();
+
+    if (name.match(/\.(mp3|m4a|aac)$/)) {
+      return `
+        <div class="file-item-player">
+          <span class="file-label">🎵 ${f.name}</span>
+          <audio controls style="width:100%;margin-top:0.4rem">
+            <source src="${url}" />
+          </audio>
+        </div>`;
+    } else if (name.match(/\.(mp4|mov|webm)$/)) {
+      return `
+        <div class="file-item-player">
+          <span class="file-label">🎬 ${f.name}</span>
+          <video controls style="width:100%;margin-top:0.4rem;border-radius:8px;max-height:200px">
+            <source src="${url}" />
+          </video>
+        </div>`;
+    } else {
+      // PDF or other — open in new tab
+      return `<div class="file-item"><a href="${url}" target="_blank" class="file-link">📄 ${f.name}</a></div>`;
+    }
   }).join('');
 
   container.insertAdjacentHTML('beforeend', `
