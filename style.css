@@ -608,7 +608,7 @@ a { color: var(--gold); text-decoration: none; }
 .modal-close:hover { color: var(--text); }
 
 /* ════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE.
 ════════════════════════════════ */
 @media (min-width: 600px) {
   .auth-container { padding: 2.5rem 2rem; }
