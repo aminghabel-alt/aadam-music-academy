@@ -45,7 +45,7 @@ a { color: var(--gold); text-decoration: none; }
 .screen { display: none; min-height: 100vh; position: relative; }
 #screen-auth { position: relative; }
 .auth-bg { display: none; }
-#screen-auth.active .auth-bg { display: block; }
+.screen.active .auth-bg { display: block; }
 .screen.active { display: block; }
 .screen.active#screen-auth { display: flex; }
 .screen.active#screen-auth { display: flex; }
@@ -614,3 +614,138 @@ a { color: var(--gold); text-decoration: none; }
   .auth-container { padding: 2.5rem 2rem; }
   .panels { max-width: 600px; margin: 0 auto; }
 }
+
+/* ═══════════════════════════════
+   TERM & STUDENT PROFILE
+═══════════════════════════════ */
+
+.modal-box--wide { max-width: 520px; }
+
+.profile-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.profile-tab {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-tab.active {
+  background: var(--gold);
+  color: #000;
+  font-weight: 600;
+}
+
+.profile-tab-content { display: none; }
+.profile-tab-content.active { display: block; }
+
+/* Days grid */
+.days-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.day-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.day-check input { display: none; }
+
+.day-check span {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+
+.day-check input:checked + span {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+/* Sessions preview */
+.sessions-preview {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.preview-label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.preview-session {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Term card */
+.term-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.term-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.term-title { font-weight: 600; color: var(--text); }
+.term-level { font-size: 0.78rem; color: var(--gold); }
+
+.month-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.month-row:last-child { border-bottom: none; }
+.month-label { font-size: 0.85rem; color: var(--text-dim); }
+
+/* Student info tab */
+.info-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.88rem;
+}
+.info-label { color: var(--text-dim); }

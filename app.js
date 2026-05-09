@@ -152,16 +152,13 @@ async function afterAuth(user) {
   currentProfile = profile;
 
   if (profile.role === 'teacher') {
-    const nameEl = document.getElementById('teacher-name-display');
-    const codeEl = document.getElementById('invite-code-display');
-    if (nameEl) nameEl.textContent = profile.name;
-    if (codeEl) codeEl.textContent = profile.invite_code || '—';
+    document.getElementById('teacher-name-display').textContent = profile.name;
+    document.getElementById('invite-code-display').textContent = profile.invite_code || '—';
     showScreen('screen-teacher');
-    await loadStudents();
-    loadLessons(); // non-blocking — error handle dare
+    loadStudents();
+    loadLessons();
   } else {
-    const nameEl = document.getElementById('student-name-display');
-    if (nameEl) nameEl.textContent = profile.name;
+    document.getElementById('student-name-display').textContent = profile.name;
     showScreen('screen-student');
     loadMyScores();
     loadStudentMessages();
@@ -191,7 +188,7 @@ async function loadStudents() {
   list.innerHTML = students.map(s => {
     const badge = paymentLabel(s.payment_status);
     return `
-      <div class="student-card">
+      <div class="student-card" data-id="${s.id}" data-name="${s.name}" style="cursor:pointer">
         <div class="student-info">
           <span class="student-name">${s.name}</span>
           <span class="student-meta">${s.instrument || '—'} · ${s.class_time || '—'}</span>
@@ -200,7 +197,14 @@ async function loadStudents() {
       </div>`;
   }).join('');
 
-  // Populate selects
+  // Click on student card → open profile modal
+  list.querySelectorAll('.student-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const student = students.find(s => s.id === card.dataset.id);
+      openStudentProfile(student);
+    });
+  });
+
   populateStudentSelects(students);
 }
 
@@ -224,22 +228,16 @@ async function addStudent(data) {
 }
 
 async function loadLessons() {
-  const list = document.getElementById('lessons-list');
-  if (!list) return; // element vojod nadareh — silent skip
-
   const { data: lessons, error } = await db
     .from('lessons')
     .select('*')
     .eq('teacher_id', currentProfile.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    logError(error, 'loadLessons');
-    list.innerHTML = '<div class="empty-state">خطا در بارگذاری درس‌ها</div>';
-    return;
-  }
+  if (error) { logError(error, 'loadLessons'); return; }
 
-  if (!lessons || !lessons.length) {
+  const list = document.getElementById('lessons-list');
+  if (!lessons.length) {
     list.innerHTML = '<div class="empty-state">هنوز درسی اضافه نشده</div>';
     return;
   }
@@ -265,8 +263,166 @@ async function addLesson(data) {
 }
 
 // ════════════════════════════════
-// SCORES (Teacher)
+// TERMS (Teacher)
 // ════════════════════════════════
+
+let currentStudentForTerm = null;
+
+function openStudentProfile(student) {
+  currentStudentForTerm = student;
+  document.getElementById('profile-student-name').textContent = student.name;
+
+  // Info tab
+  document.getElementById('student-info-display').innerHTML = `
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">ساز</span><span>${student.instrument || '—'}</span></div>
+      <div class="info-row"><span class="info-label">سطح</span><span>${student.level || '—'}</span></div>
+      <div class="info-row"><span class="info-label">ساعت کلاس</span><span>${student.class_time || '—'}</span></div>
+      <div class="info-row"><span class="info-label">شهریه</span><span>${student.monthly_fee ? student.monthly_fee.toLocaleString('fa') + ' تومان' : '—'}</span></div>
+      <div class="info-row"><span class="info-label">نوع کلاس</span><span>${student.class_type === 'online' ? 'آنلاین' : 'حضوری'}</span></div>
+    </div>`;
+
+  // Switch to terms tab
+  switchProfileTab('terms');
+  loadTerms(student.id);
+  openModal('modal-student-profile');
+}
+
+function switchProfileTab(tabName) {
+  document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
+  document.getElementById(`profile-tab-${tabName}`).classList.add('active');
+}
+
+async function loadTerms(studentId) {
+  const list = document.getElementById('terms-list');
+  list.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+
+  const { data: terms, error } = await db
+    .from('terms')
+    .select('*, term_months(*)')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+
+  if (error) { logError(error, 'loadTerms'); return; }
+
+  if (!terms.length) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const levelLabel = {
+    moghadamati_1: 'مقدماتی ۱', moghadamati_2: 'مقدماتی ۲',
+    motevaset_1: 'متوسط ۱', motevaset_2: 'متوسط ۲',
+    pishrafte_1: 'پیشرفته ۱', pishrafte_2: 'پیشرفته ۲'
+  };
+
+  list.innerHTML = terms.map(t => {
+    const months = (t.term_months || []).sort((a, b) => a.month_number - b.month_number);
+    return `
+      <div class="term-card" data-term-id="${t.id}">
+        <div class="term-header">
+          <span class="term-title">${t.title}</span>
+          <span class="term-level">${levelLabel[t.level] || t.level}</span>
+        </div>
+        <div class="term-months">
+          ${months.map(m => `
+            <div class="month-row">
+              <span class="month-label">ماه ${m.month_number}</span>
+              <label class="toggle-label">
+                <input type="checkbox" class="month-unlock-toggle"
+                  data-month-id="${m.id}"
+                  ${m.is_unlocked ? 'checked' : ''} />
+                <span class="toggle-track"></span>
+                <span>${m.is_unlocked ? 'باز' : 'قفل'}</span>
+              </label>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Toggle month lock
+  list.querySelectorAll('.month-unlock-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async () => {
+      const monthId = toggle.dataset.monthId;
+      const isUnlocked = toggle.checked;
+      const { error } = await db.from('term_months').update({
+        is_unlocked: isUnlocked,
+        unlocked_at: isUnlocked ? new Date().toISOString() : null
+      }).eq('id', monthId);
+      if (error) { showNotif('خطا در تغییر دسترسی', 'error'); logError(error, 'toggleMonth'); toggle.checked = !isUnlocked; return; }
+      toggle.nextElementSibling.nextElementSibling.textContent = isUnlocked ? 'باز' : 'قفل';
+      showNotif(isUnlocked ? 'ماه باز شد ✓' : 'ماه قفل شد', 'success');
+    });
+  });
+}
+
+// Calculate 12 session dates from start date + class days
+function calcSessionDates(startDateStr, classDays) {
+  const dayMap = { 'شنبه': 6, 'یکشنبه': 0, 'دوشنبه': 1, 'سه‌شنبه': 2, 'چهارشنبه': 3, 'پنجشنبه': 4 };
+  const targetDays = classDays.map(d => dayMap[d]).filter(d => d !== undefined);
+  if (!targetDays.length) return [];
+
+  const dates = [];
+  const start = new Date(startDateStr);
+  let current = new Date(start);
+
+  while (dates.length < 12) {
+    if (targetDays.includes(current.getDay())) {
+      dates.push(new Date(current));
+    }
+    current.setDate(current.getDate() + 1);
+    if (dates.length === 0 && current - start > 14 * 86400000) break; // safety
+  }
+  return dates;
+}
+
+async function addTerm() {
+  const title = document.getElementById('term-title').value.trim();
+  const level = document.getElementById('term-level').value;
+  const startDate = document.getElementById('term-start-date').value;
+  const classDays = [...document.querySelectorAll('input[name="class-day"]:checked')].map(c => c.value);
+
+  if (!title || !level || !startDate || !classDays.length) {
+    showNotif('همه فیلدهای ستاره‌دار الزامی است', 'error'); return;
+  }
+
+  const sessionDates = calcSessionDates(startDate, classDays);
+  if (sessionDates.length < 12) {
+    showNotif('تاریخ‌ها کافی نیست — روزهای بیشتری انتخاب کن', 'error'); return;
+  }
+
+  // Insert term
+  const { data: term, error: termErr } = await db.from('terms').insert({
+    teacher_id: currentProfile.id,
+    student_id: currentStudentForTerm.id,
+    title, level, start_date: startDate, status: 'active'
+  }).select().single();
+
+  if (termErr) { showNotif('خطا در ساختن ترم', 'error'); logError(termErr, 'addTerm'); return; }
+
+  // Insert 3 term_months
+  const months = [1, 2, 3].map(m => ({ term_id: term.id, month_number: m, is_unlocked: false }));
+  const { error: monthErr } = await db.from('term_months').insert(months);
+  if (monthErr) { logError(monthErr, 'addTerm-months'); }
+
+  // Insert 12 sessions
+  const sessions = sessionDates.map((date, i) => ({
+    term_id: term.id,
+    month_number: Math.ceil((i + 1) / 4),
+    session_number: i + 1,
+    session_date: date.toISOString().split('T')[0]
+  }));
+  const { error: sessErr } = await db.from('sessions').insert(sessions);
+  if (sessErr) { logError(sessErr, 'addTerm-sessions'); }
+
+  showNotif('ترم ساخته شد ✓', 'success');
+  closeModal('modal-add-term');
+  loadTerms(currentStudentForTerm.id);
+}
+
+
 
 function calcAverage() {
   const ids = ['score-technique', 'score-rhythm', 'score-melody', 'score-fretboard', 'score-ear'];
@@ -494,16 +650,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
-    const { data: { user }, error: userError } = await db.auth.getUser();
-    if (userError || !user) {
-      await db.auth.signOut();
-      showScreen("screen-auth");
-    } else {
-      await afterAuth(user);
-    }
-  } else {
-    showScreen("screen-auth");
+    await afterAuth(session.user);
   }
+
   // ── Auth Tabs ──
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -638,12 +787,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
   });
 
-  // ── Lessons ──
-  const btnAddLesson = document.getElementById('btn-add-lesson');
-  if (btnAddLesson) btnAddLesson.addEventListener('click', () => openModal('modal-add-lesson'));
+  // ── Student Profile Modal Tabs ──
+  document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab));
+  });
 
-  const formAddLesson = document.getElementById('form-add-lesson');
-  if (formAddLesson) formAddLesson.addEventListener('submit', async e => {
+  // ── Add Term Button ──
+  const btnAddTerm = document.getElementById('btn-add-term');
+  if (btnAddTerm) btnAddTerm.addEventListener('click', () => {
+    document.getElementById('form-add-term').reset();
+    document.getElementById('term-sessions-preview').classList.add('hidden');
+    openModal('modal-add-term');
+  });
+
+  // ── Preview sessions when date/days change ──
+  function updatePreview() {
+    const startDate = document.getElementById('term-start-date').value;
+    const classDays = [...document.querySelectorAll('input[name="class-day"]:checked')].map(c => c.value);
+    if (!startDate || !classDays.length) { document.getElementById('term-sessions-preview').classList.add('hidden'); return; }
+    const dates = calcSessionDates(startDate, classDays);
+    if (!dates.length) return;
+    document.getElementById('term-sessions-preview').classList.remove('hidden');
+    document.getElementById('preview-list').innerHTML = dates.map((d, i) =>
+      `<div class="preview-session">جلسه ${i + 1} — ${d.toLocaleDateString('fa-IR')}</div>`
+    ).join('');
+  }
+
+  document.getElementById('term-start-date').addEventListener('change', updatePreview);
+  document.querySelectorAll('input[name="class-day"]').forEach(cb => cb.addEventListener('change', updatePreview));
+
+  // ── Add Term Form ──
+  const formAddTerm = document.getElementById('form-add-term');
+  if (formAddTerm) formAddTerm.addEventListener('submit', async e => {
+    e.preventDefault();
+    await addTerm();
+  });
+
+
+  document.getElementById('btn-add-lesson').addEventListener('click', () => openModal('modal-add-lesson'));
+
+  document.getElementById('form-add-lesson').addEventListener('submit', async e => {
     e.preventDefault();
     await addLesson({
       title: document.getElementById('lesson-title').value,
