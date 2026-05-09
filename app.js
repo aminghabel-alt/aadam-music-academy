@@ -494,9 +494,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
-    await afterAuth(session.user);
+    const { data: { user }, error: userError } = await db.auth.getUser();
+    if (userError || !user) {
+      await db.auth.signOut();
+      showScreen("screen-auth");
+    } else {
+      await afterAuth(user);
+    }
+  } else {
+    showScreen("screen-auth");
   }
-
   // ── Auth Tabs ──
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
