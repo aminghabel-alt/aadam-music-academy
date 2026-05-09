@@ -401,9 +401,10 @@ async function openTermDetail(term, levelLabel) {
     const isToday = s.session_date === today;
     const statusClass = isToday ? 'session-today' : isPast ? 'session-past' : 'session-future';
     const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
+    const hasContent = s.content_text ? '📝' : '';
     return `
-      <div class="session-row ${statusClass}">
-        <span class="session-num">جلسه ${s.session_number}</span>
+      <div class="session-row ${statusClass}" data-session-id="${s.id}" style="cursor:pointer">
+        <span class="session-num">جلسه ${s.session_number} ${hasContent}</span>
         <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
         <span class="session-status">${statusLabel}</span>
       </div>`;
@@ -416,7 +417,42 @@ async function openTermDetail(term, levelLabel) {
   document.getElementById('term-detail-sessions').innerHTML =
     sessionRows || '<div class="empty-state">جلسه‌ای ثبت نشده</div>';
 
+  // Click on session row
+  document.querySelectorAll('.session-row[data-session-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const session = sessions.find(s => s.id === row.dataset.sessionId);
+      openSessionDetail(session);
+    });
+  });
+
   openModal('modal-term-detail');
+}
+
+let currentSession = null;
+
+function openSessionDetail(session) {
+  currentSession = session;
+  document.getElementById('session-detail-title').textContent = `جلسه ${session.session_number}`;
+  document.getElementById('session-detail-date').value = session.session_date || '';
+  document.getElementById('session-detail-content').value = session.content_text || '';
+  openModal('modal-session-detail');
+}
+
+async function saveSessionDate() {
+  const newDate = document.getElementById('session-detail-date').value;
+  if (!newDate) { showNotif('تاریخ را انتخاب کنید', 'error'); return; }
+  const { error } = await db.from('sessions').update({ session_date: newDate }).eq('id', currentSession.id);
+  if (error) { showNotif('خطا در ذخیره تاریخ', 'error'); logError(error, 'saveSessionDate'); return; }
+  currentSession.session_date = newDate;
+  showNotif('تاریخ ذخیره شد ✓', 'success');
+}
+
+async function saveSessionContent() {
+  const content = document.getElementById('session-detail-content').value;
+  const { error } = await db.from('sessions').update({ content_text: content }).eq('id', currentSession.id);
+  if (error) { showNotif('خطا در ذخیره محتوا', 'error'); logError(error, 'saveSessionContent'); return; }
+  currentSession.content_text = content;
+  showNotif('محتوا ذخیره شد ✓', 'success');
 }
 
 
@@ -781,6 +817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         modal.classList.add('hidden');
         if (modal.id === 'modal-add-term') openModal('modal-student-profile');
         if (modal.id === 'modal-term-detail') openModal('modal-student-profile');
+        if (modal.id === 'modal-session-detail') openModal('modal-term-detail');
       }
     });
   });
@@ -851,6 +888,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const code = currentProfile?.invite_code;
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
+  });
+
+  // ── Session Detail Buttons (delegated) ──
+  document.addEventListener('click', e => {
+    if (e.target.id === 'btn-save-session-date') saveSessionDate();
+    if (e.target.id === 'btn-save-session-content') saveSessionContent();
   });
 
   // ── Student Profile Modal Tabs ──

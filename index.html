@@ -481,6 +481,27 @@
     </div>
   </div>
 
+
+  <!-- ═══════════════════════════════ MODAL — SESSION DETAIL ═══════════════════════════════ -->
+  <div id="modal-session-detail" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="session-detail-title">جلسه —</h3>
+        <button class="modal-close" data-modal="modal-session-detail">✕</button>
+      </div>
+      <div class="session-detail-meta">
+        <input type="date" id="session-detail-date" class="session-date-input" />
+        <button id="btn-save-session-date" class="btn-outline btn-sm">ذخیره تاریخ</button>
+      </div>
+      <div class="field" style="margin-top:1rem">
+        <label>محتوای آموزشی جلسه</label>
+        <textarea id="session-detail-content" rows="6" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
+      </div>
+      <button id="btn-save-session-content" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره محتوا</button>
+    </div>
+  </div>
+
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
   <script src="app.js"></script>
