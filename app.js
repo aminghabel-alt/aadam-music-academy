@@ -299,7 +299,7 @@ function switchProfileTab(tabName) {
   document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
   document.getElementById(`profile-tab-${tabName}`).classList.add('active');
   if (tabName === 'karname' && currentStudentForTerm) {
-    loadTeacherKarname('selected');
+    loadTeacherKarname();
   }
 }
 
@@ -673,52 +673,91 @@ async function loadMyScores() {
 // KARNAME (Teacher view)
 // ════════════════════════════════
 
-async function loadTeacherKarname(mode) {
+// ════════════════════════════════
+// KARNAME (Teacher view)
+// ════════════════════════════════
+
+let teacherKarnaTerms = [];
+let teacherKarnaTermMonths = {};
+
+async function loadTeacherKarname() {
   if (!currentStudentForTerm) return;
   const studentId = currentStudentForTerm.id;
 
-  // Load student's terms
   const { data: terms } = await db
-    .from('terms').select('*')
+    .from('terms').select('*, term_months(*)')
     .eq('student_id', studentId)
     .order('created_at', { ascending: false });
 
   if (!terms?.length) {
     document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
-    document.getElementById('teacher-karname-chart').innerHTML = '';
     return;
   }
 
-  // Populate dropdown once
-  const sel = document.getElementById('teacher-karname-term-select');
-  if (sel && sel.options.length <= 2) {
-    terms.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.title;
-      sel.appendChild(opt);
+  teacherKarnaTerms = terms;
+
+  // Build checkboxes
+  const checkboxEl = document.getElementById('karname-term-checkboxes');
+  checkboxEl.innerHTML = terms.map(t => {
+    const months = (t.term_months || []).sort((a, b) => a.month_number - b.month_number);
+    return `
+      <div class="karname-term-group">
+        <div class="karname-term-label">
+          <label class="karname-check-all">
+            <input type="checkbox" class="term-all-check" data-term-id="${t.id}" checked />
+            <span>${t.title}</span>
+          </label>
+        </div>
+        <div class="karname-month-checks">
+          ${months.map(m => `
+            <label class="karname-month-check">
+              <input type="checkbox" class="month-karname-check"
+                data-term-id="${t.id}"
+                data-month="${m.month_number}"
+                checked />
+              <span>ماه ${m.month_number}</span>
+            </label>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Term all-check toggle
+  checkboxEl.querySelectorAll('.term-all-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      checkboxEl.querySelectorAll(`.month-karname-check[data-term-id="${cb.dataset.termId}"]`)
+        .forEach(m => { m.checked = cb.checked; });
     });
-    sel.onchange = () => loadTeacherKarname(sel.value);
-  }
+  });
+}
 
-  // Filter terms
-  let termIds = [];
-  if (mode === 'selected') termIds = terms.filter(t => t.include_in_report !== false).map(t => t.id);
-  else if (mode === 'all') termIds = terms.map(t => t.id);
-  else termIds = [mode];
+async function applyTeacherKarname() {
+  if (!currentStudentForTerm) return;
+  const studentId = currentStudentForTerm.id;
 
-  if (!termIds.length) {
-    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هیچ ترمی انتخاب نشده</div>';
+  // Collect selected term+month combos
+  const selected = [];
+  document.querySelectorAll('.month-karname-check:checked').forEach(cb => {
+    selected.push({ termId: cb.dataset.termId, month: parseInt(cb.dataset.month) });
+  });
+
+  if (!selected.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هیچ ماهی انتخاب نشده</div>';
     document.getElementById('teacher-karname-chart').innerHTML = '';
     return;
   }
 
-  const { data: sessions } = await db
-    .from('sessions').select('id, session_number, session_date, term_id')
+  // Load sessions matching selected term+month
+  const termIds = [...new Set(selected.map(s => s.termId))];
+  const { data: allSessions } = await db
+    .from('sessions').select('id, session_number, session_date, term_id, month_number')
     .in('term_id', termIds).order('session_number', { ascending: true });
 
-  if (!sessions?.length) {
-    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هنوز جلسه‌ای ثبت نشده</div>';
+  const sessions = (allSessions || []).filter(s =>
+    selected.some(sel => sel.termId === s.term_id && sel.month === s.month_number)
+  );
+
+  if (!sessions.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">جلسه‌ای یافت نشد</div>';
     document.getElementById('teacher-karname-chart').innerHTML = '';
     return;
   }
@@ -740,17 +779,16 @@ async function loadTeacherKarname(mode) {
   const skillMap = {};
   (exercises || []).forEach(ex => {
     const cat = ex.skill_categories?.name || 'سایر';
-    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0, count: 0 };
+    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0 };
     const score = scoreMap[ex.id];
     if (score !== null && score !== undefined) {
       skillMap[cat].total += score;
       skillMap[cat].max += ex.max_score;
-      skillMap[cat].count++;
     }
   });
 
   const skillsEl = document.getElementById('teacher-karname-skills');
-  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.count > 0);
+  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.max > 0);
   if (skillEntries.length) {
     skillsEl.innerHTML = `
       <div class="karname-section-title">خلاصه مهارت‌ها</div>
@@ -783,11 +821,14 @@ async function loadTeacherKarname(mode) {
   }).filter(Boolean);
 
   const chartEl = document.getElementById('teacher-karname-chart');
+  const chartTitle = document.getElementById('karname-chart-title');
   if (!sessionData.length) {
     chartEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای در جلسات ثبت نشده</div>';
+    if (chartTitle) chartTitle.style.display = 'none';
     return;
   }
 
+  if (chartTitle) chartTitle.style.display = '';
   chartEl.innerHTML = `<div class="session-bars">
     ${sessionData.map(s => `
       <div class="session-bar-col" data-session-id="${s.id}" data-total="${s.total}" data-max="${s.max}" data-num="${s.session_number}" data-date="${s.session_date || ''}">
@@ -1527,6 +1568,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const code = currentProfile?.invite_code;
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
+  });
+
+  // ── Apply Karname Button ──
+  document.addEventListener('click', e => {
+    if (e.target.id === 'btn-apply-karname') applyTeacherKarname();
   });
 
   // ── Session Detail + Exercise Buttons (delegated) ──

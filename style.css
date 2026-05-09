@@ -1058,3 +1058,47 @@ a { color: var(--gold); text-decoration: none; }
 }
 .karname-detail-score { color: var(--gold); font-weight: 600; }
 .karname-detail-total { font-size: 0.82rem; color: var(--text-dim); margin-top: 0.5rem; text-align: left; }
+
+/* Karname checkboxes */
+.karname-term-group {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.karname-term-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.karname-check-all {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.karname-month-checks {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-right: 1rem;
+}
+
+.karname-month-check {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.karname-month-check input,
+.karname-check-all input {
+  accent-color: var(--gold);
+  width: 16px;
+  height: 16px;
+}

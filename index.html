@@ -358,14 +358,12 @@
         <div id="terms-list"><div class="empty-state">هنوز ترمی تعریف نشده</div></div>
       </div>
       <div id="profile-tab-karname" class="profile-tab-content">
-        <div class="field" style="margin-bottom:1rem;margin-top:0.75rem">
-          <select id="teacher-karname-term-select">
-            <option value="selected">ترم‌های منتخب</option>
-            <option value="all">همه ترم‌ها</option>
-          </select>
-        </div>
+        <!-- Term/Month checkboxes -->
+        <div id="karname-term-checkboxes" style="margin-top:0.75rem"></div>
+        <button id="btn-apply-karname" class="btn-gold" style="width:100%;margin:0.75rem 0">محاسبه کارنامه</button>
+        <!-- Results -->
         <div id="teacher-karname-skills"></div>
-        <div class="karname-section-title">نمودار جلسات</div>
+        <div class="karname-section-title" id="karname-chart-title" style="display:none">نمودار جلسات</div>
         <div id="teacher-karname-chart"></div>
         <div id="teacher-karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
