@@ -45,7 +45,7 @@ a { color: var(--gold); text-decoration: none; }
 .screen { display: none; min-height: 100vh; position: relative; }
 #screen-auth { position: relative; }
 .auth-bg { display: none; }
-.screen.active .auth-bg { display: block; }
+#screen-auth.active .auth-bg { display: block; }
 .screen.active { display: block; }
 .screen.active#screen-auth { display: flex; }
 .screen.active#screen-auth { display: flex; }
