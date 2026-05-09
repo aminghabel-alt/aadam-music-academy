@@ -266,3 +266,79 @@ CREATE TABLE error_logs (
 **RLS Policies:**
 - `teacher_own_lessons`: مربی فقط درس‌های خودش رو می‌بینه/مدیریت می‌کنه
 - `student_view_lessons`: هنرجو درس‌های استادش رو می‌بینه
+
+Success shod?
+
+Hala **DATA_SCHEMA.md ro update konim** — in jadval haro ezafe kon:
+
+```markdown
+### `terms`
+ترم‌های آموزشی هر هنرجو
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` CASCADE |
+| `student_id` | UUID | NO | — | FK → `students.id` CASCADE |
+| `title` | TEXT | NO | — | عنوان ترم |
+| `level` | TEXT | NO | — | `moghadamati_1/2` / `motevaset_1/2` / `pishrafte_1/2` |
+| `start_date` | DATE | YES | NULL | — |
+| `status` | TEXT | NO | `active` | `active` / `finished` |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+### `term_months`
+ماه‌های هر ترم — کنترل دسترسی توسط مربی
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `term_id` | UUID | NO | — | FK → `terms.id` CASCADE |
+| `month_number` | INT | NO | — | ۱ / ۲ / ۳ |
+| `is_unlocked` | BOOLEAN | NO | FALSE | مربی کنترل می‌کنه |
+| `unlocked_at` | TIMESTAMPTZ | YES | NULL | — |
+
+### `sessions`
+جلسات هر ترم
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `term_id` | UUID | NO | — | FK → `terms.id` CASCADE |
+| `month_number` | INT | NO | — | ۱ / ۲ / ۳ |
+| `session_number` | INT | NO | — | ۱ تا ۳۶ |
+| `title` | TEXT | YES | NULL | — |
+| `content_text` | TEXT | YES | NULL | — |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+### `exercises`
+تمرین‌های هر جلسه
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `session_id` | UUID | NO | — | FK → `sessions.id` CASCADE |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` CASCADE |
+| `title` | TEXT | NO | — | — |
+| `max_score` | INT | NO | 20 | — |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+### `exercise_scores`
+نمرات تمرین‌ها
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `exercise_id` | UUID | NO | — | FK → `exercises.id` CASCADE |
+| `student_id` | UUID | NO | — | FK → `students.id` CASCADE |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` CASCADE |
+| `score` | INT | YES | NULL | — |
+| `comment` | TEXT | YES | NULL | — |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+---
+## Faz B — Baadi (Defer Shod)
+- `skill_categories` — دسته‌بندی مهارت‌ها
+- `classes` — کلاس‌های گروهی
+```
+
+Update kardi, push kon — baad UI ro shoru konim.
