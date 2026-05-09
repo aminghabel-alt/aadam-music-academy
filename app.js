@@ -324,7 +324,10 @@ async function loadTerms(studentId) {
       <div class="term-card" data-term-id="${t.id}">
         <div class="term-header">
           <span class="term-title">${t.title}</span>
-          <span class="term-level">${levelLabel[t.level] || t.level}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span class="term-level">${levelLabel[t.level] || t.level}</span>
+            <button class="btn-delete-term" data-term-id="${t.id}" title="حذف ترم">🗑</button>
+          </div>
         </div>
         <div class="term-months">
           ${months.map(m => `
@@ -354,6 +357,18 @@ async function loadTerms(studentId) {
       if (error) { showNotif('خطا در تغییر دسترسی', 'error'); logError(error, 'toggleMonth'); toggle.checked = !isUnlocked; return; }
       toggle.nextElementSibling.nextElementSibling.textContent = isUnlocked ? 'باز' : 'قفل';
       showNotif(isUnlocked ? 'ماه باز شد ✓' : 'ماه قفل شد', 'success');
+    });
+  });
+
+  // Delete term
+  list.querySelectorAll('.btn-delete-term').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const termId = btn.dataset.termId;
+      if (!confirm('این ترم و تمام جلسات آن حذف می‌شود. مطمئنی؟')) return;
+      const { error } = await db.from('terms').delete().eq('id', termId);
+      if (error) { showNotif('خطا در حذف ترم', 'error'); logError(error, 'deleteTerm'); return; }
+      showNotif('ترم حذف شد', 'success');
+      loadTerms(currentStudentForTerm.id);
     });
   });
 }
