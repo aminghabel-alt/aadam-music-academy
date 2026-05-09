@@ -1388,7 +1388,7 @@ async function openStudentTermSessions(term, levelLabel) {
     const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
     const hasContent = s.content_text ? '📝' : '';
     return `
-      <div class="session-row ${statusClass}" data-session-id="${s.id}" data-content="${encodeURIComponent(s.content_text || '')}" data-date="${s.session_date || ''}" data-num="${s.session_number}" style="cursor:pointer">
+      <div class="session-row ${statusClass}" data-session-id="${s.id}" data-content="${encodeURIComponent(s.content_text || '')}" data-date="${s.session_date || ''}" data-num="${s.session_number}" data-link="${s.link || ''}" style="cursor:pointer">
         <span class="session-num">جلسه ${s.session_number} ${hasContent}</span>
         <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
         <span class="session-status">${statusLabel}</span>
@@ -1398,18 +1398,60 @@ async function openStudentTermSessions(term, levelLabel) {
   document.getElementById('term-detail-sessions').innerHTML =
     sessionRows || '<div class="empty-state">جلسه‌ای در ماه‌های باز وجود ندارد</div>';
 
-  // Click session → read-only view
+  // Click session → read-only view with exercises
   document.querySelectorAll('#term-detail-sessions .session-row[data-session-id]').forEach(row => {
-    row.addEventListener('click', () => {
+    row.addEventListener('click', async () => {
       const content = decodeURIComponent(row.dataset.content);
       const date = row.dataset.date;
       const num = row.dataset.num;
+      const sessionId = row.dataset.sessionId;
+
       document.getElementById('student-session-title').textContent = `جلسه ${num}`;
       document.getElementById('student-session-date').textContent =
         date ? new Date(date).toLocaleDateString('fa-IR') : '—';
-      document.getElementById('student-session-content').textContent =
-        content || 'محتوایی برای این جلسه ثبت نشده';
+
+      // Content + link
+      const linkMatch = row.dataset.link ? `<a href="${row.dataset.link}" target="_blank" class="exercise-link" style="display:block;margin-top:0.5rem">🔗 منبع جلسه</a>` : '';
+      document.getElementById('student-session-content').innerHTML =
+        `<p class="student-session-content">${content || 'محتوایی برای این جلسه ثبت نشده'}</p>${linkMatch}`;
+
+      // Load exercises + scores
+      const exEl = document.getElementById('student-session-exercises');
+      exEl.innerHTML = '<div class="empty-state" style="font-size:0.8rem">در حال بارگذاری تمرین‌ها...</div>';
       openModal('modal-student-session');
+
+      const { data: studentRec } = await db.from('students').select('id').eq('profile_id', currentUser.id).single();
+      if (!studentRec) { exEl.innerHTML = ''; return; }
+
+      const [exRes, scRes] = await Promise.all([
+        db.from('exercises').select('id, title, max_score, skill_categories(name), description, link').eq('session_id', sessionId).order('created_at'),
+        db.from('exercise_scores').select('exercise_id, score').eq('student_id', studentRec.id)
+      ]);
+
+      const exercises = exRes.data || [];
+      const scoreMap = {};
+      (scRes.data || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+      if (!exercises.length) { exEl.innerHTML = ''; return; }
+
+      exEl.innerHTML = `
+        <div class="section-divider"><span>تمرین‌های جلسه</span></div>
+        ${exercises.map(ex => {
+          const score = scoreMap[ex.id];
+          const hasScore = score !== null && score !== undefined;
+          return `
+            <div class="exercise-card">
+              <div class="exercise-header">
+                <span class="exercise-title">${ex.title}</span>
+                <span class="exercise-score-badge ${hasScore ? 'scored' : ''}">
+                  ${hasScore ? `${score} / ${ex.max_score}` : `${ex.max_score} نمره`}
+                </span>
+              </div>
+              ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
+              ${ex.description ? `<p class="exercise-desc">${ex.description}</p>` : ''}
+              ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع تمرین</a>` : ''}
+            </div>`;
+        }).join('')}`;
     });
   });
 
