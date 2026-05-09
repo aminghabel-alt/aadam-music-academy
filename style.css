@@ -749,3 +749,13 @@ a { color: var(--gold); text-decoration: none; }
   font-size: 0.88rem;
 }
 .info-label { color: var(--text-dim); }
+
+/* Fix modal-add-term submit button visibility */
+#modal-add-term .modal-box {
+  padding-bottom: 2rem;
+}
+
+#form-add-term button[type="submit"] {
+  margin-top: 1rem;
+  width: 100%;
+}

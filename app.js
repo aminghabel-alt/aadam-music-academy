@@ -418,7 +418,7 @@ async function addTerm() {
   if (sessErr) { logError(sessErr, 'addTerm-sessions'); }
 
   showNotif('ترم ساخته شد ✓', 'success');
-  closeModal('modal-add-term');
+  closeModal('modal-add-term'); openModal('modal-student-profile');
   loadTerms(currentStudentForTerm.id);
 }
 
@@ -715,7 +715,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
     el.addEventListener('click', () => {
       const modal = el.closest('.modal') || document.getElementById(el.dataset.modal);
-      if (modal) modal.classList.add('hidden');
+      if (modal) {
+        modal.classList.add('hidden');
+        if (modal.id === 'modal-add-term') openModal('modal-student-profile');
+      }
     });
   });
 
