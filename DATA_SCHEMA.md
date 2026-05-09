@@ -341,4 +341,4 @@ Hala **DATA_SCHEMA.md ro update konim** — in jadval haro ezafe kon:
 - `classes` — کلاس‌های گروهی
 ```
 
-Update kardi, push kon — baad UI ro shoru konim.
+| `session_date` | DATE | YES | NULL | تاریخ جلسه — auto یا دستی |
