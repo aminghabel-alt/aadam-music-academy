@@ -152,13 +152,16 @@ async function afterAuth(user) {
   currentProfile = profile;
 
   if (profile.role === 'teacher') {
-    document.getElementById('teacher-name-display').textContent = profile.name;
-    document.getElementById('invite-code-display').textContent = profile.invite_code || '—';
+    const nameEl = document.getElementById('teacher-name-display');
+    const codeEl = document.getElementById('invite-code-display');
+    if (nameEl) nameEl.textContent = profile.name;
+    if (codeEl) codeEl.textContent = profile.invite_code || '—';
     showScreen('screen-teacher');
-    loadStudents();
-    loadLessons();
+    await loadStudents();
+    loadLessons(); // non-blocking — error handle dare
   } else {
-    document.getElementById('student-name-display').textContent = profile.name;
+    const nameEl = document.getElementById('student-name-display');
+    if (nameEl) nameEl.textContent = profile.name;
     showScreen('screen-student');
     loadMyScores();
     loadStudentMessages();
@@ -221,16 +224,22 @@ async function addStudent(data) {
 }
 
 async function loadLessons() {
+  const list = document.getElementById('lessons-list');
+  if (!list) return; // element vojod nadareh — silent skip
+
   const { data: lessons, error } = await db
     .from('lessons')
     .select('*')
     .eq('teacher_id', currentProfile.id)
     .order('created_at', { ascending: false });
 
-  if (error) { logError(error, 'loadLessons'); return; }
+  if (error) {
+    logError(error, 'loadLessons');
+    list.innerHTML = '<div class="empty-state">خطا در بارگذاری درس‌ها</div>';
+    return;
+  }
 
-  const list = document.getElementById('lessons-list');
-  if (!lessons.length) {
+  if (!lessons || !lessons.length) {
     list.innerHTML = '<div class="empty-state">هنوز درسی اضافه نشده</div>';
     return;
   }
@@ -623,9 +632,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── Lessons ──
-  document.getElementById('btn-add-lesson').addEventListener('click', () => openModal('modal-add-lesson'));
+  const btnAddLesson = document.getElementById('btn-add-lesson');
+  if (btnAddLesson) btnAddLesson.addEventListener('click', () => openModal('modal-add-lesson'));
 
-  document.getElementById('form-add-lesson').addEventListener('submit', async e => {
+  const formAddLesson = document.getElementById('form-add-lesson');
+  if (formAddLesson) formAddLesson.addEventListener('submit', async e => {
     e.preventDefault();
     await addLesson({
       title: document.getElementById('lesson-title').value,
