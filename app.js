@@ -152,19 +152,17 @@ async function afterAuth(user) {
   currentProfile = profile;
 
   if (profile.role === 'teacher') {
-    const nameEl = document.getElementById('teacher-name-display');
-    const codeEl = document.getElementById('invite-code-display');
-    if (nameEl) nameEl.textContent = profile.name;
-    if (codeEl) codeEl.textContent = profile.invite_code || '—';
+    document.getElementById('teacher-name-display').textContent = profile.name;
+    document.getElementById('invite-code-display').textContent = profile.invite_code || '—';
     showScreen('screen-teacher');
-    await loadStudents();
-    loadLessons(); // non-blocking — error handle dare
+    loadStudents();
+    loadLessons();
   } else {
-    const nameEl = document.getElementById('student-name-display');
-    if (nameEl) nameEl.textContent = profile.name;
+    document.getElementById('student-name-display').textContent = profile.name;
     showScreen('screen-student');
-    loadMyScores();
+    initKarname();
     loadStudentMessages();
+    loadStudentTerms();
   }
 }
 
@@ -191,7 +189,7 @@ async function loadStudents() {
   list.innerHTML = students.map(s => {
     const badge = paymentLabel(s.payment_status);
     return `
-      <div class="student-card">
+      <div class="student-card" data-id="${s.id}" data-name="${s.name}" style="cursor:pointer">
         <div class="student-info">
           <span class="student-name">${s.name}</span>
           <span class="student-meta">${s.instrument || '—'} · ${s.class_time || '—'}</span>
@@ -200,7 +198,14 @@ async function loadStudents() {
       </div>`;
   }).join('');
 
-  // Populate selects
+  // Click on student card → open profile modal
+  list.querySelectorAll('.student-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const student = students.find(s => s.id === card.dataset.id);
+      openStudentProfile(student);
+    });
+  });
+
   populateStudentSelects(students);
 }
 
@@ -224,22 +229,16 @@ async function addStudent(data) {
 }
 
 async function loadLessons() {
-  const list = document.getElementById('lessons-list');
-  if (!list) return; // element vojod nadareh — silent skip
-
   const { data: lessons, error } = await db
     .from('lessons')
     .select('*')
     .eq('teacher_id', currentProfile.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    logError(error, 'loadLessons');
-    list.innerHTML = '<div class="empty-state">خطا در بارگذاری درس‌ها</div>';
-    return;
-  }
+  if (error) { logError(error, 'loadLessons'); return; }
 
-  if (!lessons || !lessons.length) {
+  const list = document.getElementById('lessons-list');
+  if (!lessons.length) {
     list.innerHTML = '<div class="empty-state">هنوز درسی اضافه نشده</div>';
     return;
   }
@@ -265,8 +264,296 @@ async function addLesson(data) {
 }
 
 // ════════════════════════════════
-// SCORES (Teacher)
+// TERMS (Teacher)
 // ════════════════════════════════
+
+let currentStudentForTerm = null;
+
+function openStudentProfile(student) {
+  currentStudentForTerm = student;
+  document.getElementById('profile-student-name').textContent = student.name;
+
+  // Info tab
+  document.getElementById('student-info-display').innerHTML = `
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">ساز</span><span>${student.instrument || '—'}</span></div>
+      <div class="info-row"><span class="info-label">سطح</span><span>${student.level || '—'}</span></div>
+      <div class="info-row"><span class="info-label">ساعت کلاس</span><span>${student.class_time || '—'}</span></div>
+      <div class="info-row"><span class="info-label">شهریه</span><span>${student.monthly_fee ? student.monthly_fee.toLocaleString('fa') + ' تومان' : '—'}</span></div>
+      <div class="info-row"><span class="info-label">نوع کلاس</span><span>${student.class_type === 'online' ? 'آنلاین' : 'حضوری'}</span></div>
+    </div>`;
+
+  // Hide add-term button for non-teachers
+  const btnAddTerm = document.getElementById('btn-add-term');
+  if (btnAddTerm) btnAddTerm.style.display = currentProfile?.role === 'teacher' ? '' : 'none';
+
+  // Switch to terms tab
+  switchProfileTab('terms');
+  loadTerms(student.id);
+  openModal('modal-student-profile');
+}
+
+function switchProfileTab(tabName) {
+  document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.profile-tab[data-tab="${tabName}"]`).classList.add('active');
+  document.getElementById(`profile-tab-${tabName}`).classList.add('active');
+  if (tabName === 'karname' && currentStudentForTerm) {
+    loadTeacherKarname();
+  }
+}
+
+async function loadTerms(studentId) {
+  const list = document.getElementById('terms-list');
+  list.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+
+  const { data: terms, error } = await db
+    .from('terms')
+    .select('*, term_months(*)')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+
+  if (error) { logError(error, 'loadTerms'); return; }
+
+  if (!terms.length) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const levelLabel = {
+    moghadamati_1: 'مقدماتی ۱', moghadamati_2: 'مقدماتی ۲',
+    motevaset_1: 'متوسط ۱', motevaset_2: 'متوسط ۲',
+    pishrafte_1: 'پیشرفته ۱', pishrafte_2: 'پیشرفته ۲'
+  };
+
+  list.innerHTML = terms.map(t => {
+    const months = (t.term_months || []).sort((a, b) => a.month_number - b.month_number);
+    return `
+      <div class="term-card" data-term-id="${t.id}" style="cursor:pointer">
+        <div class="term-header">
+          <span class="term-title">${t.title}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span class="term-level">${levelLabel[t.level] || t.level}</span>
+            <button class="btn-delete-term" data-term-id="${t.id}" title="حذف ترم">🗑</button>
+          </div>
+        </div>
+        <div class="term-months">
+          ${months.map(m => `
+            <div class="month-row">
+              <span class="month-label">ماه ${m.month_number}</span>
+              <label class="toggle-label">
+                <input type="checkbox" class="month-unlock-toggle"
+                  data-month-id="${m.id}"
+                  ${m.is_unlocked ? 'checked' : ''} />
+                <span class="toggle-track"></span>
+                <span>${m.is_unlocked ? 'باز' : 'قفل'}</span>
+              </label>
+            </div>`).join('')}
+        </div>
+        <div class="term-footer" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="term-detail-hint">برای جزئیات کلیک کن ←</span>
+          <label class="toggle-label" onclick="event.stopPropagation()">
+            <input type="checkbox" class="term-report-toggle"
+              data-term-id="${t.id}"
+              ${t.include_in_report !== false ? 'checked' : ''} />
+            <span class="toggle-track"></span>
+            <span style="font-size:0.75rem">${t.include_in_report !== false ? 'در کارنامه' : 'خارج کارنامه'}</span>
+          </label>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Click on term card → show detail
+  list.querySelectorAll('.term-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.btn-delete-term') || e.target.closest('.toggle-label')) return;
+      const term = terms.find(t => t.id === card.dataset.termId);
+      openTermDetail(term, levelLabel);
+    });
+  });
+
+  // Toggle month lock
+  list.querySelectorAll('.month-unlock-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async () => {
+      const monthId = toggle.dataset.monthId;
+      const isUnlocked = toggle.checked;
+      const { error } = await db.from('term_months').update({
+        is_unlocked: isUnlocked,
+        unlocked_at: isUnlocked ? new Date().toISOString() : null
+      }).eq('id', monthId);
+      if (error) { showNotif('خطا در تغییر دسترسی', 'error'); logError(error, 'toggleMonth'); toggle.checked = !isUnlocked; return; }
+      toggle.nextElementSibling.nextElementSibling.textContent = isUnlocked ? 'باز' : 'قفل';
+      showNotif(isUnlocked ? 'ماه باز شد ✓' : 'ماه قفل شد', 'success');
+    });
+  });
+
+  // Toggle include_in_report
+  list.querySelectorAll('.term-report-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async () => {
+      const termId = toggle.dataset.termId;
+      const val = toggle.checked;
+      const { error } = await db.from('terms').update({ include_in_report: val }).eq('id', termId);
+      if (error) { showNotif('خطا', 'error'); toggle.checked = !val; return; }
+      toggle.nextElementSibling.nextElementSibling.textContent = val ? 'در کارنامه' : 'خارج کارنامه';
+      showNotif(val ? 'به کارنامه اضافه شد ✓' : 'از کارنامه خارج شد', 'success');
+    });
+  });
+
+  // Delete term
+  list.querySelectorAll('.btn-delete-term').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const termId = btn.dataset.termId;
+      if (!confirm('این ترم و تمام جلسات آن حذف می‌شود. مطمئنی؟')) return;
+      const { error } = await db.from('terms').delete().eq('id', termId);
+      if (error) { showNotif('خطا در حذف ترم', 'error'); logError(error, 'deleteTerm'); return; }
+      showNotif('ترم حذف شد', 'success');
+      loadTerms(currentStudentForTerm.id);
+    });
+  });
+}
+
+async function openTermDetail(term, levelLabel) {
+  const { data: sessions, error } = await db
+    .from('sessions')
+    .select('*')
+    .eq('term_id', term.id)
+    .order('session_number', { ascending: true });
+
+  if (error) { logError(error, 'openTermDetail'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const sessionRows = (sessions || []).map(s => {
+    const isPast = s.session_date && s.session_date < today;
+    const isToday = s.session_date === today;
+    const statusClass = isToday ? 'session-today' : isPast ? 'session-past' : 'session-future';
+    const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
+    const hasContent = s.content_text ? '📝' : '';
+    return `
+      <div class="session-row ${statusClass}" data-session-id="${s.id}" style="cursor:pointer">
+        <span class="session-num">جلسه ${s.session_number} ${hasContent}</span>
+        <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
+        <span class="session-status">${statusLabel}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('term-detail-title').textContent = term.title;
+  document.getElementById('term-detail-level').textContent = levelLabel[term.level] || term.level;
+  document.getElementById('term-detail-start').textContent = term.start_date
+    ? new Date(term.start_date).toLocaleDateString('fa-IR') : '—';
+  document.getElementById('term-detail-sessions').innerHTML =
+    sessionRows || '<div class="empty-state">جلسه‌ای ثبت نشده</div>';
+
+  // Click on session row
+  document.querySelectorAll('.session-row[data-session-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const session = sessions.find(s => s.id === row.dataset.sessionId);
+      openSessionDetail(session);
+    });
+  });
+
+  openModal('modal-term-detail');
+}
+
+let currentSession = null;
+
+function openSessionDetail(session) {
+  currentSession = session;
+  document.getElementById('session-detail-title').textContent = `جلسه ${session.session_number}`;
+  document.getElementById('session-detail-date').value = session.session_date || '';
+  document.getElementById('session-detail-content').value = session.content_text || '';
+  const linkEl = document.getElementById('session-detail-link');
+  if (linkEl) linkEl.value = session.link || '';
+  loadExercises(session.id);
+  openModal('modal-session-detail');
+}
+
+async function saveSessionDate() {
+  const newDate = document.getElementById('session-detail-date').value;
+  if (!newDate) { showNotif('تاریخ را انتخاب کنید', 'error'); return; }
+  const { error } = await db.from('sessions').update({ session_date: newDate }).eq('id', currentSession.id);
+  if (error) { showNotif('خطا در ذخیره تاریخ', 'error'); logError(error, 'saveSessionDate'); return; }
+  currentSession.session_date = newDate;
+  showNotif('تاریخ ذخیره شد ✓', 'success');
+}
+
+async function saveSessionContent() {
+  const content = document.getElementById('session-detail-content').value;
+  const linkEl = document.getElementById('session-detail-link');
+  const link = linkEl ? linkEl.value || null : null;
+  const { error } = await db.from('sessions').update({ content_text: content, link }).eq('id', currentSession.id);
+  if (error) { showNotif('خطا در ذخیره محتوا', 'error'); logError(error, 'saveSessionContent'); return; }
+  currentSession.content_text = content;
+  currentSession.link = link;
+  showNotif('محتوا ذخیره شد ✓', 'success');
+}
+
+
+// Calculate 12 session dates from start date + class days
+function calcSessionDates(startDateStr, classDays) {
+  const dayMap = { 'شنبه': 6, 'یکشنبه': 0, 'دوشنبه': 1, 'سه‌شنبه': 2, 'چهارشنبه': 3, 'پنجشنبه': 4 };
+  const targetDays = classDays.map(d => dayMap[d]).filter(d => d !== undefined);
+  if (!targetDays.length) return [];
+
+  const dates = [];
+  const start = new Date(startDateStr);
+  let current = new Date(start);
+
+  while (dates.length < 12) {
+    if (targetDays.includes(current.getDay())) {
+      dates.push(new Date(current));
+    }
+    current.setDate(current.getDate() + 1);
+    if (dates.length === 0 && current - start > 14 * 86400000) break; // safety
+  }
+  return dates;
+}
+
+async function addTerm() {
+  const title = document.getElementById('term-title').value.trim();
+  const level = document.getElementById('term-level').value;
+  const startDate = document.getElementById('term-start-date').value;
+  const classDays = [...document.querySelectorAll('input[name="class-day"]:checked')].map(c => c.value);
+
+  if (!title || !level || !startDate || !classDays.length) {
+    showNotif('همه فیلدهای ستاره‌دار الزامی است', 'error'); return;
+  }
+
+  const sessionDates = calcSessionDates(startDate, classDays);
+  if (sessionDates.length < 12) {
+    showNotif('تاریخ‌ها کافی نیست — روزهای بیشتری انتخاب کن', 'error'); return;
+  }
+
+  // Insert term
+  const { data: term, error: termErr } = await db.from('terms').insert({
+    teacher_id: currentProfile.id,
+    student_id: currentStudentForTerm.id,
+    title, level, start_date: startDate, status: 'active'
+  }).select().single();
+
+  if (termErr) { showNotif('خطا در ساختن ترم', 'error'); logError(termErr, 'addTerm'); return; }
+
+  // Insert 3 term_months
+  const months = [1, 2, 3].map(m => ({ term_id: term.id, month_number: m, is_unlocked: false }));
+  const { error: monthErr } = await db.from('term_months').insert(months);
+  if (monthErr) { logError(monthErr, 'addTerm-months'); }
+
+  // Insert 12 sessions
+  const sessions = sessionDates.map((date, i) => ({
+    term_id: term.id,
+    month_number: Math.ceil((i + 1) / 4),
+    session_number: i + 1,
+    session_date: date.toISOString().split('T')[0]
+  }));
+  const { error: sessErr } = await db.from('sessions').insert(sessions);
+  if (sessErr) { logError(sessErr, 'addTerm-sessions'); }
+
+  showNotif('ترم ساخته شد ✓', 'success');
+  closeModal('modal-add-term'); openModal('modal-student-profile');
+  loadTerms(currentStudentForTerm.id);
+}
+
+
 
 function calcAverage() {
   const ids = ['score-technique', 'score-rhythm', 'score-melody', 'score-fretboard', 'score-ear'];
@@ -381,6 +668,365 @@ async function loadMyScores() {
   }).join('');
 }
 
+
+// ════════════════════════════════
+// KARNAME (Teacher view)
+// ════════════════════════════════
+
+// ════════════════════════════════
+// KARNAME (Teacher view)
+// ════════════════════════════════
+
+let teacherKarnaTerms = [];
+let teacherKarnaTermMonths = {};
+
+async function loadTeacherKarname() {
+  if (!currentStudentForTerm) return;
+  const studentId = currentStudentForTerm.id;
+
+  const { data: terms } = await db
+    .from('terms').select('*, term_months(*)')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+
+  if (!terms?.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  teacherKarnaTerms = terms;
+
+  // Build checkboxes
+  const checkboxEl = document.getElementById('karname-term-checkboxes');
+  checkboxEl.innerHTML = terms.map(t => {
+    const months = (t.term_months || []).sort((a, b) => a.month_number - b.month_number);
+    return `
+      <div class="karname-term-group">
+        <div class="karname-term-label">
+          <label class="karname-check-all">
+            <input type="checkbox" class="term-all-check" data-term-id="${t.id}" checked />
+            <span>${t.title}</span>
+          </label>
+        </div>
+        <div class="karname-month-checks">
+          ${months.map(m => `
+            <label class="karname-month-check">
+              <input type="checkbox" class="month-karname-check"
+                data-term-id="${t.id}"
+                data-month="${m.month_number}"
+                checked />
+              <span>ماه ${m.month_number}</span>
+            </label>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Term all-check toggle
+  checkboxEl.querySelectorAll('.term-all-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      checkboxEl.querySelectorAll(`.month-karname-check[data-term-id="${cb.dataset.termId}"]`)
+        .forEach(m => { m.checked = cb.checked; });
+    });
+  });
+}
+
+async function applyTeacherKarname() {
+  if (!currentStudentForTerm) return;
+  const studentId = currentStudentForTerm.id;
+
+  // Collect selected term+month combos
+  const selected = [];
+  document.querySelectorAll('.month-karname-check:checked').forEach(cb => {
+    selected.push({ termId: cb.dataset.termId, month: parseInt(cb.dataset.month) });
+  });
+
+  if (!selected.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">هیچ ماهی انتخاب نشده</div>';
+    document.getElementById('teacher-karname-chart').innerHTML = '';
+    return;
+  }
+
+  // Load sessions matching selected term+month
+  const termIds = [...new Set(selected.map(s => s.termId))];
+  const { data: allSessions } = await db
+    .from('sessions').select('id, session_number, session_date, term_id, month_number')
+    .in('term_id', termIds).order('session_number', { ascending: true });
+
+  const sessions = (allSessions || []).filter(s =>
+    selected.some(sel => sel.termId === s.term_id && sel.month === s.month_number)
+  );
+
+  if (!sessions.length) {
+    document.getElementById('teacher-karname-skills').innerHTML = '<div class="empty-state">جلسه‌ای یافت نشد</div>';
+    document.getElementById('teacher-karname-chart').innerHTML = '';
+    return;
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+  const { data: exercises } = await db
+    .from('exercises').select('id, session_id, max_score, title, skill_categories(name)')
+    .in('session_id', sessionIds);
+
+  const { data: scores } = await db
+    .from('exercise_scores').select('exercise_id, score')
+    .eq('student_id', studentId)
+    .in('exercise_id', (exercises || []).map(e => e.id));
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  // Skill summary
+  const skillMap = {};
+  (exercises || []).forEach(ex => {
+    const cat = ex.skill_categories?.name || 'سایر';
+    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0 };
+    const score = scoreMap[ex.id];
+    if (score !== null && score !== undefined) {
+      skillMap[cat].total += score;
+      skillMap[cat].max += ex.max_score;
+    }
+  });
+
+  const skillsEl = document.getElementById('teacher-karname-skills');
+  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.max > 0);
+  if (skillEntries.length) {
+    skillsEl.innerHTML = `
+      <div class="karname-section-title">خلاصه مهارت‌ها</div>
+      ${skillEntries.map(([name, v]) => {
+        const pct = Math.round((v.total / v.max) * 100);
+        return `<div class="skill-summary-row">
+          <span class="skill-name">${name}</span>
+          <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${pct}%"></div></div>
+          <span class="skill-score">${v.total} / ${v.max}</span>
+        </div>`;
+      }).join('')}`;
+  } else {
+    skillsEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای ثبت نشده</div>';
+  }
+
+  // Session chart
+  const exBySession = {};
+  (exercises || []).forEach(ex => {
+    if (!exBySession[ex.session_id]) exBySession[ex.session_id] = [];
+    exBySession[ex.session_id].push(ex);
+  });
+
+  const sessionData = sessions.map(s => {
+    const exs = exBySession[s.id] || [];
+    const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+    if (!scored.length) return null;
+    const total = scored.reduce((a, e) => a + scoreMap[e.id], 0);
+    const max = scored.reduce((a, e) => a + e.max_score, 0);
+    return { ...s, pct: Math.round((total / max) * 100), total, max, exs: scored };
+  }).filter(Boolean);
+
+  const chartEl = document.getElementById('teacher-karname-chart');
+  const chartTitle = document.getElementById('karname-chart-title');
+  if (!sessionData.length) {
+    chartEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای در جلسات ثبت نشده</div>';
+    if (chartTitle) chartTitle.style.display = 'none';
+    return;
+  }
+
+  if (chartTitle) chartTitle.style.display = '';
+  chartEl.innerHTML = `<div class="session-bars">
+    ${sessionData.map(s => `
+      <div class="session-bar-col" data-session-id="${s.id}" data-total="${s.total}" data-max="${s.max}" data-num="${s.session_number}" data-date="${s.session_date || ''}">
+        <div class="session-bar-wrap">
+          <div class="session-bar-inner" style="height:${s.pct}%"></div>
+        </div>
+        <span class="session-bar-label">ج${s.session_number}</span>
+      </div>`).join('')}
+  </div>`;
+
+  chartEl.querySelectorAll('.session-bar-col').forEach(col => {
+    col.addEventListener('click', () => {
+      const s = sessionData.find(s => s.id === col.dataset.sessionId);
+      if (!s) return;
+      const detailEl = document.getElementById('teacher-karname-session-detail');
+      detailEl.classList.remove('hidden');
+      detailEl.innerHTML = `
+        <div class="karname-detail-header">جلسه ${s.session_number}${s.session_date ? ' — ' + new Date(s.session_date).toLocaleDateString('fa-IR') : ''}</div>
+        ${s.exs.map(e => `
+          <div class="karname-detail-row">
+            <span>${e.skill_categories?.name || 'سایر'} — ${e.title}</span>
+            <span class="karname-detail-score">${scoreMap[e.id]} / ${e.max_score}</span>
+          </div>`).join('')}
+        <div class="karname-detail-total">جمع: ${s.total} / ${s.max}</div>`;
+    });
+  });
+}
+
+
+// ════════════════════════════════
+// KARNAME (Student)
+// ════════════════════════════════
+
+let myStudentId = null;
+let myTerms = [];
+
+async function initKarname() {
+  const { data: studentRec, error } = await db
+    .from('students').select('id').eq('profile_id', currentUser.id).single();
+  if (error || !studentRec) return;
+  myStudentId = studentRec.id;
+
+  const { data: terms } = await db
+    .from('terms').select('*')
+    .eq('student_id', myStudentId)
+    .order('created_at', { ascending: false });
+  myTerms = terms || [];
+
+  // Add term options to dropdown
+  const sel = document.getElementById('karname-term-select');
+  if (sel && myTerms.length) {
+    myTerms.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.title;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => loadKarname(sel.value));
+  }
+  loadKarname('selected');
+}
+
+async function loadKarname(mode) {
+  if (!myStudentId) return;
+
+  // Filter terms
+  let termIds = [];
+  if (mode === 'selected') {
+    termIds = myTerms.filter(t => t.include_in_report !== false).map(t => t.id);
+  } else if (mode === 'all') {
+    termIds = myTerms.map(t => t.id);
+  } else {
+    termIds = [mode]; // specific term id
+  }
+
+  if (!termIds.length) {
+    document.getElementById('karname-skills').innerHTML = '<div class="empty-state">هیچ ترمی انتخاب نشده</div>';
+    document.getElementById('karname-chart').innerHTML = '';
+    return;
+  }
+
+  // Load sessions in these terms
+  const { data: sessions } = await db
+    .from('sessions').select('id, session_number, session_date, term_id')
+    .in('term_id', termIds)
+    .order('session_number', { ascending: true });
+
+  if (!sessions?.length) {
+    document.getElementById('karname-skills').innerHTML = '<div class="empty-state">هنوز جلسه‌ای ثبت نشده</div>';
+    document.getElementById('karname-chart').innerHTML = '';
+    return;
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+
+  // Load exercises
+  const { data: exercises } = await db
+    .from('exercises').select('id, session_id, max_score, skill_categories(name)')
+    .in('session_id', sessionIds);
+
+  // Load scores
+  const { data: scores } = await db
+    .from('exercise_scores').select('exercise_id, score')
+    .eq('student_id', myStudentId)
+    .in('exercise_id', (exercises || []).map(e => e.id));
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  // Build skill summary
+  const skillMap = {};
+  (exercises || []).forEach(ex => {
+    const cat = ex.skill_categories?.name || 'سایر';
+    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0, count: 0 };
+    const score = scoreMap[ex.id];
+    if (score !== null && score !== undefined) {
+      skillMap[cat].total += score;
+      skillMap[cat].max += ex.max_score;
+      skillMap[cat].count++;
+    }
+  });
+
+  // Render skill summary
+  const skillsEl = document.getElementById('karname-skills');
+  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.count > 0);
+  if (skillEntries.length) {
+    skillsEl.innerHTML = `
+      <div class="karname-section-title">خلاصه مهارت‌ها</div>
+      ${skillEntries.map(([name, v]) => {
+        const pct = Math.round((v.total / v.max) * 100);
+        return `
+          <div class="skill-summary-row">
+            <span class="skill-name">${name}</span>
+            <div class="skill-bar-track">
+              <div class="skill-bar-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="skill-score">${v.total} / ${v.max}</span>
+          </div>`;
+      }).join('')}`;
+  } else {
+    skillsEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای ثبت نشده</div>';
+  }
+
+  // Build session chart — per session average score %
+  const exBySession = {};
+  (exercises || []).forEach(ex => {
+    if (!exBySession[ex.session_id]) exBySession[ex.session_id] = [];
+    exBySession[ex.session_id].push(ex);
+  });
+
+  const chartEl = document.getElementById('karname-chart');
+  const sessionData = sessions.map(s => {
+    const exs = exBySession[s.id] || [];
+    const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+    if (!scored.length) return { ...s, pct: null, total: 0, max: 0 };
+    const total = scored.reduce((a, e) => a + scoreMap[e.id], 0);
+    const max = scored.reduce((a, e) => a + e.max_score, 0);
+    return { ...s, pct: Math.round((total / max) * 100), total, max };
+  }).filter(s => s.pct !== null);
+
+  if (!sessionData.length) {
+    chartEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای در جلسات ثبت نشده</div>';
+    return;
+  }
+
+  chartEl.innerHTML = `
+    <div class="session-bars">
+      ${sessionData.map(s => `
+        <div class="session-bar-col" data-session-id="${s.id}" data-total="${s.total}" data-max="${s.max}" data-num="${s.session_number}" data-date="${s.session_date || ''}">
+          <div class="session-bar-wrap">
+            <div class="session-bar-inner" style="height:${s.pct}%" title="${s.pct}%"></div>
+          </div>
+          <span class="session-bar-label">ج${s.session_number}</span>
+        </div>`).join('')}
+    </div>`;
+
+  // Click on session bar → show detail
+  chartEl.querySelectorAll('.session-bar-col').forEach(col => {
+    col.addEventListener('click', () => {
+      const detailEl = document.getElementById('karname-session-detail');
+      const exs = exBySession[col.dataset.sessionId] || [];
+      const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+      if (!scored.length) { detailEl.classList.add('hidden'); return; }
+      detailEl.classList.remove('hidden');
+      detailEl.innerHTML = `
+        <div class="karname-detail-header">جلسه ${col.dataset.num}
+          ${col.dataset.date ? ' — ' + new Date(col.dataset.date).toLocaleDateString('fa-IR') : ''}
+        </div>
+        ${scored.map(e => `
+          <div class="karname-detail-row">
+            <span>${e.skill_categories?.name || 'سایر'} — ${e.title || ''}</span>
+            <span class="karname-detail-score">${scoreMap[e.id]} / ${e.max_score}</span>
+          </div>`).join('')}
+        <div class="karname-detail-total">جمع: ${col.dataset.total} / ${col.dataset.max}</div>`;
+    });
+  });
+}
+
 // ════════════════════════════════
 // MESSAGES
 // ════════════════════════════════
@@ -484,6 +1130,334 @@ async function stopTimer() {
   document.getElementById('practice-note').value = '';
 }
 
+
+
+// ════════════════════════════════
+// EXERCISES (Teacher)
+// ════════════════════════════════
+
+let currentExercise = null;
+let skillCategories = [];
+
+async function loadSkillCategories() {
+  const { data, error } = await db
+    .from('skill_categories')
+    .select('*')
+    .or(`is_default.eq.true,teacher_id.eq.${currentProfile.id}`)
+    .order('is_default', { ascending: false });
+  if (error) { logError(error, 'loadSkillCategories'); return; }
+  skillCategories = data || [];
+  const sel = document.getElementById('exercise-category');
+  if (sel) {
+    sel.innerHTML = '<option value="">— انتخاب —</option>' +
+      skillCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+}
+
+async function loadExercises(sessionId) {
+  const list = document.getElementById('exercises-list');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+
+  const [exercisesRes, scoresRes] = await Promise.all([
+    db.from('exercises').select('*, skill_categories(name)').eq('session_id', sessionId).order('created_at', { ascending: true }),
+    currentStudentForTerm ? db.from('exercise_scores').select('exercise_id, score').eq('student_id', currentStudentForTerm.id) : { data: [] }
+  ]);
+
+  if (exercisesRes.error) { logError(exercisesRes.error, 'loadExercises'); return; }
+
+  const exercises = exercisesRes.data || [];
+  const scoreMap = {};
+  (scoresRes.data || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  if (!exercises.length) {
+    list.innerHTML = '<div class="empty-state">هنوز تمرینی اضافه نشده</div>';
+    return;
+  }
+
+  list.innerHTML = exercises.map(ex => {
+    const studentScore = scoreMap[ex.id];
+    const scoreDisplay = studentScore !== undefined && studentScore !== null
+      ? `<span class="exercise-score-badge scored">${studentScore} / ${ex.max_score}</span>`
+      : `<span class="exercise-score-badge">${ex.max_score} نمره</span>`;
+    return `
+    <div class="exercise-card" data-exercise-id="${ex.id}">
+      <div class="exercise-header">
+        <span class="exercise-title">${ex.title}</span>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          ${scoreDisplay}
+          <button class="btn-score-exercise btn-gold btn-xs" data-exercise-id="${ex.id}" data-title="${ex.title}" data-max="${ex.max_score}">نمره‌دهی</button>
+          <button class="btn-delete-exercise btn-xs" data-exercise-id="${ex.id}">🗑</button>
+        </div>
+      </div>
+      ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
+      ${ex.description ? `<p class="exercise-desc">${ex.description}</p>` : ''}
+      ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع</a>` : ''}
+    </div>`;
+  }).join('');
+
+  // Score button
+  list.querySelectorAll('.btn-score-exercise').forEach(btn => {
+    btn.addEventListener('click', () => openScoreExercise(btn.dataset.exerciseId, btn.dataset.title, parseInt(btn.dataset.max)));
+  });
+
+  // Delete exercise
+  list.querySelectorAll('.btn-delete-exercise').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('این تمرین حذف شود؟')) return;
+      const { error } = await db.from('exercises').delete().eq('id', btn.dataset.exerciseId);
+      if (error) { showNotif('خطا در حذف', 'error'); return; }
+      showNotif('تمرین حذف شد', 'success');
+      loadExercises(currentSession.id);
+    });
+  });
+}
+
+async function addExercise(data) {
+  const { error } = await db.from('exercises').insert({
+    session_id: currentSession.id,
+    teacher_id: currentProfile.id,
+    ...data
+  });
+  if (error) { showNotif('خطا در ذخیره تمرین', 'error'); logError(error, 'addExercise'); return; }
+  showNotif('تمرین اضافه شد ✓', 'success');
+  closeModal('modal-add-exercise');
+  openModal('modal-session-detail');
+  loadExercises(currentSession.id);
+}
+
+async function openScoreExercise(exerciseId, title, maxScore) {
+  currentExercise = { id: exerciseId, title, max_score: maxScore };
+  document.getElementById('score-exercise-title').textContent = `نمره‌دهی — ${title}`;
+
+  // Load students of current teacher
+  const { data: students, error: se } = await db
+    .from('students')
+    .select('id, name')
+    .eq('teacher_id', currentProfile.id)
+    .eq('status', 'active');
+
+  if (se || !students) { showNotif('خطا در بارگذاری هنرجوها', 'error'); return; }
+
+  // Load existing scores
+  const { data: scores } = await db
+    .from('exercise_scores')
+    .select('*')
+    .eq('exercise_id', exerciseId);
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.student_id] = s.score; });
+
+  document.getElementById('score-exercise-students').innerHTML = students.map(s => `
+    <div class="score-student-row">
+      <span class="score-student-name">${s.name}</span>
+      <input type="number" class="exercise-score-input" 
+        data-student-id="${s.id}"
+        value="${scoreMap[s.id] ?? ''}"
+        min="0" max="${maxScore}"
+        placeholder="/${maxScore}" />
+    </div>`).join('');
+
+  closeModal('modal-session-detail');
+  openModal('modal-score-exercise');
+}
+
+async function saveExerciseScores() {
+  const inputs = document.querySelectorAll('.exercise-score-input');
+  const upserts = [];
+
+  inputs.forEach(input => {
+    const score = input.value === '' ? null : parseInt(input.value);
+    upserts.push({
+      exercise_id: currentExercise.id,
+      student_id: input.dataset.studentId,
+      teacher_id: currentProfile.id,
+      score
+    });
+  });
+
+  const { error } = await db.from('exercise_scores').upsert(upserts, {
+    onConflict: 'exercise_id,student_id'
+  });
+
+  if (error) { showNotif('خطا در ذخیره نمرات', 'error'); logError(error, 'saveExerciseScores'); return; }
+  showNotif('نمرات ذخیره شد ✓', 'success');
+  closeModal('modal-score-exercise');
+  openModal('modal-session-detail');
+  loadExercises(currentSession.id);
+}
+
+// ════════════════════════════════
+// TERMS (Student)
+// ════════════════════════════════
+
+async function loadStudentTerms() {
+  const list = document.getElementById('student-terms-list');
+  if (!list) return;
+
+  // Get student record
+  const { data: studentRec, error: se } = await db
+    .from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .single();
+
+  if (se || !studentRec) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const { data: terms, error } = await db
+    .from('terms')
+    .select('*, term_months(*)')
+    .eq('student_id', studentRec.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
+
+  if (error) { logError(error, 'loadStudentTerms'); return; }
+
+  if (!terms.length) {
+    list.innerHTML = '<div class="empty-state">هنوز ترمی تعریف نشده</div>';
+    return;
+  }
+
+  const levelLabel = {
+    moghadamati_1: 'مقدماتی ۱', moghadamati_2: 'مقدماتی ۲',
+    motevaset_1: 'متوسط ۱', motevaset_2: 'متوسط ۲',
+    pishrafte_1: 'پیشرفته ۱', pishrafte_2: 'پیشرفته ۲'
+  };
+
+  list.innerHTML = terms.map(t => {
+    const unlockedMonths = (t.term_months || [])
+      .filter(m => m.is_unlocked)
+      .map(m => m.month_number);
+    return `
+      <div class="term-card" data-term-id="${t.id}" data-student-id="${studentRec.id}" style="cursor:pointer">
+        <div class="term-header">
+          <span class="term-title">${t.title}</span>
+          <span class="term-level">${levelLabel[t.level] || t.level}</span>
+        </div>
+        <div class="term-unlocked-info">
+          ${unlockedMonths.length ? 
+            `<span class="unlocked-label">ماه‌های باز: ${unlockedMonths.map(m => `ماه ${m}`).join('، ')}</span>` :
+            '<span class="locked-label">هنوز ماهی باز نشده</span>'}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Click on term → show sessions
+  list.querySelectorAll('.term-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const term = terms.find(t => t.id === card.dataset.termId);
+      openStudentTermSessions(term, levelLabel);
+    });
+  });
+}
+
+async function openStudentTermSessions(term, levelLabel) {
+  const unlockedMonths = (term.term_months || [])
+    .filter(m => m.is_unlocked)
+    .map(m => m.month_number);
+
+  if (!unlockedMonths.length) {
+    showNotif('هنوز ماهی توسط استاد باز نشده', 'error');
+    return;
+  }
+
+  const { data: sessions, error } = await db
+    .from('sessions')
+    .select('*')
+    .eq('term_id', term.id)
+    .in('month_number', unlockedMonths)
+    .order('session_number', { ascending: true });
+
+  if (error) { logError(error, 'openStudentTermSessions'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Reuse modal-term-detail for student view (read-only)
+  document.getElementById('term-detail-title').textContent = term.title;
+  document.getElementById('term-detail-level').textContent = levelLabel[term.level] || term.level;
+  document.getElementById('term-detail-start').textContent = term.start_date
+    ? new Date(term.start_date).toLocaleDateString('fa-IR') : '—';
+
+  const sessionRows = (sessions || []).map(s => {
+    const isPast = s.session_date && s.session_date < today;
+    const isToday = s.session_date === today;
+    const statusClass = isToday ? 'session-today' : isPast ? 'session-past' : 'session-future';
+    const statusLabel = isToday ? '📍 امروز' : isPast ? '✓' : '—';
+    const hasContent = s.content_text ? '📝' : '';
+    return `
+      <div class="session-row ${statusClass}" data-session-id="${s.id}" data-content="${encodeURIComponent(s.content_text || '')}" data-date="${s.session_date || ''}" data-num="${s.session_number}" data-link="${s.link || ''}" style="cursor:pointer">
+        <span class="session-num">جلسه ${s.session_number} ${hasContent}</span>
+        <span class="session-date">${s.session_date ? new Date(s.session_date).toLocaleDateString('fa-IR') : '—'}</span>
+        <span class="session-status">${statusLabel}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('term-detail-sessions').innerHTML =
+    sessionRows || '<div class="empty-state">جلسه‌ای در ماه‌های باز وجود ندارد</div>';
+
+  // Click session → read-only view with exercises
+  document.querySelectorAll('#term-detail-sessions .session-row[data-session-id]').forEach(row => {
+    row.addEventListener('click', async () => {
+      const content = decodeURIComponent(row.dataset.content);
+      const date = row.dataset.date;
+      const num = row.dataset.num;
+      const sessionId = row.dataset.sessionId;
+
+      document.getElementById('student-session-title').textContent = `جلسه ${num}`;
+      document.getElementById('student-session-date').textContent =
+        date ? new Date(date).toLocaleDateString('fa-IR') : '—';
+
+      // Content + link
+      const linkMatch = row.dataset.link ? `<a href="${row.dataset.link}" target="_blank" class="exercise-link" style="display:block;margin-top:0.5rem">🔗 منبع جلسه</a>` : '';
+      document.getElementById('student-session-content').innerHTML =
+        `<p class="student-session-content">${content || 'محتوایی برای این جلسه ثبت نشده'}</p>${linkMatch}`;
+
+      // Load exercises + scores
+      const exEl = document.getElementById('student-session-exercises');
+      exEl.innerHTML = '<div class="empty-state" style="font-size:0.8rem">در حال بارگذاری تمرین‌ها...</div>';
+      openModal('modal-student-session');
+
+      const { data: studentRec } = await db.from('students').select('id').eq('profile_id', currentUser.id).single();
+      if (!studentRec) { exEl.innerHTML = ''; return; }
+
+      const [exRes, scRes] = await Promise.all([
+        db.from('exercises').select('id, title, max_score, skill_categories(name), description, link').eq('session_id', sessionId).order('created_at'),
+        db.from('exercise_scores').select('exercise_id, score').eq('student_id', studentRec.id)
+      ]);
+
+      const exercises = exRes.data || [];
+      const scoreMap = {};
+      (scRes.data || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+      if (!exercises.length) { exEl.innerHTML = ''; return; }
+
+      exEl.innerHTML = `
+        <div class="section-divider"><span>تمرین‌های جلسه</span></div>
+        ${exercises.map(ex => {
+          const score = scoreMap[ex.id];
+          const hasScore = score !== null && score !== undefined;
+          return `
+            <div class="exercise-card">
+              <div class="exercise-header">
+                <span class="exercise-title">${ex.title}</span>
+                <span class="exercise-score-badge ${hasScore ? 'scored' : ''}">
+                  ${hasScore ? `${score} از ${ex.max_score}` : `${ex.max_score} نمره`}
+                </span>
+              </div>
+              ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
+              ${ex.description ? `<p class="exercise-desc">${ex.description}</p>` : ''}
+              ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع تمرین</a>` : ''}
+            </div>`;
+        }).join('')}`;
+    });
+  });
+
+  openModal('modal-term-detail');
+}
+
 // ════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════
@@ -494,16 +1468,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check existing session
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
-    const { data: { user }, error: userError } = await db.auth.getUser();
-    if (userError || !user) {
-      await db.auth.signOut();
-      showScreen("screen-auth");
-    } else {
-      await afterAuth(user);
-    }
-  } else {
-    showScreen("screen-auth");
+    await afterAuth(session.user);
   }
+
   // ── Auth Tabs ──
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -566,7 +1533,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.modal-close, .modal-backdrop').forEach(el => {
     el.addEventListener('click', () => {
       const modal = el.closest('.modal') || document.getElementById(el.dataset.modal);
-      if (modal) modal.classList.add('hidden');
+      if (modal) {
+        modal.classList.add('hidden');
+        if (modal.id === 'modal-add-term') openModal('modal-student-profile');
+        if (modal.id === 'modal-term-detail' && currentProfile?.role === 'teacher') openModal('modal-student-profile');
+        if (modal.id === 'modal-session-detail') openModal('modal-term-detail');
+        if (modal.id === 'modal-add-exercise') openModal('modal-session-detail');
+        if (modal.id === 'modal-score-exercise') openModal('modal-session-detail');
+      }
     });
   });
 
@@ -638,12 +1612,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
   });
 
-  // ── Lessons ──
-  const btnAddLesson = document.getElementById('btn-add-lesson');
-  if (btnAddLesson) btnAddLesson.addEventListener('click', () => openModal('modal-add-lesson'));
+  // ── Apply Karname Button ──
+  document.addEventListener('click', e => {
+    if (e.target.id === 'btn-apply-karname') applyTeacherKarname();
+  });
 
-  const formAddLesson = document.getElementById('form-add-lesson');
-  if (formAddLesson) formAddLesson.addEventListener('submit', async e => {
+  // ── Session Detail + Exercise Buttons (delegated) ──
+  document.addEventListener('click', e => {
+    if (e.target.id === 'btn-save-session-date') saveSessionDate();
+    if (e.target.id === 'btn-save-session-content') saveSessionContent();
+    if (e.target.id === 'btn-add-exercise') {
+      document.getElementById('form-add-exercise').reset();
+      loadSkillCategories();
+      closeModal('modal-session-detail');
+      openModal('modal-add-exercise');
+    }
+    if (e.target.id === 'btn-save-exercise-scores') saveExerciseScores();
+  });
+
+  // ── Add Exercise Form ──
+  const formAddExercise = document.getElementById('form-add-exercise');
+  if (formAddExercise) formAddExercise.addEventListener('submit', async e => {
+    e.preventDefault();
+    await addExercise({
+      title: document.getElementById('exercise-title').value,
+      category_id: document.getElementById('exercise-category').value || null,
+      max_score: parseInt(document.getElementById('exercise-max-score').value) || 20,
+      description: document.getElementById('exercise-description').value || null,
+      link: document.getElementById('exercise-link').value || null
+    });
+  });
+
+  // Fix: modal-add-exercise close → back to session detail
+
+
+  // ── Student Profile Modal Tabs ──
+  document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab));
+  });
+
+  // ── Add Term Button ──
+  // ── Add Term Button (delegated) ──
+  document.addEventListener("click", e => {
+    if (e.target.id === "btn-add-term" || e.target.closest("#btn-add-term")) {
+      document.getElementById("form-add-term").reset();
+      document.getElementById("term-sessions-preview").classList.add("hidden");
+      openModal("modal-add-term");
+    }
+  });
+
+
+
+
+
+
+
+  // ── Preview sessions when date/days change ──
+  function updatePreview() {
+    const startDate = document.getElementById('term-start-date').value;
+    const classDays = [...document.querySelectorAll('input[name="class-day"]:checked')].map(c => c.value);
+    if (!startDate || !classDays.length) { document.getElementById('term-sessions-preview').classList.add('hidden'); return; }
+    const dates = calcSessionDates(startDate, classDays);
+    if (!dates.length) return;
+    document.getElementById('term-sessions-preview').classList.remove('hidden');
+    document.getElementById('preview-list').innerHTML = dates.map((d, i) =>
+      `<div class="preview-session">جلسه ${i + 1} — ${d.toLocaleDateString('fa-IR')}</div>`
+    ).join('');
+  }
+
+  document.getElementById('term-start-date').addEventListener('change', updatePreview);
+  document.querySelectorAll('input[name="class-day"]').forEach(cb => cb.addEventListener('change', updatePreview));
+
+  // ── Add Term Form ──
+  const formAddTerm = document.getElementById('form-add-term');
+  if (formAddTerm) formAddTerm.addEventListener('submit', async e => {
+    e.preventDefault();
+    await addTerm();
+  });
+
+
+  document.getElementById('btn-add-lesson').addEventListener('click', () => openModal('modal-add-lesson'));
+
+  document.getElementById('form-add-lesson').addEventListener('submit', async e => {
     e.preventDefault();
     await addLesson({
       title: document.getElementById('lesson-title').value,

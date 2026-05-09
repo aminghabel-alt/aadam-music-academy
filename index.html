@@ -279,13 +279,33 @@
         <span class="nav-icon">💬</span>
         <span class="nav-label">پیام‌ها</span>
       </button>
-      
+      <button class="nav-item" data-panel="panel-student-terms">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">ترم‌ها</span>
+      </button>
     </nav>
 
     <main class="panels">
       <div id="panel-my-scores" class="panel active">
         <div class="panel-header"><h2>کارنامه من</h2></div>
-        <div id="my-scores-list" class="scores-list"></div>
+
+        <!-- Term selector -->
+        <div class="field" style="margin-bottom:1rem">
+          <select id="karname-term-select">
+            <option value="selected">ترم‌های منتخب استاد</option>
+            <option value="all">همه ترم‌ها</option>
+          </select>
+        </div>
+
+        <!-- Skill summary -->
+        <div id="karname-skills" class="karname-skills"></div>
+
+        <!-- Session chart -->
+        <div class="karname-section-title">نمودار جلسات</div>
+        <div id="karname-chart" class="karname-chart"></div>
+
+        <!-- Session detail (on click) -->
+        <div id="karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
       <div id="panel-practice" class="panel">
         <div class="panel-header"><h2>تمرین امروز</h2></div>
@@ -309,7 +329,97 @@
           <button id="btn-student-send-msg" class="btn-gold">ارسال</button>
         </div>
       </div>
+      <div id="panel-student-terms" class="panel">
+        <div class="panel-header"><h2>ترم‌های من</h2></div>
+        <div id="student-terms-list"><div class="empty-state">در حال بارگذاری...</div></div>
+      </div>
     </main>
+  </div>
+
+
+  <!-- ═══════════════════════════════ MODAL — STUDENT PROFILE ═══════════════════════════════ -->
+  <div id="modal-student-profile" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h3 id="profile-student-name">—</h3>
+        <button class="modal-close" data-modal="modal-student-profile">✕</button>
+      </div>
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="terms">ترم‌ها</button>
+        <button class="profile-tab" data-tab="karname">کارنامه</button>
+        <button class="profile-tab" data-tab="info">اطلاعات</button>
+      </div>
+      <div id="profile-tab-terms" class="profile-tab-content active">
+        <div class="panel-header" style="margin-bottom:1rem">
+          <span></span>
+          <button id="btn-add-term" class="btn-gold">+ ترم جدید</button>
+        </div>
+        <div id="terms-list"><div class="empty-state">هنوز ترمی تعریف نشده</div></div>
+      </div>
+      <div id="profile-tab-karname" class="profile-tab-content">
+        <!-- Term/Month checkboxes -->
+        <div id="karname-term-checkboxes" style="margin-top:0.75rem"></div>
+        <button id="btn-apply-karname" class="btn-gold" style="width:100%;margin:0.75rem 0">محاسبه کارنامه</button>
+        <!-- Results -->
+        <div id="teacher-karname-skills"></div>
+        <div class="karname-section-title" id="karname-chart-title" style="display:none">نمودار جلسات</div>
+        <div id="teacher-karname-chart"></div>
+        <div id="teacher-karname-session-detail" class="karname-session-detail hidden"></div>
+      </div>
+      <div id="profile-tab-info" class="profile-tab-content">
+        <div id="student-info-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — ADD TERM ═══════════════════════════════ -->
+  <div id="modal-add-term" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>ترم جدید</h3>
+        <button class="modal-close" data-modal="modal-add-term">✕</button>
+      </div>
+      <form id="form-add-term">
+        <div class="field">
+          <label>عنوان ترم *</label>
+          <input type="text" id="term-title" required placeholder="مثلاً ترم پاییز ۱۴۰۴" />
+        </div>
+        <div class="field">
+          <label>سطح *</label>
+          <select id="term-level" required>
+            <option value="">— انتخاب —</option>
+            <option value="moghadamati_1">مقدماتی ۱</option>
+            <option value="moghadamati_2">مقدماتی ۲</option>
+            <option value="motevaset_1">متوسط ۱</option>
+            <option value="motevaset_2">متوسط ۲</option>
+            <option value="pishrafte_1">پیشرفته ۱</option>
+            <option value="pishrafte_2">پیشرفته ۲</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>تاریخ شروع *</label>
+          <input type="date" id="term-start-date" required />
+        </div>
+        <div class="field">
+          <label>روزهای کلاس *</label>
+          <div class="days-grid">
+            <label class="day-check"><input type="checkbox" name="class-day" value="شنبه" /><span>ش</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="یکشنبه" /><span>ی</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="دوشنبه" /><span>د</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="سه‌شنبه" /><span>س</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="چهارشنبه" /><span>چ</span></label>
+            <label class="day-check"><input type="checkbox" name="class-day" value="پنجشنبه" /><span>پ</span></label>
+          </div>
+        </div>
+        <div id="term-sessions-preview" class="sessions-preview hidden">
+          <p class="preview-label">پیش‌نمایش جلسات:</p>
+          <div id="preview-list"></div>
+        </div>
+        <button type="submit" class="btn-primary">ساختن ترم</button>
+      </form>
+    </div>
   </div>
 
   <!-- ═══════════════════════════════ MODAL — ADD STUDENT ═══════════════════════════════ -->
@@ -387,6 +497,121 @@
     </form>
   </div>
 </div>
+
+
+  <!-- ═══════════════════════════════ MODAL — TERM DETAIL ═══════════════════════════════ -->
+  <div id="modal-term-detail" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="term-detail-title">—</h3>
+        <button class="modal-close" data-modal="modal-term-detail">✕</button>
+      </div>
+      <div class="term-detail-meta">
+        <span id="term-detail-level" class="term-level"></span>
+        <span class="term-detail-sep">·</span>
+        <span>شروع: <span id="term-detail-start">—</span></span>
+      </div>
+      <div id="term-detail-sessions" class="sessions-list"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ MODAL — SESSION DETAIL ═══════════════════════════════ -->
+  <div id="modal-session-detail" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="session-detail-title">جلسه —</h3>
+        <button class="modal-close" data-modal="modal-session-detail">✕</button>
+      </div>
+      <div class="session-detail-meta">
+        <input type="date" id="session-detail-date" class="session-date-input" />
+        <button id="btn-save-session-date" class="btn-outline btn-sm">ذخیره تاریخ</button>
+      </div>
+      <div class="field" style="margin-top:1rem">
+        <label>محتوای آموزشی جلسه</label>
+        <textarea id="session-detail-content" rows="4" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
+      </div>
+      <div class="field">
+        <label>لینک منابع (ویدیو / PDF / فایل)</label>
+        <input type="url" id="session-detail-link" placeholder="https://..." />
+      </div>
+      <button id="btn-save-session-content" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره محتوا</button>
+
+      <!-- Exercises Section -->
+      <div class="section-divider">
+        <span>تمرین‌های جلسه</span>
+      </div>
+      <div id="exercises-list"><div class="empty-state">هنوز تمرینی اضافه نشده</div></div>
+      <button id="btn-add-exercise" class="btn-gold" style="width:100%;margin-top:0.75rem">+ افزودن تمرین</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — ADD EXERCISE ═══════════════════════════════ -->
+  <div id="modal-add-exercise" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>تمرین جدید</h3>
+        <button class="modal-close" data-modal="modal-add-exercise">✕</button>
+      </div>
+      <form id="form-add-exercise">
+        <div class="field">
+          <label>عنوان تمرین *</label>
+          <input type="text" id="exercise-title" required placeholder="مثلاً کروماتیک دست راست" />
+        </div>
+        <div class="field">
+          <label>دسته مهارت</label>
+          <select id="exercise-category">
+            <option value="">— انتخاب —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>حداکثر نمره</label>
+          <input type="number" id="exercise-max-score" value="20" min="1" max="100" />
+        </div>
+        <div class="field">
+          <label>توضیحات</label>
+          <textarea id="exercise-description" rows="2" placeholder="توضیح تمرین..."></textarea>
+        </div>
+        <div class="field">
+          <label>لینک منبع</label>
+          <input type="url" id="exercise-link" placeholder="https://..." />
+        </div>
+        <button type="submit" class="btn-primary">ذخیره تمرین</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — SCORE EXERCISE ═══════════════════════════════ -->
+  <div id="modal-score-exercise" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="score-exercise-title">نمره‌دهی</h3>
+        <button class="modal-close" data-modal="modal-score-exercise">✕</button>
+      </div>
+      <div id="score-exercise-students"></div>
+      <button id="btn-save-exercise-scores" class="btn-primary" style="width:100%;margin-top:1rem">ذخیره نمرات</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ MODAL — STUDENT SESSION VIEW ═══════════════════════════════ -->
+  <div id="modal-student-session" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="student-session-title">جلسه —</h3>
+        <button class="modal-close" data-modal="modal-student-session">✕</button>
+      </div>
+      <div class="student-session-date" id="student-session-date"></div>
+      <div id="student-session-content" class="student-session-content"></div>
+      <!-- Exercises for student -->
+      <div id="student-session-exercises"></div>
+    </div>
+  </div>
 
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>

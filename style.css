@@ -45,7 +45,7 @@ a { color: var(--gold); text-decoration: none; }
 .screen { display: none; min-height: 100vh; position: relative; }
 #screen-auth { position: relative; }
 .auth-bg { display: none; }
-#screen-auth.active .auth-bg { display: block; }
+.screen.active .auth-bg { display: block; }
 .screen.active { display: block; }
 .screen.active#screen-auth { display: flex; }
 .screen.active#screen-auth { display: flex; }
@@ -608,9 +608,497 @@ a { color: var(--gold); text-decoration: none; }
 .modal-close:hover { color: var(--text); }
 
 /* ════════════════════════════════
-   RESPONSIVE.
+   RESPONSIVE
 ════════════════════════════════ */
 @media (min-width: 600px) {
   .auth-container { padding: 2.5rem 2rem; }
   .panels { max-width: 600px; margin: 0 auto; }
+}
+
+/* ═══════════════════════════════
+   TERM & STUDENT PROFILE
+═══════════════════════════════ */
+
+.modal-box--wide { max-width: 520px; }
+
+.profile-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.profile-tab {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-tab.active {
+  background: var(--gold);
+  color: #000;
+  font-weight: 600;
+}
+
+.profile-tab-content { display: none; }
+.profile-tab-content.active { display: block; }
+
+/* Days grid */
+.days-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.day-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.day-check input { display: none; }
+
+.day-check span {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+
+.day-check input:checked + span {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+/* Sessions preview */
+.sessions-preview {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.preview-label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.preview-session {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Term card */
+.term-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.term-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.term-title { font-weight: 600; color: var(--text); }
+.term-level { font-size: 0.78rem; color: var(--gold); }
+
+.month-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.month-row:last-child { border-bottom: none; }
+.month-label { font-size: 0.85rem; color: var(--text-dim); }
+
+/* Student info tab */
+.info-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.88rem;
+}
+.info-label { color: var(--text-dim); }
+
+/* Fix modal-add-term submit button visibility */
+#modal-add-term .modal-box {
+  padding-bottom: 2rem;
+}
+
+#form-add-term button[type="submit"] {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Fix modal-add-term height on mobile/small screens */
+#modal-add-term .modal-box {
+  max-height: 92vh;
+  overflow-y: auto;
+  padding-bottom: 3rem;
+}
+
+/* Delete term button */
+.btn-delete-term {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.5;
+  padding: 0.2rem;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.btn-delete-term:hover { opacity: 1; }
+
+/* Term detail */
+.term-detail-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.term-detail-sep { color: var(--border); }
+
+.sessions-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: rgba(255,255,255,0.03);
+}
+
+.session-past { opacity: 0.6; }
+.session-today { background: rgba(201,168,76,0.12); border: 1px solid var(--gold); }
+.session-future { opacity: 0.85; }
+
+.session-num { font-weight: 600; color: var(--text); }
+.session-date { color: var(--text-dim); }
+.session-status { font-size: 0.78rem; color: var(--gold); }
+
+/* Term footer hint */
+.term-footer { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+.term-detail-hint { font-size: 0.75rem; color: var(--text-dim); }
+
+/* Session detail modal */
+.session-detail-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-date-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.75rem;
+  flex: 1;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.session-row { cursor: pointer; transition: background 0.15s; }
+.session-row:hover { background: rgba(201,168,76,0.08); }
+
+/* Student terms */
+.term-unlocked-info { margin-top: 0.5rem; font-size: 0.82rem; }
+.unlocked-label { color: var(--gold); }
+.locked-label { color: var(--text-dim); }
+
+/* Student session view */
+.student-session-date {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-session-content {
+  font-size: 0.92rem;
+  color: var(--text);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  min-height: 100px;
+}
+
+/* Fix student profile modal layout */
+.modal-box--wide {
+  max-width: 520px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-box--wide .modal-header h3 {
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.modal-box--wide .profile-tabs {
+  flex-shrink: 0;
+}
+
+.modal-box--wide .profile-tab-content.active {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Exercises */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.75rem;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.section-divider::before, .section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.exercise-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.exercise-title { font-weight: 600; font-size: 0.9rem; }
+.exercise-score-badge {
+  font-size: 0.75rem;
+  color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+}
+.exercise-category { font-size: 0.75rem; color: var(--text-dim); }
+.exercise-desc { font-size: 0.82rem; color: var(--text-mid); margin-top: 0.25rem; }
+.exercise-link { font-size: 0.82rem; color: var(--gold); text-decoration: none; }
+
+.btn-xs {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Score exercise */
+.score-student-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.score-student-name { font-size: 0.9rem; }
+.exercise-score-input {
+  width: 70px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+}
+
+.exercise-score-badge.scored {
+  background: rgba(201,168,76,0.2);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════
+   KARNAME
+═══════════════════════════════ */
+
+.karname-section-title {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.skill-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.skill-name { font-size: 0.82rem; color: var(--text); min-width: 60px; text-align: right; }
+.skill-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.skill-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.skill-score { font-size: 0.78rem; color: var(--text-dim); min-width: 55px; text-align: left; }
+
+/* Session chart */
+.session-bars {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-end;
+  height: 120px;
+  padding: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.session-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  min-width: 32px;
+  flex: 1;
+}
+
+.session-bar-wrap {
+  width: 100%;
+  height: 90px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.session-bar-inner {
+  width: 100%;
+  background: var(--gold);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+  min-height: 4px;
+}
+
+.session-bar-col:hover .session-bar-inner { opacity: 0.8; }
+.session-bar-label { font-size: 0.65rem; color: var(--text-dim); }
+
+/* Session detail */
+.karname-session-detail {
+  margin-top: 1rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+.karname-session-detail.hidden { display: none; }
+.karname-detail-header { font-weight: 600; margin-bottom: 0.5rem; color: var(--gold); font-size: 0.88rem; }
+.karname-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.karname-detail-score { color: var(--gold); font-weight: 600; }
+.karname-detail-total { font-size: 0.82rem; color: var(--text-dim); margin-top: 0.5rem; text-align: left; }
+
+/* Karname checkboxes */
+.karname-term-group {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.karname-term-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.karname-check-all {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.karname-month-checks {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-right: 1rem;
+}
+
+.karname-month-check {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.karname-month-check input,
+.karname-check-all input {
+  accent-color: var(--gold);
+  width: 16px;
+  height: 16px;
 }
