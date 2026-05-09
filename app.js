@@ -160,7 +160,7 @@ async function afterAuth(user) {
   } else {
     document.getElementById('student-name-display').textContent = profile.name;
     showScreen('screen-student');
-    loadMyScores();
+    initKarname();
     loadStudentMessages();
     loadStudentTerms();
   }
@@ -347,8 +347,15 @@ async function loadTerms(studentId) {
               </label>
             </div>`).join('')}
         </div>
-        <div class="term-footer">
+        <div class="term-footer" style="display:flex;justify-content:space-between;align-items:center">
           <span class="term-detail-hint">برای جزئیات کلیک کن ←</span>
+          <label class="toggle-label" onclick="event.stopPropagation()">
+            <input type="checkbox" class="term-report-toggle"
+              data-term-id="${t.id}"
+              ${t.include_in_report !== false ? 'checked' : ''} />
+            <span class="toggle-track"></span>
+            <span style="font-size:0.75rem">${t.include_in_report !== false ? 'در کارنامه' : 'خارج کارنامه'}</span>
+          </label>
         </div>
       </div>`;
   }).join('');
@@ -374,6 +381,18 @@ async function loadTerms(studentId) {
       if (error) { showNotif('خطا در تغییر دسترسی', 'error'); logError(error, 'toggleMonth'); toggle.checked = !isUnlocked; return; }
       toggle.nextElementSibling.nextElementSibling.textContent = isUnlocked ? 'باز' : 'قفل';
       showNotif(isUnlocked ? 'ماه باز شد ✓' : 'ماه قفل شد', 'success');
+    });
+  });
+
+  // Toggle include_in_report
+  list.querySelectorAll('.term-report-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async () => {
+      const termId = toggle.dataset.termId;
+      const val = toggle.checked;
+      const { error } = await db.from('terms').update({ include_in_report: val }).eq('id', termId);
+      if (error) { showNotif('خطا', 'error'); toggle.checked = !val; return; }
+      toggle.nextElementSibling.nextElementSibling.textContent = val ? 'در کارنامه' : 'خارج کارنامه';
+      showNotif(val ? 'به کارنامه اضافه شد ✓' : 'از کارنامه خارج شد', 'success');
     });
   });
 
@@ -644,6 +663,176 @@ async function loadMyScores() {
         ${s.comment ? `<p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.75rem">${s.comment}</p>` : ''}
       </div>`;
   }).join('');
+}
+
+
+// ════════════════════════════════
+// KARNAME (Student)
+// ════════════════════════════════
+
+let myStudentId = null;
+let myTerms = [];
+
+async function initKarname() {
+  const { data: studentRec, error } = await db
+    .from('students').select('id').eq('profile_id', currentUser.id).single();
+  if (error || !studentRec) return;
+  myStudentId = studentRec.id;
+
+  const { data: terms } = await db
+    .from('terms').select('*')
+    .eq('student_id', myStudentId)
+    .order('created_at', { ascending: false });
+  myTerms = terms || [];
+
+  // Add term options to dropdown
+  const sel = document.getElementById('karname-term-select');
+  if (sel && myTerms.length) {
+    myTerms.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.title;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => loadKarname(sel.value));
+  }
+  loadKarname('selected');
+}
+
+async function loadKarname(mode) {
+  if (!myStudentId) return;
+
+  // Filter terms
+  let termIds = [];
+  if (mode === 'selected') {
+    termIds = myTerms.filter(t => t.include_in_report !== false).map(t => t.id);
+  } else if (mode === 'all') {
+    termIds = myTerms.map(t => t.id);
+  } else {
+    termIds = [mode]; // specific term id
+  }
+
+  if (!termIds.length) {
+    document.getElementById('karname-skills').innerHTML = '<div class="empty-state">هیچ ترمی انتخاب نشده</div>';
+    document.getElementById('karname-chart').innerHTML = '';
+    return;
+  }
+
+  // Load sessions in these terms
+  const { data: sessions } = await db
+    .from('sessions').select('id, session_number, session_date, term_id')
+    .in('term_id', termIds)
+    .order('session_number', { ascending: true });
+
+  if (!sessions?.length) {
+    document.getElementById('karname-skills').innerHTML = '<div class="empty-state">هنوز جلسه‌ای ثبت نشده</div>';
+    document.getElementById('karname-chart').innerHTML = '';
+    return;
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+
+  // Load exercises
+  const { data: exercises } = await db
+    .from('exercises').select('id, session_id, max_score, skill_categories(name)')
+    .in('session_id', sessionIds);
+
+  // Load scores
+  const { data: scores } = await db
+    .from('exercise_scores').select('exercise_id, score')
+    .eq('student_id', myStudentId)
+    .in('exercise_id', (exercises || []).map(e => e.id));
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  // Build skill summary
+  const skillMap = {};
+  (exercises || []).forEach(ex => {
+    const cat = ex.skill_categories?.name || 'سایر';
+    if (!skillMap[cat]) skillMap[cat] = { total: 0, max: 0, count: 0 };
+    const score = scoreMap[ex.id];
+    if (score !== null && score !== undefined) {
+      skillMap[cat].total += score;
+      skillMap[cat].max += ex.max_score;
+      skillMap[cat].count++;
+    }
+  });
+
+  // Render skill summary
+  const skillsEl = document.getElementById('karname-skills');
+  const skillEntries = Object.entries(skillMap).filter(([, v]) => v.count > 0);
+  if (skillEntries.length) {
+    skillsEl.innerHTML = `
+      <div class="karname-section-title">خلاصه مهارت‌ها</div>
+      ${skillEntries.map(([name, v]) => {
+        const pct = Math.round((v.total / v.max) * 100);
+        return `
+          <div class="skill-summary-row">
+            <span class="skill-name">${name}</span>
+            <div class="skill-bar-track">
+              <div class="skill-bar-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="skill-score">${v.total} / ${v.max}</span>
+          </div>`;
+      }).join('')}`;
+  } else {
+    skillsEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای ثبت نشده</div>';
+  }
+
+  // Build session chart — per session average score %
+  const exBySession = {};
+  (exercises || []).forEach(ex => {
+    if (!exBySession[ex.session_id]) exBySession[ex.session_id] = [];
+    exBySession[ex.session_id].push(ex);
+  });
+
+  const chartEl = document.getElementById('karname-chart');
+  const sessionData = sessions.map(s => {
+    const exs = exBySession[s.id] || [];
+    const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+    if (!scored.length) return { ...s, pct: null, total: 0, max: 0 };
+    const total = scored.reduce((a, e) => a + scoreMap[e.id], 0);
+    const max = scored.reduce((a, e) => a + e.max_score, 0);
+    return { ...s, pct: Math.round((total / max) * 100), total, max };
+  }).filter(s => s.pct !== null);
+
+  if (!sessionData.length) {
+    chartEl.innerHTML = '<div class="empty-state">هنوز نمره‌ای در جلسات ثبت نشده</div>';
+    return;
+  }
+
+  chartEl.innerHTML = `
+    <div class="session-bars">
+      ${sessionData.map(s => `
+        <div class="session-bar-col" data-session-id="${s.id}" data-total="${s.total}" data-max="${s.max}" data-num="${s.session_number}" data-date="${s.session_date || ''}">
+          <div class="session-bar-wrap">
+            <div class="session-bar-inner" style="height:${s.pct}%" title="${s.pct}%"></div>
+          </div>
+          <span class="session-bar-label">ج${s.session_number}</span>
+        </div>`).join('')}
+    </div>`;
+
+  // Click on session bar → show detail
+  chartEl.querySelectorAll('.session-bar-col').forEach(col => {
+    col.addEventListener('click', () => {
+      const detailEl = document.getElementById('karname-session-detail');
+      const exs = exBySession[col.dataset.sessionId] || [];
+      const scored = exs.filter(e => scoreMap[e.id] !== null && scoreMap[e.id] !== undefined);
+      if (!scored.length) { detailEl.classList.add('hidden'); return; }
+      detailEl.classList.remove('hidden');
+      detailEl.innerHTML = `
+        <div class="karname-detail-header">جلسه ${col.dataset.num}
+          ${col.dataset.date ? ' — ' + new Date(col.dataset.date).toLocaleDateString('fa-IR') : ''}
+        </div>
+        ${scored.map(e => `
+          <div class="karname-detail-row">
+            <span>${e.skill_categories?.name || 'سایر'} — ${e.title || ''}</span>
+            <span class="karname-detail-score">${scoreMap[e.id]} / ${e.max_score}</span>
+          </div>`).join('')}
+        <div class="karname-detail-total">جمع: ${col.dataset.total} / ${col.dataset.max}</div>`;
+    });
+  });
 }
 
 // ════════════════════════════════

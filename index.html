@@ -288,7 +288,24 @@
     <main class="panels">
       <div id="panel-my-scores" class="panel active">
         <div class="panel-header"><h2>کارنامه من</h2></div>
-        <div id="my-scores-list" class="scores-list"></div>
+
+        <!-- Term selector -->
+        <div class="field" style="margin-bottom:1rem">
+          <select id="karname-term-select">
+            <option value="selected">ترم‌های منتخب استاد</option>
+            <option value="all">همه ترم‌ها</option>
+          </select>
+        </div>
+
+        <!-- Skill summary -->
+        <div id="karname-skills" class="karname-skills"></div>
+
+        <!-- Session chart -->
+        <div class="karname-section-title">نمودار جلسات</div>
+        <div id="karname-chart" class="karname-chart"></div>
+
+        <!-- Session detail (on click) -->
+        <div id="karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
       <div id="panel-practice" class="panel">
         <div class="panel-header"><h2>تمرین امروز</h2></div>
