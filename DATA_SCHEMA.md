@@ -342,3 +342,17 @@ Hala **DATA_SCHEMA.md ro update konim** — in jadval haro ezafe kon:
 ```
 
 | `session_date` | DATE | YES | NULL | تاریخ جلسه — auto یا دستی |
+
+### `skill_categories`
+دسته‌بندی مهارت‌ها
+
+| ستون | Type | Nullable | Default | توضیح |
+|------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `teacher_id` | UUID | YES | NULL | NULL = default global |
+| `name` | TEXT | NO | — | نام دسته |
+| `is_default` | BOOLEAN | NO | FALSE | default های سیستم |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+**همچنین:**
+- `exercises` — اضافه شد `link`, `description`
