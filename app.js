@@ -1512,10 +1512,34 @@ async function openStudentTermSessions(term, levelLabel) {
               ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع تمرین</a>` : ''}
             </div>`;
         }).join('')}`;
+
+      // Load session files for student
+      await loadStudentSessionFiles(sessionId, exEl);
     });
   });
 
   openModal('modal-term-detail');
+}
+
+async function loadStudentSessionFiles(sessionId, container) {
+  const { data: files, error } = await db.storage
+    .from('session-files')
+    .list(`sessions/${sessionId}`);
+
+  if (error || !files?.length) return;
+
+  const filesHtml = files.map(f => {
+    const { data: urlData } = db.storage
+      .from('session-files')
+      .getPublicUrl(`sessions/${sessionId}/${f.name}`);
+    const url = urlData?.publicUrl || '#';
+    const icon = f.name.endsWith('.pdf') ? '📄' : f.name.match(/mp3|m4a|aac/) ? '🎵' : '🎬';
+    return `<div class="file-item"><a href="${url}" target="_blank" class="file-link">${icon} ${f.name}</a></div>`;
+  }).join('');
+
+  container.insertAdjacentHTML('beforeend', `
+    <div class="section-divider"><span>فایل‌های جلسه</span></div>
+    <div class="files-list">${filesHtml}</div>`);
 }
 
 // ════════════════════════════════
