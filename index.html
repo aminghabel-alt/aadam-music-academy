@@ -16,7 +16,7 @@
   <div id="notif" class="notif hidden"></div>
 
   <!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
-  <div id="screen-auth" class="screen active" style="position:relative;z-index:1">
+  <div id="screen-auth" class="screen active">
     <div class="auth-container">
       <div class="auth-logo">
         <span class="logo-symbol">𝄞</span>
@@ -125,10 +125,6 @@
         <span class="nav-icon">💬</span>
         <span class="nav-label">پیام‌ها</span>
       </button>
-      <button class="nav-item" data-panel="panel-lessons">
-        <span class="nav-icon">📚</span>
-        <span class="nav-label">محتوا</span>
-      </button>
       <button class="nav-item" data-panel="panel-settings">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label">تنظیمات</span>
@@ -225,17 +221,6 @@
         </div>
       </div>
 
-<!-- Panel: Lessons -->
-<div id="panel-lessons" class="panel">
-  <div class="panel-header">
-    <h2>محتوای آموزشی</h2>
-    <button id="btn-add-lesson" class="btn-gold">+ درس جدید</button>
-  </div>
-  <div id="lessons-list" class="students-list">
-    <div class="empty-state">در حال بارگذاری...</div>
-  </div>
-</div>
-
       <!-- Panel: Settings -->
       <div id="panel-settings" class="panel">
         <div class="panel-header">
@@ -279,7 +264,6 @@
         <span class="nav-icon">💬</span>
         <span class="nav-label">پیام‌ها</span>
       </button>
-      
     </nav>
 
     <main class="panels">
@@ -346,63 +330,6 @@
         <div class="field"><label>یادداشت</label><textarea id="st-notes" rows="2"></textarea></div>
         <button type="submit" class="btn-primary">ذخیره هنرجو</button>
       </form>
-    </div>
-  </div>
-
-  <!-- Modal: Add Lesson -->
-<div id="modal-add-lesson" class="modal hidden">
-  <div class="modal-backdrop"></div>
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>درس جدید</h3>
-      <button class="modal-close" data-modal="modal-add-lesson">✕</button>
-    </div>
-    <form id="form-add-lesson">
-      <div class="field">
-        <label>عنوان درس *</label>
-        <input type="text" id="lesson-title" required />
-      </div>
-      <div class="field">
-        <label>سطح</label>
-        <select id="lesson-level">
-          <option value="">— انتخاب —</option>
-          <option value="beginner">مبتدی</option>
-          <option value="intermediate">متوسط</option>
-          <option value="advanced">پیشرفته</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>شماره جلسه</label>
-        <input type="number" id="lesson-session" min="1" />
-      </div>
-      <div class="field">
-        <label>توضیحات</label>
-        <textarea id="lesson-content" rows="3"></textarea>
-      </div>
-      <div class="field">
-        <label>لینک (ویدیو / PDF / فایل)</label>
-        <input type="url" id="lesson-link" placeholder="https://..." />
-      </div>
-      <button type="submit" class="btn-primary">ذخیره درس</button>
-    </form>
-  </div>
-</div>
-
-
-  <!-- ═══════════════════════════════ MODAL — TERM DETAIL ═══════════════════════════════ -->
-  <div id="modal-term-detail" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="term-detail-title">—</h3>
-        <button class="modal-close" data-modal="modal-term-detail">✕</button>
-      </div>
-      <div class="term-detail-meta">
-        <span id="term-detail-level" class="term-level"></span>
-        <span class="term-detail-sep">·</span>
-        <span>شروع: <span id="term-detail-start">—</span></span>
-      </div>
-      <div id="term-detail-sessions" class="sessions-list"></div>
     </div>
   </div>
 
