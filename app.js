@@ -440,6 +440,9 @@ function openSessionDetail(session) {
   document.getElementById('session-detail-title').textContent = `جلسه ${session.session_number}`;
   document.getElementById('session-detail-date').value = session.session_date || '';
   document.getElementById('session-detail-content').value = session.content_text || '';
+  const linkEl = document.getElementById('session-detail-link');
+  if (linkEl) linkEl.value = session.link || '';
+  loadExercises(session.id);
   openModal('modal-session-detail');
 }
 
@@ -454,9 +457,12 @@ async function saveSessionDate() {
 
 async function saveSessionContent() {
   const content = document.getElementById('session-detail-content').value;
-  const { error } = await db.from('sessions').update({ content_text: content }).eq('id', currentSession.id);
+  const linkEl = document.getElementById('session-detail-link');
+  const link = linkEl ? linkEl.value || null : null;
+  const { error } = await db.from('sessions').update({ content_text: content, link }).eq('id', currentSession.id);
   if (error) { showNotif('خطا در ذخیره محتوا', 'error'); logError(error, 'saveSessionContent'); return; }
   currentSession.content_text = content;
+  currentSession.link = link;
   showNotif('محتوا ذخیره شد ✓', 'success');
 }
 
@@ -744,6 +750,152 @@ async function stopTimer() {
 }
 
 
+
+// ════════════════════════════════
+// EXERCISES (Teacher)
+// ════════════════════════════════
+
+let currentExercise = null;
+let skillCategories = [];
+
+async function loadSkillCategories() {
+  const { data, error } = await db
+    .from('skill_categories')
+    .select('*')
+    .or(`is_default.eq.true,teacher_id.eq.${currentProfile.id}`)
+    .order('is_default', { ascending: false });
+  if (error) { logError(error, 'loadSkillCategories'); return; }
+  skillCategories = data || [];
+  const sel = document.getElementById('exercise-category');
+  if (sel) {
+    sel.innerHTML = '<option value="">— انتخاب —</option>' +
+      skillCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+}
+
+async function loadExercises(sessionId) {
+  const list = document.getElementById('exercises-list');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">در حال بارگذاری...</div>';
+
+  const { data: exercises, error } = await db
+    .from('exercises')
+    .select('*, skill_categories(name)')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true });
+
+  if (error) { logError(error, 'loadExercises'); return; }
+
+  if (!exercises.length) {
+    list.innerHTML = '<div class="empty-state">هنوز تمرینی اضافه نشده</div>';
+    return;
+  }
+
+  list.innerHTML = exercises.map(ex => `
+    <div class="exercise-card" data-exercise-id="${ex.id}">
+      <div class="exercise-header">
+        <span class="exercise-title">${ex.title}</span>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <span class="exercise-score-badge">${ex.max_score} نمره</span>
+          <button class="btn-score-exercise btn-gold btn-xs" data-exercise-id="${ex.id}" data-title="${ex.title}" data-max="${ex.max_score}">نمره‌دهی</button>
+          <button class="btn-delete-exercise btn-xs" data-exercise-id="${ex.id}">🗑</button>
+        </div>
+      </div>
+      ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
+      ${ex.description ? `<p class="exercise-desc">${ex.description}</p>` : ''}
+      ${ex.link ? `<a href="${ex.link}" target="_blank" class="exercise-link">🔗 منبع</a>` : ''}
+    </div>`).join('');
+
+  // Score button
+  list.querySelectorAll('.btn-score-exercise').forEach(btn => {
+    btn.addEventListener('click', () => openScoreExercise(btn.dataset.exerciseId, btn.dataset.title, parseInt(btn.dataset.max)));
+  });
+
+  // Delete exercise
+  list.querySelectorAll('.btn-delete-exercise').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('این تمرین حذف شود؟')) return;
+      const { error } = await db.from('exercises').delete().eq('id', btn.dataset.exerciseId);
+      if (error) { showNotif('خطا در حذف', 'error'); return; }
+      showNotif('تمرین حذف شد', 'success');
+      loadExercises(currentSession.id);
+    });
+  });
+}
+
+async function addExercise(data) {
+  const { error } = await db.from('exercises').insert({
+    session_id: currentSession.id,
+    teacher_id: currentProfile.id,
+    ...data
+  });
+  if (error) { showNotif('خطا در ذخیره تمرین', 'error'); logError(error, 'addExercise'); return; }
+  showNotif('تمرین اضافه شد ✓', 'success');
+  closeModal('modal-add-exercise');
+  openModal('modal-session-detail');
+  loadExercises(currentSession.id);
+}
+
+async function openScoreExercise(exerciseId, title, maxScore) {
+  currentExercise = { id: exerciseId, title, max_score: maxScore };
+  document.getElementById('score-exercise-title').textContent = `نمره‌دهی — ${title}`;
+
+  // Load students of current teacher
+  const { data: students, error: se } = await db
+    .from('students')
+    .select('id, name')
+    .eq('teacher_id', currentProfile.id)
+    .eq('status', 'active');
+
+  if (se || !students) { showNotif('خطا در بارگذاری هنرجوها', 'error'); return; }
+
+  // Load existing scores
+  const { data: scores } = await db
+    .from('exercise_scores')
+    .select('*')
+    .eq('exercise_id', exerciseId);
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.student_id] = s.score; });
+
+  document.getElementById('score-exercise-students').innerHTML = students.map(s => `
+    <div class="score-student-row">
+      <span class="score-student-name">${s.name}</span>
+      <input type="number" class="exercise-score-input" 
+        data-student-id="${s.id}"
+        value="${scoreMap[s.id] ?? ''}"
+        min="0" max="${maxScore}"
+        placeholder="/${maxScore}" />
+    </div>`).join('');
+
+  closeModal('modal-session-detail');
+  openModal('modal-score-exercise');
+}
+
+async function saveExerciseScores() {
+  const inputs = document.querySelectorAll('.exercise-score-input');
+  const upserts = [];
+
+  inputs.forEach(input => {
+    const score = input.value === '' ? null : parseInt(input.value);
+    upserts.push({
+      exercise_id: currentExercise.id,
+      student_id: input.dataset.studentId,
+      teacher_id: currentProfile.id,
+      score
+    });
+  });
+
+  const { error } = await db.from('exercise_scores').upsert(upserts, {
+    onConflict: 'exercise_id,student_id'
+  });
+
+  if (error) { showNotif('خطا در ذخیره نمرات', 'error'); logError(error, 'saveExerciseScores'); return; }
+  showNotif('نمرات ذخیره شد ✓', 'success');
+  closeModal('modal-score-exercise');
+  openModal('modal-session-detail');
+}
+
 // ════════════════════════════════
 // TERMS (Student)
 // ════════════════════════════════
@@ -953,6 +1105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modal.id === 'modal-add-term') openModal('modal-student-profile');
         if (modal.id === 'modal-term-detail' && currentProfile?.role === 'teacher') openModal('modal-student-profile');
         if (modal.id === 'modal-session-detail') openModal('modal-term-detail');
+        if (modal.id === 'modal-add-exercise') openModal('modal-session-detail');
+        if (modal.id === 'modal-score-exercise') openModal('modal-session-detail');
       }
     });
   });
@@ -1025,11 +1179,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigator.clipboard.writeText(code).then(() => showNotif('کد کپی شد ✓', 'success'));
   });
 
-  // ── Session Detail Buttons (delegated) ──
+  // ── Session Detail + Exercise Buttons (delegated) ──
   document.addEventListener('click', e => {
     if (e.target.id === 'btn-save-session-date') saveSessionDate();
     if (e.target.id === 'btn-save-session-content') saveSessionContent();
+    if (e.target.id === 'btn-add-exercise') {
+      document.getElementById('form-add-exercise').reset();
+      loadSkillCategories();
+      closeModal('modal-session-detail');
+      openModal('modal-add-exercise');
+    }
+    if (e.target.id === 'btn-save-exercise-scores') saveExerciseScores();
   });
+
+  // ── Add Exercise Form ──
+  const formAddExercise = document.getElementById('form-add-exercise');
+  if (formAddExercise) formAddExercise.addEventListener('submit', async e => {
+    e.preventDefault();
+    await addExercise({
+      title: document.getElementById('exercise-title').value,
+      category_id: document.getElementById('exercise-category').value || null,
+      max_score: parseInt(document.getElementById('exercise-max-score').value) || 20,
+      description: document.getElementById('exercise-description').value || null,
+      link: document.getElementById('exercise-link').value || null
+    });
+  });
+
+  // Fix: modal-add-exercise close → back to session detail
+
 
   // ── Student Profile Modal Tabs ──
   document.querySelectorAll('.profile-tab').forEach(tab => {

@@ -503,9 +503,69 @@
       </div>
       <div class="field" style="margin-top:1rem">
         <label>محتوای آموزشی جلسه</label>
-        <textarea id="session-detail-content" rows="6" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
+        <textarea id="session-detail-content" rows="4" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
+      </div>
+      <div class="field">
+        <label>لینک منابع (ویدیو / PDF / فایل)</label>
+        <input type="url" id="session-detail-link" placeholder="https://..." />
       </div>
       <button id="btn-save-session-content" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره محتوا</button>
+
+      <!-- Exercises Section -->
+      <div class="section-divider">
+        <span>تمرین‌های جلسه</span>
+      </div>
+      <div id="exercises-list"><div class="empty-state">هنوز تمرینی اضافه نشده</div></div>
+      <button id="btn-add-exercise" class="btn-gold" style="width:100%;margin-top:0.75rem">+ افزودن تمرین</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — ADD EXERCISE ═══════════════════════════════ -->
+  <div id="modal-add-exercise" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>تمرین جدید</h3>
+        <button class="modal-close" data-modal="modal-add-exercise">✕</button>
+      </div>
+      <form id="form-add-exercise">
+        <div class="field">
+          <label>عنوان تمرین *</label>
+          <input type="text" id="exercise-title" required placeholder="مثلاً کروماتیک دست راست" />
+        </div>
+        <div class="field">
+          <label>دسته مهارت</label>
+          <select id="exercise-category">
+            <option value="">— انتخاب —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>حداکثر نمره</label>
+          <input type="number" id="exercise-max-score" value="20" min="1" max="100" />
+        </div>
+        <div class="field">
+          <label>توضیحات</label>
+          <textarea id="exercise-description" rows="2" placeholder="توضیح تمرین..."></textarea>
+        </div>
+        <div class="field">
+          <label>لینک منبع</label>
+          <input type="url" id="exercise-link" placeholder="https://..." />
+        </div>
+        <button type="submit" class="btn-primary">ذخیره تمرین</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODAL — SCORE EXERCISE ═══════════════════════════════ -->
+  <div id="modal-score-exercise" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="score-exercise-title">نمره‌دهی</h3>
+        <button class="modal-close" data-modal="modal-score-exercise">✕</button>
+      </div>
+      <div id="score-exercise-students"></div>
+      <button id="btn-save-exercise-scores" class="btn-primary" style="width:100%;margin-top:1rem">ذخیره نمرات</button>
     </div>
   </div>
 

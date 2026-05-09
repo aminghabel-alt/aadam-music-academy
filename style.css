@@ -886,3 +886,75 @@ a { color: var(--gold); text-decoration: none; }
   flex: 1;
   overflow-y: auto;
 }
+
+/* Exercises */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.75rem;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.section-divider::before, .section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.exercise-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.exercise-title { font-weight: 600; font-size: 0.9rem; }
+.exercise-score-badge {
+  font-size: 0.75rem;
+  color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+}
+.exercise-category { font-size: 0.75rem; color: var(--text-dim); }
+.exercise-desc { font-size: 0.82rem; color: var(--text-mid); margin-top: 0.25rem; }
+.exercise-link { font-size: 0.82rem; color: var(--gold); text-decoration: none; }
+
+.btn-xs {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Score exercise */
+.score-student-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.score-student-name { font-size: 0.9rem; }
+.exercise-score-input {
+  width: 70px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+}
