@@ -1444,7 +1444,7 @@ async function openStudentTermSessions(term, levelLabel) {
               <div class="exercise-header">
                 <span class="exercise-title">${ex.title}</span>
                 <span class="exercise-score-badge ${hasScore ? 'scored' : ''}">
-                  ${hasScore ? `${score} / ${ex.max_score}` : `${ex.max_score} نمره`}
+                  ${hasScore ? `${score} از ${ex.max_score}` : `${ex.max_score} نمره`}
                 </span>
               </div>
               ${ex.skill_categories ? `<span class="exercise-category">${ex.skill_categories.name}</span>` : ''}
