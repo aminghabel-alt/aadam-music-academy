@@ -14,6 +14,15 @@ let currentProfile = null;
 let timerInterval = null;
 let timerSeconds = 0;
 
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/aadam-music-academy/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
 // ════════════════════════════════
 // UTILITIES
 // ════════════════════════════════
