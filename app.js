@@ -14,15 +14,6 @@ let currentProfile = null;
 let timerInterval = null;
 let timerSeconds = 0;
 
-// ── PWA Service Worker ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/aadam-music-academy/sw.js')
-      .then(reg => console.log('SW registered:', reg.scope))
-      .catch(err => console.warn('SW registration failed:', err));
-  });
-}
-
 // ════════════════════════════════
 // UTILITIES
 // ════════════════════════════════
@@ -1946,3 +1937,273 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
 });
+
+// ════════════════════════════════════════════════════════
+// METRONOME
+// ════════════════════════════════════════════════════════
+(function initMetronome() {
+
+  // ── State ──
+  let bpm = 80;
+  let isPlaying = false;
+  let currentBeat = 0;
+  let totalBeats = 2;       // default 2/4
+  let beatsPerMeasure = 2;
+  let subdivide = false;    // zade zarb on/off
+  let activeTheme = 'pendulum';
+  let audioCtx = null;
+  let nextBeatTime = 0;
+  let scheduleTimer = null;
+  let tapTimes = [];
+
+  // ── DOM ──
+  const bpmVal    = document.getElementById('metro-bpm-val');
+  const slider    = document.getElementById('metro-slider');
+  const playBtn   = document.getElementById('metro-play');
+  const tapBtn    = document.getElementById('metro-tap');
+  const stage     = document.getElementById('metro-stage');
+  const beatsWrap = document.getElementById('metro-beats');
+
+  if (!bpmVal) return; // panel not in DOM yet
+
+  // ── Audio ──
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playClick(time, isAccent, isZad) {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (isAccent) {
+      osc.frequency.value = 1200;
+      gain.gain.setValueAtTime(0.9, time);
+    } else if (isZad) {
+      osc.frequency.value = 900;
+      gain.gain.setValueAtTime(0.5, time);
+    } else {
+      osc.frequency.value = 700;
+      gain.gain.setValueAtTime(0.7, time);
+    }
+
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+    osc.start(time);
+    osc.stop(time + 0.07);
+  }
+
+  // ── Scheduler ──
+  function scheduler() {
+    const ctx = getAudioCtx();
+    while (nextBeatTime < ctx.currentTime + 0.1) {
+      const isAccent = (currentBeat === 0);
+      const isZad    = false;
+      playClick(nextBeatTime, isAccent, isZad);
+
+      // Zede zarb: half way between beats
+      if (subdivide) {
+        const secPerBeat = 60 / bpm;
+        playClick(nextBeatTime + secPerBeat / 2, false, true);
+      }
+
+      // Visual sync
+      const beatSnap = currentBeat;
+      const delay = (nextBeatTime - ctx.currentTime) * 1000;
+      setTimeout(() => flashBeat(beatSnap), Math.max(0, delay));
+      setTimeout(() => animateStage(beatSnap, isAccent), Math.max(0, delay));
+
+      nextBeatTime += 60 / bpm;
+      currentBeat = (currentBeat + 1) % beatsPerMeasure;
+    }
+    scheduleTimer = setTimeout(scheduler, 25);
+  }
+
+  // ── Visual: Beat Dots ──
+  function buildBeatDots() {
+    if (!beatsWrap) return;
+    beatsWrap.innerHTML = '';
+    for (let i = 0; i < beatsPerMeasure; i++) {
+      const d = document.createElement('div');
+      d.className = 'metro-beat-dot' + (i === 0 ? ' accent' : '');
+      d.id = 'metro-dot-' + i;
+      beatsWrap.appendChild(d);
+    }
+  }
+
+  function flashBeat(beat) {
+    document.querySelectorAll('.metro-beat-dot').forEach((d, i) => {
+      d.classList.remove('active-zarb', 'active-zad');
+      if (i === beat) d.classList.add('active-zarb');
+    });
+  }
+
+  // ── Visual: Stage Themes ──
+  function renderStage() {
+    if (!stage) return;
+    stage.innerHTML = '';
+
+    if (activeTheme === 'pendulum') {
+      stage.innerHTML = `
+        <svg width="200" height="170" viewBox="0 0 200 170" id="metro-svg-pendulum">
+          <line x1="100" y1="10" x2="100" y2="10" stroke="none"/>
+          <g id="pendulum-arm" style="transform-origin:100px 15px">
+            <line x1="100" y1="15" x2="100" y2="130" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="100" cy="138" r="14" fill="#c9a84c" opacity="0.9"/>
+            <circle cx="100" cy="15" r="5" fill="#7a6f96"/>
+          </g>
+        </svg>`;
+
+    } else if (activeTheme === 'pulse') {
+      stage.innerHTML = `
+        <svg width="200" height="170" viewBox="0 0 200 170" id="metro-svg-pulse">
+          <circle cx="100" cy="85" r="55" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="2"/>
+          <circle id="pulse-circle" cx="100" cy="85" r="40" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="2"/>
+        </svg>`;
+
+    } else if (activeTheme === 'circles') {
+      stage.innerHTML = `
+        <svg width="200" height="170" viewBox="0 0 200 170" id="metro-svg-circles">
+          <circle id="circle-zarb" cx="68" cy="85" r="38" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="2"/>
+          <circle id="circle-zad" cx="132" cy="85" r="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <text x="68" y="140" text-anchor="middle" font-size="10" fill="#c9a84c" font-family="Vazirmatn">ضرب</text>
+          <text x="132" y="140" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.5)" font-family="Vazirmatn">ضدضرب</text>
+        </svg>`;
+
+    } else if (activeTheme === 'waveform') {
+      stage.innerHTML = `
+        <svg width="260" height="170" viewBox="0 0 260 170" id="metro-svg-wave">
+          <polyline id="wave-line" points="0,85 260,85" fill="none" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+  }
+
+  // pending zarb/zad animations
+  let pendulumAngle = -30;
+  let pendulumDir = 1;
+
+  function animateStage(beat, isAccent) {
+    if (activeTheme === 'pendulum') {
+      pendulumDir *= -1;
+      pendulumAngle = pendulumDir * 32;
+      const arm = document.getElementById('pendulum-arm');
+      if (arm) arm.style.transform = `rotate(${pendulumAngle}deg)`;
+
+    } else if (activeTheme === 'pulse') {
+      const c = document.getElementById('pulse-circle');
+      if (!c) return;
+      const r = isAccent ? 50 : 38;
+      c.setAttribute('r', r);
+      c.style.fill = isAccent ? 'rgba(201,168,76,0.35)' : 'rgba(201,168,76,0.12)';
+      setTimeout(() => { if(c) { c.setAttribute('r', 40); c.style.fill = 'rgba(201,168,76,0.15)'; }}, 120);
+
+    } else if (activeTheme === 'circles') {
+      const cz = document.getElementById('circle-zarb');
+      const cd = document.getElementById('circle-zad');
+      if (isAccent || !subdivide) {
+        if (cz) { cz.style.fill = 'rgba(201,168,76,0.5)'; setTimeout(()=>{ if(cz) cz.style.fill='rgba(201,168,76,0.15)';},120); }
+      } else {
+        if (cd) { cd.style.fill = 'rgba(255,255,255,0.25)'; setTimeout(()=>{ if(cd) cd.style.fill='rgba(255,255,255,0.05)';},120); }
+      }
+
+    } else if (activeTheme === 'waveform') {
+      const wl = document.getElementById('wave-line');
+      if (!wl) return;
+      const h = isAccent ? 55 : 30;
+      const pts = `0,85 30,85 65,${85-h} 100,85 130,85 165,${85+(h*0.6)} 200,85 260,85`;
+      wl.setAttribute('points', pts);
+      setTimeout(() => { if(wl) wl.setAttribute('points','0,85 260,85'); }, 180);
+    }
+  }
+
+  // ── BPM Update ──
+  function setBpm(val) {
+    bpm = Math.min(240, Math.max(40, val));
+    if (bpmVal) bpmVal.textContent = bpm;
+    if (slider) slider.value = bpm;
+  }
+
+  // ── Time Signature ──
+  function setSig(sig) {
+    const map = { '2/4':2, '3/4':3, '4/4':4, '6/8':6, '5/4':5, '7/8':7 };
+    beatsPerMeasure = map[sig] || 4;
+    currentBeat = 0;
+    buildBeatDots();
+  }
+
+  // ── Start / Stop ──
+  function start() {
+    isPlaying = true;
+    currentBeat = 0;
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    nextBeatTime = ctx.currentTime + 0.05;
+    scheduler();
+    if (playBtn) { playBtn.textContent = '⏹ توقف'; playBtn.classList.add('playing'); }
+  }
+
+  function stop() {
+    isPlaying = false;
+    clearTimeout(scheduleTimer);
+    if (playBtn) { playBtn.textContent = '▶ شروع'; playBtn.classList.remove('playing'); }
+    document.querySelectorAll('.metro-beat-dot').forEach(d => d.classList.remove('active-zarb','active-zad'));
+    // reset stage
+    renderStage();
+  }
+
+  // ── Tap Tempo ──
+  function tapTempo() {
+    const now = Date.now();
+    tapTimes.push(now);
+    if (tapTimes.length > 4) tapTimes.shift();
+    if (tapTimes.length >= 2) {
+      const gaps = [];
+      for (let i = 1; i < tapTimes.length; i++) gaps.push(tapTimes[i] - tapTimes[i-1]);
+      const avg = gaps.reduce((a,b)=>a+b,0)/gaps.length;
+      setBpm(Math.round(60000/avg));
+    }
+  }
+
+  // ── Event Listeners ──
+  document.getElementById('metro-bpm-minus')?.addEventListener('click', () => setBpm(bpm - 1));
+  document.getElementById('metro-bpm-plus')?.addEventListener('click',  () => setBpm(bpm + 1));
+  slider?.addEventListener('input', e => setBpm(Number(e.target.value)));
+  playBtn?.addEventListener('click', () => isPlaying ? stop() : start());
+  tapBtn?.addEventListener('click', tapTempo);
+
+  document.querySelectorAll('.metro-sig-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.metro-sig-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setSig(btn.dataset.sig);
+      if (isPlaying) { stop(); start(); }
+    });
+  });
+
+  document.getElementById('metro-mode-zarb')?.addEventListener('click', () => {
+    subdivide = false;
+    document.getElementById('metro-mode-zarb')?.classList.add('active');
+    document.getElementById('metro-mode-both')?.classList.remove('active');
+  });
+  document.getElementById('metro-mode-both')?.addEventListener('click', () => {
+    subdivide = true;
+    document.getElementById('metro-mode-both')?.classList.add('active');
+    document.getElementById('metro-mode-zarb')?.classList.remove('active');
+  });
+
+  document.querySelectorAll('.metro-theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.metro-theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTheme = btn.dataset.theme;
+      renderStage();
+    });
+  });
+
+  // ── Init ──
+  buildBeatDots();
+  renderStage();
+
+})();

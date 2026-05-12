@@ -2,318 +2,347 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>آدام — آکادمی موسیقی</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ADAM — Music Academy</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="theme-color" content="#0a0612" />
 </head>
 <body>
 
-  <!-- ═══════════════════════════════ NOTIFICATION ═══════════════════════════════ -->
   <div id="notif" class="notif hidden"></div>
 
-  <!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
-  <div id="screen-auth" class="screen active" style="position:relative;z-index:1">
+  <!-- AUTH -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-bg"><div class="auth-glow"></div><div class="auth-glow auth-glow--2"></div></div>
     <div class="auth-container">
       <div class="auth-logo">
-        <span class="logo-symbol">𝄞</span>
-        <h1 class="logo-title">آدام</h1>
-        <p class="logo-sub">آکادمی موسیقی</p>
+        <svg class="adam-logo-svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <circle cx="30" cy="30" r="27" stroke="#c9a84c" stroke-width="1.6"/>
+          <line x1="30" y1="3.5" x2="30" y2="56.5" stroke="#c9a84c" stroke-width="1.6"/>
+          <circle cx="30" cy="30" r="8.5" stroke="#c9a84c" stroke-width="1.4"/>
+          <circle cx="30" cy="30" r="2.8" fill="#c9a84c"/>
+        </svg>
+        <h1 class="logo-title">ADAM</h1>
+        <p class="logo-sub">Music Academy</p>
       </div>
 
-      <!-- Tab Switch -->
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">ورود</button>
         <button class="auth-tab" data-tab="register">ثبت‌نام</button>
       </div>
 
-      <!-- Login Form -->
       <form id="form-login" class="auth-form active">
         <div class="field">
           <label>ایمیل</label>
-          <input type="email" id="login-email" placeholder="example@email.com" autocomplete="email" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.4"/></svg>
+            <input type="email" id="login-email" placeholder="example@email.com" autocomplete="email" />
+          </div>
         </div>
         <div class="field">
           <label>رمز عبور</label>
-          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.4"/></svg>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
         </div>
-        <button type="submit" class="btn-primary">ورود</button>
+        <button type="submit" class="btn-primary">ورود به حساب</button>
       </form>
 
-      <!-- Register Form -->
       <form id="form-register" class="auth-form">
         <div class="field">
           <label>نام کامل</label>
-          <input type="text" id="reg-name" placeholder="نام و نام خانوادگی" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 18c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <input type="text" id="reg-name" placeholder="نام و نام خانوادگی" />
+          </div>
         </div>
         <div class="field">
           <label>ایمیل</label>
-          <input type="email" id="reg-email" placeholder="example@email.com" autocomplete="email" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.4"/></svg>
+            <input type="email" id="reg-email" placeholder="example@email.com" autocomplete="email" />
+          </div>
         </div>
         <div class="field">
           <label>رمز عبور</label>
-          <input type="password" id="reg-password" placeholder="حداقل ۶ کاراکتر" autocomplete="new-password" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.4"/></svg>
+            <input type="password" id="reg-password" placeholder="حداقل ۶ کاراکتر" autocomplete="new-password" />
+          </div>
         </div>
-
-        <!-- Role Selection -->
         <div class="field">
           <label>نقش شما</label>
           <div class="role-selector">
             <label class="role-option">
               <input type="radio" name="role" value="teacher" />
               <span class="role-card">
-                <span class="role-icon">🎸</span>
+                <svg class="role-svg" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="10" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M5 28c0-4.418 4.925-8 11-8s11 3.582 11 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M22 8l2.5-2.5 2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 <span class="role-label">مربی</span>
               </span>
             </label>
             <label class="role-option">
               <input type="radio" name="role" value="student" />
               <span class="role-card">
-                <span class="role-icon">🎵</span>
+                <svg class="role-svg" viewBox="0 0 32 32" fill="none"><path d="M16 7L5 13l11 6 11-6-11-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 13v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 17v5c0 2.761 3.134 5 7 5s7-2.239 7-5v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 <span class="role-label">هنرجو</span>
               </span>
             </label>
             <label class="role-option">
               <input type="radio" name="role" value="parent" />
               <span class="role-card">
-                <span class="role-icon">👪</span>
+                <svg class="role-svg" viewBox="0 0 32 32" fill="none"><circle cx="11" cy="11" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="21" cy="11" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M4 27c0-3.866 3.134-7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18 27c0-3.866 3.134-7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 <span class="role-label">والدین</span>
               </span>
             </label>
           </div>
         </div>
-
-        <!-- Invite Code (student/parent) -->
         <div class="field" id="field-invite" style="display:none">
           <label>کد دعوت استاد</label>
-          <input type="text" id="reg-invite" placeholder="کد ۶ رقمی استاد" maxlength="10" />
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none"><path d="M10 2l2 5h5.5l-4.5 3.5 1.5 5L10 13l-4.5 2.5 1.5-5L2.5 7H8L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            <input type="text" id="reg-invite" placeholder="کد ۶ رقمی استاد" maxlength="10" />
+          </div>
         </div>
-
-        <button type="submit" class="btn-primary">ثبت‌نام</button>
+        <button type="submit" class="btn-primary">ایجاد حساب</button>
       </form>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════ DASHBOARD — TEACHER ═══════════════════════════════ -->
+  <!-- TEACHER SCREEN -->
   <div id="screen-teacher" class="screen">
-    <!-- Header -->
     <header class="app-header">
-      <div class="header-right">
-        <span class="header-logo">𝄞</span>
-        <span class="header-title">آدام</span>
+      <div class="header-brand">
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+          <circle cx="15" cy="15" r="13" stroke="#c9a84c" stroke-width="1.4"/>
+          <line x1="15" y1="2.5" x2="15" y2="27.5" stroke="#c9a84c" stroke-width="1.4"/>
+          <circle cx="15" cy="15" r="4.2" stroke="#c9a84c" stroke-width="1.2"/>
+          <circle cx="15" cy="15" r="1.6" fill="#c9a84c"/>
+        </svg>
+        <span class="header-title">ADAM</span>
       </div>
-      <div class="header-left">
+      <div class="header-actions">
         <span id="teacher-name-display" class="header-user"></span>
-        <button id="btn-logout" class="btn-icon" title="خروج">⏻</button>
+        <button id="btn-logout" class="btn-icon-round" title="خروج" aria-label="خروج">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M7 10H17m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
       </div>
     </header>
 
-    <!-- Nav -->
     <nav class="bottom-nav">
       <button class="nav-item active" data-panel="panel-students">
-        <span class="nav-icon">👥</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3.5" stroke="currentColor" stroke-width="1.65"/><path d="M2 20c0-3.31 3.13-6 7-6s7 2.69 7 6" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><circle cx="18" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M22 20c0-2.76-1.79-5-4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span class="nav-label">هنرجوها</span>
       </button>
       <button class="nav-item" data-panel="panel-scores">
-        <span class="nav-icon">📊</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.65"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="nav-label">نمرات</span>
       </button>
       <button class="nav-item" data-panel="panel-messages">
-        <span class="nav-icon">💬</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg>
         <span class="nav-label">پیام‌ها</span>
       </button>
       <button class="nav-item" data-panel="panel-lessons">
-        <span class="nav-icon">📚</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h10" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>
         <span class="nav-label">محتوا</span>
       </button>
       <button class="nav-item" data-panel="panel-settings">
-        <span class="nav-icon">⚙️</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <span class="nav-label">تنظیمات</span>
+      </button>
+      <button class="nav-item" data-panel="panel-metronome">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M8 19h8" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path d="M9.5 5h5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><path d="M12 5l5.5 8" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>
+        <span class="nav-label">مترونوم</span>
       </button>
     </nav>
 
-    <!-- Panels -->
     <main class="panels">
-
-      <!-- Panel: Students -->
       <div id="panel-students" class="panel active">
         <div class="panel-header">
           <h2>هنرجوها</h2>
-          <button id="btn-add-student" class="btn-gold">+ افزودن</button>
+          <button id="btn-add-student" class="btn-gold">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            افزودن
+          </button>
         </div>
-        <div id="students-list" class="students-list">
-          <div class="empty-state">در حال بارگذاری...</div>
-        </div>
+        <div id="students-list" class="students-list"><div class="empty-state">در حال بارگذاری...</div></div>
       </div>
 
-      <!-- Panel: Scores -->
       <div id="panel-scores" class="panel">
-        <div class="panel-header">
-          <h2>ثبت نمره</h2>
-        </div>
-        <div class="field">
-          <label>انتخاب هنرجو</label>
-          <select id="score-student-select">
-            <option value="">— انتخاب کنید —</option>
-          </select>
-        </div>
+        <div class="panel-header"><h2>ثبت نمره</h2></div>
+        <div class="field"><label>انتخاب هنرجو</label><select id="score-student-select"><option value="">— انتخاب کنید —</option></select></div>
         <div id="score-form-wrap" style="display:none">
-          <div class="field">
-            <label>شماره جلسه</label>
-            <input type="number" id="score-session" min="1" placeholder="مثلاً ۵" />
-          </div>
+          <div class="field"><label>شماره جلسه</label><input type="number" id="score-session" min="1" placeholder="مثلاً ۵" /></div>
           <div class="field absent-toggle">
-            <label class="toggle-label">
-              <input type="checkbox" id="score-absent" />
-              <span class="toggle-track"></span>
-              <span>غیبت</span>
-            </label>
+            <label class="toggle-label"><input type="checkbox" id="score-absent" /><span class="toggle-track"></span><span>غیبت</span></label>
           </div>
           <div id="score-fields">
             <div class="score-grid">
-              <div class="field">
-                <label>تکنیک <span class="score-max">/۲۰</span></label>
-                <input type="number" id="score-technique" min="0" max="20" />
-              </div>
-              <div class="field">
-                <label>ریتم <span class="score-max">/۲۰</span></label>
-                <input type="number" id="score-rhythm" min="0" max="20" />
-              </div>
-              <div class="field">
-                <label>ملودی <span class="score-max">/۲۰</span></label>
-                <input type="number" id="score-melody" min="0" max="20" />
-              </div>
-              <div class="field">
-                <label>دانش دسته <span class="score-max">/۲۰</span></label>
-                <input type="number" id="score-fretboard" min="0" max="20" />
-              </div>
-              <div class="field">
-                <label>شنیداری <span class="score-max">/۲۰</span></label>
-                <input type="number" id="score-ear" min="0" max="20" />
-              </div>
+              <div class="field"><label>تکنیک <span class="score-max">/۲۰</span></label><input type="number" id="score-technique" min="0" max="20" /></div>
+              <div class="field"><label>ریتم <span class="score-max">/۲۰</span></label><input type="number" id="score-rhythm" min="0" max="20" /></div>
+              <div class="field"><label>ملودی <span class="score-max">/۲۰</span></label><input type="number" id="score-melody" min="0" max="20" /></div>
+              <div class="field"><label>دانش دسته <span class="score-max">/۲۰</span></label><input type="number" id="score-fretboard" min="0" max="20" /></div>
+              <div class="field"><label>شنیداری <span class="score-max">/۲۰</span></label><input type="number" id="score-ear" min="0" max="20" /></div>
             </div>
-            <div class="score-average-display">
-              میانگین: <span id="score-avg-display">—</span>
-            </div>
+            <div class="score-average-display">میانگین: <span id="score-avg-display">—</span></div>
           </div>
-          <div class="field">
-            <label>نظر مربی</label>
-            <textarea id="score-comment" placeholder="نکات جلسه..." rows="3"></textarea>
-          </div>
+          <div class="field"><label>نظر مربی</label><textarea id="score-comment" placeholder="نکات جلسه..." rows="3"></textarea></div>
           <button id="btn-save-score" class="btn-primary">ذخیره نمره</button>
         </div>
       </div>
 
-      <!-- Panel: Messages -->
       <div id="panel-messages" class="panel">
-        <div class="panel-header">
-          <h2>پیام‌ها</h2>
-        </div>
-        <div class="field">
-          <label>ارسال به</label>
-          <select id="msg-to-select">
-            <option value="">— انتخاب هنرجو —</option>
-          </select>
-        </div>
+        <div class="panel-header"><h2>پیام‌ها</h2></div>
+        <div class="field"><label>ارسال به</label><select id="msg-to-select"><option value="">— انتخاب هنرجو —</option></select></div>
         <div id="messages-list" class="messages-list"></div>
         <div class="message-input-wrap">
           <textarea id="msg-body" placeholder="پیام خود را بنویسید..." rows="2"></textarea>
-          <button id="btn-send-msg" class="btn-gold">ارسال</button>
+          <button id="btn-send-msg" class="btn-send-icon" aria-label="ارسال">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 10l14-7-5 7 5 7-14-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
 
-<!-- Panel: Lessons -->
-<div id="panel-lessons" class="panel">
-  <div class="panel-header">
-    <h2>محتوای آموزشی</h2>
-    <button id="btn-add-lesson" class="btn-gold">+ درس جدید</button>
-  </div>
-  <div id="lessons-list" class="students-list">
-    <div class="empty-state">در حال بارگذاری...</div>
-  </div>
-</div>
-
-      <!-- Panel: Settings -->
-      <div id="panel-settings" class="panel">
+      <div id="panel-lessons" class="panel">
         <div class="panel-header">
-          <h2>تنظیمات</h2>
+          <h2>محتوای آموزشی</h2>
+          <button id="btn-add-lesson" class="btn-gold">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            درس جدید
+          </button>
         </div>
+        <div id="lessons-list" class="students-list"><div class="empty-state">در حال بارگذاری...</div></div>
+      </div>
+
+      <div id="panel-settings" class="panel">
+        <div class="panel-header"><h2>تنظیمات</h2></div>
         <div class="settings-card">
-          <div class="setting-row">
-            <span>کد دعوت شما</span>
-            <span id="invite-code-display" class="invite-code">—</span>
-          </div>
-          <button id="btn-copy-invite" class="btn-outline">کپی کد دعوت</button>
+          <div class="setting-row"><span>کد دعوت شما</span><span id="invite-code-display" class="invite-code">—</span></div>
+          <button id="btn-copy-invite" class="btn-outline">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="margin-left:5px"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            کپی کد دعوت
+          </button>
         </div>
       </div>
 
+      <div id="panel-metronome" class="panel">
+        <div class="panel-header"><h2>مترونوم</h2></div>
+        <div class="metronome-wrap">
+          <div class="metro-bpm-row">
+            <button class="metro-bpm-btn" id="metro-bpm-minus"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            <div class="metro-bpm-display"><span id="metro-bpm-val">80</span><span class="metro-bpm-label">BPM</span></div>
+            <button class="metro-bpm-btn" id="metro-bpm-plus"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          </div>
+          <input type="range" id="metro-slider" class="metro-slider" min="40" max="240" value="80" />
+          <div class="metro-section-label">ضرب</div>
+          <div class="metro-sig-grid">
+            <button class="metro-sig-btn active" data-sig="2/4">۲/۴</button>
+            <button class="metro-sig-btn" data-sig="3/4">۳/۴</button>
+            <button class="metro-sig-btn" data-sig="4/4">۴/۴</button>
+            <button class="metro-sig-btn" data-sig="6/8">۶/۸</button>
+            <button class="metro-sig-btn" data-sig="5/4">۵/۴</button>
+            <button class="metro-sig-btn" data-sig="7/8">۷/۸</button>
+          </div>
+          <div class="metro-section-label">حالت</div>
+          <div class="metro-mode-row">
+            <button class="metro-mode-btn active" id="metro-mode-zarb">فقط ضرب</button>
+            <button class="metro-mode-btn" id="metro-mode-both">ضرب + ضدضرب</button>
+          </div>
+          <div class="metro-section-label">نما</div>
+          <div class="metro-theme-row">
+            <button class="metro-theme-btn active" data-theme="pendulum" title="آونگ"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><circle cx="11" cy="17" r="3" stroke="currentColor" stroke-width="1.4"/><line x1="11" y1="14" x2="11" y2="4" stroke="currentColor" stroke-width="1.4"/><path d="M5 4h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+            <button class="metro-theme-btn" data-theme="pulse" title="نبض"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.4"/><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="metro-theme-btn" data-theme="circles" title="دو دایره"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><circle cx="7" cy="11" r="4" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="11" r="4" stroke="currentColor" stroke-width="1.4"/></svg></button>
+            <button class="metro-theme-btn" data-theme="waveform" title="موج"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><path d="M2 11c1.5-4 2.5-4 4 0s2.5 4 4 0 2.5-4 4 0 2.5 4 4 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+          </div>
+          <div class="metro-stage" id="metro-stage"></div>
+          <div class="metro-beats" id="metro-beats"></div>
+          <div class="metro-controls">
+            <button class="metro-tap-btn" id="metro-tap">Tap</button>
+            <button class="metro-play-btn" id="metro-play">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 3l10 5-10 5V3z" fill="currentColor"/></svg>
+              شروع
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- ═══════════════════════════════ DASHBOARD — STUDENT ═══════════════════════════════ -->
+  <!-- STUDENT SCREEN -->
   <div id="screen-student" class="screen">
     <header class="app-header">
-      <div class="header-right">
-        <span class="header-logo">𝄞</span>
-        <span class="header-title">آدام</span>
+      <div class="header-brand">
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+          <circle cx="15" cy="15" r="13" stroke="#c9a84c" stroke-width="1.4"/>
+          <line x1="15" y1="2.5" x2="15" y2="27.5" stroke="#c9a84c" stroke-width="1.4"/>
+          <circle cx="15" cy="15" r="4.2" stroke="#c9a84c" stroke-width="1.2"/>
+          <circle cx="15" cy="15" r="1.6" fill="#c9a84c"/>
+        </svg>
+        <span class="header-title">ADAM</span>
       </div>
-      <div class="header-left">
+      <div class="header-actions">
         <span id="student-name-display" class="header-user"></span>
-        <button id="btn-logout-student" class="btn-icon">⏻</button>
+        <button id="btn-logout-student" class="btn-icon-round" aria-label="خروج">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M7 10H17m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
       </div>
     </header>
 
     <nav class="bottom-nav">
       <button class="nav-item active" data-panel="panel-my-scores">
-        <span class="nav-icon">📊</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         <span class="nav-label">کارنامه</span>
       </button>
       <button class="nav-item" data-panel="panel-practice">
-        <span class="nav-icon">⏱️</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         <span class="nav-label">تمرین</span>
       </button>
       <button class="nav-item" data-panel="panel-student-msgs">
-        <span class="nav-icon">💬</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         <span class="nav-label">پیام‌ها</span>
       </button>
       <button class="nav-item" data-panel="panel-student-terms">
-        <span class="nav-icon">📚</span>
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         <span class="nav-label">ترم‌ها</span>
+      </button>
+      <button class="nav-item" data-panel="panel-metronome">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M8 19h8M10 5h4M12 5l5.5 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="nav-label">مترونوم</span>
       </button>
     </nav>
 
     <main class="panels">
       <div id="panel-my-scores" class="panel active">
         <div class="panel-header"><h2>کارنامه من</h2></div>
-
-        <!-- Term selector -->
         <div class="field" style="margin-bottom:1rem">
           <select id="karname-term-select">
             <option value="selected">ترم‌های منتخب استاد</option>
             <option value="all">همه ترم‌ها</option>
           </select>
         </div>
-
-        <!-- Skill summary -->
         <div id="karname-skills" class="karname-skills"></div>
-
-        <!-- Session chart -->
         <div class="karname-section-title">نمودار جلسات</div>
         <div id="karname-chart" class="karname-chart"></div>
-
-        <!-- Session detail (on click) -->
         <div id="karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
+
       <div id="panel-practice" class="panel">
         <div class="panel-header"><h2>تمرین امروز</h2></div>
         <div class="practice-timer">
           <div id="timer-display" class="timer-display">۰۰:۰۰</div>
           <div class="timer-buttons">
-            <button id="btn-timer-start" class="btn-gold">شروع</button>
-            <button id="btn-timer-stop" class="btn-outline" style="display:none">توقف و ذخیره</button>
+            <button id="btn-timer-start" class="btn-gold">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M4 3l10 5-10 5V3z" fill="currentColor"/></svg>
+              شروع
+            </button>
+            <button id="btn-timer-stop" class="btn-outline" style="display:none">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="3" y="3" width="4" height="10" rx="1" fill="currentColor"/><rect x="9" y="3" width="4" height="10" rx="1" fill="currentColor"/></svg>
+              توقف و ذخیره
+            </button>
           </div>
           <div class="field" style="margin-top:1rem">
             <label>یادداشت</label>
@@ -321,14 +350,18 @@
           </div>
         </div>
       </div>
+
       <div id="panel-student-msgs" class="panel">
         <div class="panel-header"><h2>پیام‌ها</h2></div>
         <div id="student-messages-list" class="messages-list"></div>
         <div class="message-input-wrap">
           <textarea id="student-msg-body" placeholder="پیام به استاد..." rows="2"></textarea>
-          <button id="btn-student-send-msg" class="btn-gold">ارسال</button>
+          <button id="btn-student-send-msg" class="btn-send-icon" aria-label="ارسال">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 10l14-7-5 7 5 7-14-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
+
       <div id="panel-student-terms" class="panel">
         <div class="panel-header"><h2>ترم‌های من</h2></div>
         <div id="student-terms-list"><div class="empty-state">در حال بارگذاری...</div></div>
@@ -336,14 +369,13 @@
     </main>
   </div>
 
-
-  <!-- ═══════════════════════════════ MODAL — STUDENT PROFILE ═══════════════════════════════ -->
+  <!-- MODALS -->
   <div id="modal-student-profile" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box modal-box--wide">
       <div class="modal-header">
         <h3 id="profile-student-name">—</h3>
-        <button class="modal-close" data-modal="modal-student-profile">✕</button>
+        <button class="modal-close" data-modal="modal-student-profile"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       </div>
       <div class="profile-tabs">
         <button class="profile-tab active" data-tab="terms">ترم‌ها</button>
@@ -351,41 +383,29 @@
         <button class="profile-tab" data-tab="info">اطلاعات</button>
       </div>
       <div id="profile-tab-terms" class="profile-tab-content active">
-        <div class="panel-header" style="margin-bottom:1rem">
-          <span></span>
-          <button id="btn-add-term" class="btn-gold">+ ترم جدید</button>
+        <div class="panel-header" style="margin-bottom:1rem"><span></span>
+          <button id="btn-add-term" class="btn-gold"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> ترم جدید</button>
         </div>
         <div id="terms-list"><div class="empty-state">هنوز ترمی تعریف نشده</div></div>
       </div>
       <div id="profile-tab-karname" class="profile-tab-content">
-        <!-- Term/Month checkboxes -->
         <div id="karname-term-checkboxes" style="margin-top:0.75rem"></div>
         <button id="btn-apply-karname" class="btn-gold" style="width:100%;margin:0.75rem 0">محاسبه کارنامه</button>
-        <!-- Results -->
         <div id="teacher-karname-skills"></div>
         <div class="karname-section-title" id="karname-chart-title" style="display:none">نمودار جلسات</div>
         <div id="teacher-karname-chart"></div>
         <div id="teacher-karname-session-detail" class="karname-session-detail hidden"></div>
       </div>
-      <div id="profile-tab-info" class="profile-tab-content">
-        <div id="student-info-display"></div>
-      </div>
+      <div id="profile-tab-info" class="profile-tab-content"><div id="student-info-display"></div></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════ MODAL — ADD TERM ═══════════════════════════════ -->
   <div id="modal-add-term" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3>ترم جدید</h3>
-        <button class="modal-close" data-modal="modal-add-term">✕</button>
-      </div>
+      <div class="modal-header"><h3>ترم جدید</h3><button class="modal-close" data-modal="modal-add-term"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <form id="form-add-term">
-        <div class="field">
-          <label>عنوان ترم *</label>
-          <input type="text" id="term-title" required placeholder="مثلاً ترم پاییز ۱۴۰۴" />
-        </div>
+        <div class="field"><label>عنوان ترم *</label><input type="text" id="term-title" required placeholder="مثلاً ترم پاییز ۱۴۰۴" /></div>
         <div class="field">
           <label>سطح *</label>
           <select id="term-level" required>
@@ -398,10 +418,7 @@
             <option value="pishrafte_2">پیشرفته ۲</option>
           </select>
         </div>
-        <div class="field">
-          <label>تاریخ شروع *</label>
-          <input type="date" id="term-start-date" required />
-        </div>
+        <div class="field"><label>تاریخ شروع *</label><input type="date" id="term-start-date" required /></div>
         <div class="field">
           <label>روزهای کلاس *</label>
           <div class="days-grid">
@@ -413,45 +430,24 @@
             <label class="day-check"><input type="checkbox" name="class-day" value="پنجشنبه" /><span>پ</span></label>
           </div>
         </div>
-        <div id="term-sessions-preview" class="sessions-preview hidden">
-          <p class="preview-label">پیش‌نمایش جلسات:</p>
-          <div id="preview-list"></div>
-        </div>
+        <div id="term-sessions-preview" class="sessions-preview hidden"><p class="preview-label">پیش‌نمایش جلسات:</p><div id="preview-list"></div></div>
         <button type="submit" class="btn-primary">ساختن ترم</button>
       </form>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════ MODAL — ADD STUDENT ═══════════════════════════════ -->
   <div id="modal-add-student" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3>افزودن هنرجو</h3>
-        <button class="modal-close" data-modal="modal-add-student">✕</button>
-      </div>
+      <div class="modal-header"><h3>افزودن هنرجو</h3><button class="modal-close" data-modal="modal-add-student"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <form id="form-add-student">
         <div class="field"><label>نام کامل *</label><input type="text" id="st-name" required /></div>
         <div class="field"><label>تلفن</label><input type="tel" id="st-phone" /></div>
         <div class="field"><label>سن</label><input type="number" id="st-age" min="4" max="80" /></div>
         <div class="field"><label>ساز</label><input type="text" id="st-instrument" placeholder="گیتار، پیانو، ..." /></div>
-        <div class="field">
-          <label>سطح</label>
-          <select id="st-level">
-            <option value="">— انتخاب —</option>
-            <option value="beginner">مبتدی</option>
-            <option value="intermediate">متوسط</option>
-            <option value="advanced">پیشرفته</option>
-          </select>
-        </div>
+        <div class="field"><label>سطح</label><select id="st-level"><option value="">— انتخاب —</option><option value="beginner">مبتدی</option><option value="intermediate">متوسط</option><option value="advanced">پیشرفته</option></select></div>
         <div class="field"><label>شهریه ماهانه (تومان)</label><input type="number" id="st-fee" /></div>
-        <div class="field">
-          <label>نوع کلاس</label>
-          <select id="st-class-type">
-            <option value="in-person">حضوری</option>
-            <option value="online">آنلاین</option>
-          </select>
-        </div>
+        <div class="field"><label>نوع کلاس</label><select id="st-class-type"><option value="in-person">حضوری</option><option value="online">آنلاین</option></select></div>
         <div class="field"><label>ساعت کلاس</label><input type="text" id="st-time" placeholder="مثلاً ۱۷:۰۰" /></div>
         <div class="field"><label>یادداشت</label><textarea id="st-notes" rows="2"></textarea></div>
         <button type="submit" class="btn-primary">ذخیره هنرجو</button>
@@ -459,197 +455,96 @@
     </div>
   </div>
 
-  <!-- Modal: Add Lesson -->
-<div id="modal-add-lesson" class="modal hidden">
-  <div class="modal-backdrop"></div>
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>درس جدید</h3>
-      <button class="modal-close" data-modal="modal-add-lesson">✕</button>
+  <div id="modal-add-lesson" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header"><h3>درس جدید</h3><button class="modal-close" data-modal="modal-add-lesson"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+      <form id="form-add-lesson">
+        <div class="field"><label>عنوان درس *</label><input type="text" id="lesson-title" required /></div>
+        <div class="field"><label>سطح</label><select id="lesson-level"><option value="">— انتخاب —</option><option value="beginner">مبتدی</option><option value="intermediate">متوسط</option><option value="advanced">پیشرفته</option></select></div>
+        <div class="field"><label>شماره جلسه</label><input type="number" id="lesson-session" min="1" /></div>
+        <div class="field"><label>توضیحات</label><textarea id="lesson-content" rows="3"></textarea></div>
+        <div class="field"><label>لینک (ویدیو / PDF)</label><input type="url" id="lesson-link" placeholder="https://..." /></div>
+        <button type="submit" class="btn-primary">ذخیره درس</button>
+      </form>
     </div>
-    <form id="form-add-lesson">
-      <div class="field">
-        <label>عنوان درس *</label>
-        <input type="text" id="lesson-title" required />
-      </div>
-      <div class="field">
-        <label>سطح</label>
-        <select id="lesson-level">
-          <option value="">— انتخاب —</option>
-          <option value="beginner">مبتدی</option>
-          <option value="intermediate">متوسط</option>
-          <option value="advanced">پیشرفته</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>شماره جلسه</label>
-        <input type="number" id="lesson-session" min="1" />
-      </div>
-      <div class="field">
-        <label>توضیحات</label>
-        <textarea id="lesson-content" rows="3"></textarea>
-      </div>
-      <div class="field">
-        <label>لینک (ویدیو / PDF / فایل)</label>
-        <input type="url" id="lesson-link" placeholder="https://..." />
-      </div>
-      <button type="submit" class="btn-primary">ذخیره درس</button>
-    </form>
   </div>
-</div>
 
-
-  <!-- ═══════════════════════════════ MODAL — TERM DETAIL ═══════════════════════════════ -->
   <div id="modal-term-detail" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="term-detail-title">—</h3>
-        <button class="modal-close" data-modal="modal-term-detail">✕</button>
-      </div>
-      <div class="term-detail-meta">
-        <span id="term-detail-level" class="term-level"></span>
-        <span class="term-detail-sep">·</span>
-        <span>شروع: <span id="term-detail-start">—</span></span>
-      </div>
+      <div class="modal-header"><h3 id="term-detail-title">—</h3><button class="modal-close" data-modal="modal-term-detail"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+      <div class="term-detail-meta"><span id="term-detail-level" class="term-level"></span><span class="term-detail-sep">·</span><span>شروع: <span id="term-detail-start">—</span></span></div>
       <div id="term-detail-sessions" class="sessions-list"></div>
     </div>
   </div>
 
-
-  <!-- ═══════════════════════════════ MODAL — SESSION DETAIL ═══════════════════════════════ -->
   <div id="modal-session-detail" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="session-detail-title">جلسه —</h3>
-        <button class="modal-close" data-modal="modal-session-detail">✕</button>
-      </div>
+      <div class="modal-header"><h3 id="session-detail-title">جلسه —</h3><button class="modal-close" data-modal="modal-session-detail"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <div class="session-detail-meta">
         <input type="date" id="session-detail-date" class="session-date-input" />
         <button id="btn-save-session-date" class="btn-outline btn-sm">ذخیره تاریخ</button>
       </div>
-      <div class="field" style="margin-top:1rem">
-        <label>محتوای آموزشی جلسه</label>
-        <textarea id="session-detail-content" rows="4" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea>
-      </div>
-      <div class="field">
-        <label>لینک منابع (ویدیو / PDF / فایل)</label>
-        <input type="url" id="session-detail-link" placeholder="https://..." />
-      </div>
-      <div class="field">
-        <label>آپلود فایل (PDF / MP3 / ویدیو — حداکثر ۵۰MB)</label>
-        <input type="file" id="session-file-upload" accept=".pdf,.mp3,.mp4,.m4a,.aac" class="file-input" />
-        <div id="session-files-list" class="files-list"></div>
-      </div>
+      <div class="field" style="margin-top:1rem"><label>محتوای آموزشی جلسه</label><textarea id="session-detail-content" rows="4" placeholder="توضیحات، تکنیک‌ها، نکات جلسه..."></textarea></div>
+      <div class="field"><label>لینک منابع</label><input type="url" id="session-detail-link" placeholder="https://..." /></div>
+      <div class="field"><label>آپلود فایل (PDF / MP3 / ویدیو — حداکثر ۵۰MB)</label><input type="file" id="session-file-upload" accept=".pdf,.mp3,.mp4,.m4a,.aac" class="file-input" /><div id="session-files-list" class="files-list"></div></div>
       <button id="btn-save-session-content" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره محتوا</button>
-
-      <!-- Exercises Section -->
-      <div class="section-divider">
-        <span>تمرین‌های جلسه</span>
-      </div>
+      <div class="section-divider"><span>تمرین‌های جلسه</span></div>
       <div id="exercises-list"><div class="empty-state">هنوز تمرینی اضافه نشده</div></div>
-      <button id="btn-add-exercise" class="btn-gold" style="width:100%;margin-top:0.75rem">+ افزودن تمرین</button>
+      <button id="btn-add-exercise" class="btn-gold" style="width:100%;margin-top:0.75rem"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> افزودن تمرین</button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════ MODAL — ADD EXERCISE ═══════════════════════════════ -->
   <div id="modal-add-exercise" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3>تمرین جدید</h3>
-        <button class="modal-close" data-modal="modal-add-exercise">✕</button>
-      </div>
+      <div class="modal-header"><h3>تمرین جدید</h3><button class="modal-close" data-modal="modal-add-exercise"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <form id="form-add-exercise">
-        <div class="field">
-          <label>عنوان تمرین *</label>
-          <input type="text" id="exercise-title" required placeholder="مثلاً کروماتیک دست راست" />
-        </div>
-        <div class="field">
-          <label>دسته مهارت</label>
-          <select id="exercise-category">
-            <option value="">— انتخاب —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>حداکثر نمره</label>
-          <input type="number" id="exercise-max-score" value="20" min="1" max="100" />
-        </div>
-        <div class="field">
-          <label>توضیحات</label>
-          <textarea id="exercise-description" rows="2" placeholder="توضیح تمرین..."></textarea>
-        </div>
-        <div class="field">
-          <label>لینک منبع</label>
-          <input type="url" id="exercise-link" placeholder="https://..." />
-        </div>
+        <div class="field"><label>عنوان تمرین *</label><input type="text" id="exercise-title" required placeholder="مثلاً کروماتیک دست راست" /></div>
+        <div class="field"><label>دسته مهارت</label><select id="exercise-category"><option value="">— انتخاب —</option></select></div>
+        <div class="field"><label>حداکثر نمره</label><input type="number" id="exercise-max-score" value="20" min="1" max="100" /></div>
+        <div class="field"><label>توضیحات</label><textarea id="exercise-description" rows="2" placeholder="توضیح تمرین..."></textarea></div>
+        <div class="field"><label>لینک منبع</label><input type="url" id="exercise-link" placeholder="https://..." /></div>
         <button type="submit" class="btn-primary">ذخیره تمرین</button>
       </form>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════ MODAL — SCORE EXERCISE ═══════════════════════════════ -->
   <div id="modal-score-exercise" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="score-exercise-title">نمره‌دهی</h3>
-        <button class="modal-close" data-modal="modal-score-exercise">✕</button>
-      </div>
+      <div class="modal-header"><h3 id="score-exercise-title">نمره‌دهی</h3><button class="modal-close" data-modal="modal-score-exercise"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <div id="score-exercise-students"></div>
       <button id="btn-save-exercise-scores" class="btn-primary" style="width:100%;margin-top:1rem">ذخیره نمرات</button>
     </div>
   </div>
 
-
-  <!-- ═══════════════════════════════ MODAL — STUDENT SESSION VIEW ═══════════════════════════════ -->
   <div id="modal-student-session" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="student-session-title">جلسه —</h3>
-        <button class="modal-close" data-modal="modal-student-session">✕</button>
-      </div>
+      <div class="modal-header"><h3 id="student-session-title">جلسه —</h3><button class="modal-close" data-modal="modal-student-session"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <div class="student-session-date" id="student-session-date"></div>
       <div id="student-session-content" class="student-session-content"></div>
-      <!-- Exercises for student -->
       <div id="student-session-exercises"></div>
     </div>
   </div>
 
-
-  <!-- ═══════════════════════════════ MODAL — EXERCISE DETAIL ═══════════════════════════════ -->
   <div id="modal-exercise-detail" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="exercise-detail-title">—</h3>
-        <button class="modal-close" data-modal="modal-exercise-detail">✕</button>
-      </div>
-      <div class="exercise-detail-meta">
-        <span id="exercise-detail-category" class="exercise-category"></span>
-        <span id="exercise-detail-score" class="exercise-score-badge"></span>
-      </div>
-      <div class="field" style="margin-top:0.75rem">
-        <label>توضیحات تمرین</label>
-        <textarea id="exercise-detail-desc" rows="4" placeholder="توضیحات، نکات اجرا..."></textarea>
-      </div>
-      <div class="field">
-        <label>لینک منبع</label>
-        <input type="url" id="exercise-detail-link" placeholder="https://..." />
-      </div>
-      <div class="field" id="exercise-file-upload-wrap">
-        <label>آپلود فایل (PDF / MP3 / ویدیو)</label>
-        <input type="file" id="exercise-file-upload" accept=".pdf,.mp3,.mp4,.m4a,.aac" class="file-input" />
-      </div>
+      <div class="modal-header"><h3 id="exercise-detail-title">—</h3><button class="modal-close" data-modal="modal-exercise-detail"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+      <div class="exercise-detail-meta"><span id="exercise-detail-category" class="exercise-category"></span><span id="exercise-detail-score" class="exercise-score-badge"></span></div>
+      <div class="field" style="margin-top:0.75rem"><label>توضیحات تمرین</label><textarea id="exercise-detail-desc" rows="4" placeholder="توضیحات، نکات اجرا..."></textarea></div>
+      <div class="field"><label>لینک منبع</label><input type="url" id="exercise-detail-link" placeholder="https://..." /></div>
+      <div class="field" id="exercise-file-upload-wrap"><label>آپلود فایل (PDF / MP3 / ویدیو)</label><input type="file" id="exercise-file-upload" accept=".pdf,.mp3,.mp4,.m4a,.aac" class="file-input" /></div>
       <div id="exercise-files-list" class="files-list"></div>
       <button id="btn-save-exercise-detail" class="btn-primary" style="width:100%;margin-top:0.75rem">ذخیره</button>
     </div>
   </div>
 
-  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
