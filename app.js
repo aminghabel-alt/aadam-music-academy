@@ -737,6 +737,300 @@ function dbRenderAlerts(students, scoreMap) {
   });
 }
 
+
+// ════════════════════════════════
+// CALENDAR (Teacher)
+// ════════════════════════════════
+
+let calCurrentWeekStart = null;
+
+function calGetWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day; // Monday start
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function calFormatWeekLabel(weekStart) {
+  const end = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+  const opts = { day: 'numeric', month: 'short' };
+  return `${weekStart.toLocaleDateString('en-GB', opts)} — ${end.toLocaleDateString('en-GB', opts)}`;
+}
+
+async function loadCalendar() {
+  if (!calCurrentWeekStart) calCurrentWeekStart = calGetWeekStart(new Date());
+
+  // Week label
+  const labelEl = document.getElementById('cal-week-label');
+  if (labelEl) labelEl.textContent = calFormatWeekLabel(calCurrentWeekStart);
+
+  // Nav buttons
+  document.getElementById('cal-prev').onclick = () => {
+    calCurrentWeekStart.setDate(calCurrentWeekStart.getDate() - 7);
+    loadCalendar();
+  };
+  document.getElementById('cal-next').onclick = () => {
+    calCurrentWeekStart.setDate(calCurrentWeekStart.getDate() + 7);
+    loadCalendar();
+  };
+
+  // Generate button
+  document.getElementById('cal-generate').onclick = () => calGenerateSchedule();
+
+  // Close detail
+  document.getElementById('cal-detail-close').onclick = () => {
+    document.getElementById('cal-day-detail').style.display = 'none';
+  };
+
+  // Load schedules for this week
+  const weekEnd = new Date(calCurrentWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59);
+
+  const { data: schedules, error } = await db
+    .from('class_schedule')
+    .select('*, students(id, name, instrument, class_duration)')
+    .eq('teacher_id', currentProfile.id)
+    .gte('scheduled_at', calCurrentWeekStart.toISOString())
+    .lte('scheduled_at', weekEnd.toISOString())
+    .order('scheduled_at', { ascending: true });
+
+  if (error) { logError(error, 'loadCalendar'); return; }
+
+  calRenderGrid(schedules || []);
+}
+
+function calRenderGrid(schedules) {
+  const grid = document.getElementById('cal-grid');
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Group by day
+  const byDay = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(calCurrentWeekStart);
+    d.setDate(d.getDate() + i);
+    byDay[i] = { date: d, sessions: [] };
+  }
+
+  schedules.forEach(s => {
+    const d = new Date(s.scheduled_at);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 7; i++) {
+      if (byDay[i].date.getTime() === d.getTime()) {
+        byDay[i].sessions.push(s);
+        break;
+      }
+    }
+  });
+
+  grid.innerHTML = dayNames.map((name, i) => {
+    const { date, sessions } = byDay[i];
+    const isToday = date.getTime() === today.getTime();
+    const isPast = date < today;
+    const dayNum = date.getDate();
+    const activeSessions = sessions.filter(s => s.status !== 'cancelled');
+
+    return `
+      <div class="cal-day ${isToday ? 'cal-day--today' : ''} ${isPast ? 'cal-day--past' : ''}"
+           data-day-index="${i}">
+        <div class="cal-day-header">
+          <span class="cal-day-name">${name}</span>
+          <span class="cal-day-num ${isToday ? 'cal-day-num--today' : ''}">${dayNum}</span>
+        </div>
+        <div class="cal-day-sessions">
+          ${activeSessions.length ? activeSessions.map(s => {
+            const time = new Date(s.scheduled_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const color = dbAvatarColor(s.students?.name || '');
+            const initials = (s.students?.name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+            return `
+              <div class="cal-session-chip" data-schedule-id="${s.id}" style="border-color:${color}40;background:${color}12">
+                <span class="cal-chip-time">${time}</span>
+                <span class="cal-chip-name">${s.students?.name || '—'}</span>
+                <span class="cal-chip-inst">${s.students?.instrument || ''}</span>
+              </div>`;
+          }).join('') : '<div class="cal-day-empty">—</div>'}
+        </div>
+        ${activeSessions.length ? `<div class="cal-day-count">${activeSessions.length} session${activeSessions.length > 1 ? 's' : ''}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Click day → show detail
+  grid.querySelectorAll('.cal-day').forEach(dayEl => {
+    dayEl.addEventListener('click', (e) => {
+      const i = parseInt(dayEl.dataset.dayIndex);
+      calShowDayDetail(byDay[i]);
+    });
+  });
+
+  // Click chip → open student profile directly
+  grid.querySelectorAll('.cal-session-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const scheduleId = chip.dataset.scheduleId;
+      const session = schedules.find(s => s.id === scheduleId);
+      if (session?.students) openStudentProfile(session.students);
+    });
+  });
+}
+
+function calShowDayDetail(dayData) {
+  const { date, sessions } = dayData;
+  const detailEl = document.getElementById('cal-day-detail');
+  const titleEl = document.getElementById('cal-detail-title');
+  const sessionsEl = document.getElementById('cal-detail-sessions');
+
+  titleEl.textContent = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const active = sessions.filter(s => s.status !== 'cancelled');
+  const cancelled = sessions.filter(s => s.status === 'cancelled');
+
+  if (!sessions.length) {
+    sessionsEl.innerHTML = '<div class="cal-empty">No sessions scheduled</div>';
+  } else {
+    sessionsEl.innerHTML = [...active, ...cancelled].map(s => {
+      const time = new Date(s.scheduled_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const color = dbAvatarColor(s.students?.name || '');
+      const isCancelled = s.status === 'cancelled';
+      return `
+        <div class="cal-detail-row ${isCancelled ? 'cal-detail-row--cancelled' : ''}">
+          <div class="cal-detail-avatar" style="background:${color}20;color:${color}">
+            ${(s.students?.name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()}
+          </div>
+          <div class="cal-detail-info">
+            <span class="cal-detail-name">${s.students?.name || '—'}</span>
+            <span class="cal-detail-meta">${time} · ${s.duration_min || 60} min · ${s.students?.instrument || '—'}</span>
+            ${isCancelled ? '<span class="cal-detail-cancelled-badge">Cancelled</span>' : ''}
+          </div>
+          ${!isCancelled ? `
+          <div class="cal-detail-actions">
+            <button class="cal-action-btn cal-action-btn--cancel" data-id="${s.id}" title="Cancel">
+              <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+
+    // Click name → open profile
+    sessionsEl.querySelectorAll('.cal-detail-row:not(.cal-detail-row--cancelled)').forEach(row => {
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.cal-action-btn')) return;
+        const name = row.querySelector('.cal-detail-name')?.textContent;
+        const student = dbAllStudents.find(s => s.name === name);
+        if (student) openStudentProfile(student);
+      });
+    });
+
+    // Cancel button
+    sessionsEl.querySelectorAll('.cal-action-btn--cancel').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Cancel this session?')) return;
+        const { error } = await db
+          .from('class_schedule')
+          .update({ status: 'cancelled' })
+          .eq('id', btn.dataset.id);
+        if (error) { showNotif('Error cancelling', 'error'); return; }
+        showNotif('Session cancelled', 'success');
+        loadCalendar();
+        document.getElementById('cal-day-detail').style.display = 'none';
+      });
+    });
+  }
+
+  detailEl.style.display = 'block';
+}
+
+async function calGenerateSchedule() {
+  const { data: students, error } = await db
+    .from('students')
+    .select('id, name, class_days, class_time, class_duration')
+    .eq('teacher_id', currentProfile.id)
+    .eq('status', 'active');
+
+  if (error || !students?.length) {
+    showNotif('No active students found', 'error');
+    return;
+  }
+
+  const dayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const threeMonths = new Date(today);
+  threeMonths.setMonth(threeMonths.getMonth() + 3);
+
+  let generated = 0;
+  const inserts = [];
+
+  students.forEach(student => {
+    if (!student.class_days?.length || !student.class_time) return;
+    const [hour, min] = (student.class_time || '09:00').split(':').map(Number);
+
+    student.class_days.forEach(dayName => {
+      const dayIndex = dayMap[dayName.toLowerCase()];
+      if (dayIndex === undefined) return;
+
+      const cursor = new Date(today);
+      // Find first occurrence of this day
+      while (cursor.getDay() !== dayIndex) cursor.setDate(cursor.getDate() + 1);
+
+      while (cursor <= threeMonths) {
+        const scheduledAt = new Date(cursor);
+        scheduledAt.setHours(hour, min, 0, 0);
+
+        inserts.push({
+          teacher_id: currentProfile.id,
+          student_id: student.id,
+          original_date: cursor.toISOString().split('T')[0],
+          scheduled_at: scheduledAt.toISOString(),
+          duration_min: student.class_duration || 60,
+          status: 'scheduled'
+        });
+
+        generated++;
+        cursor.setDate(cursor.getDate() + 7);
+      }
+    });
+  });
+
+  if (!inserts.length) {
+    showNotif('No class_days set for students', 'error');
+    return;
+  }
+
+  // Upsert — avoid duplicates by checking existing
+  const { data: existing } = await db
+    .from('class_schedule')
+    .select('student_id, original_date')
+    .eq('teacher_id', currentProfile.id)
+    .gte('scheduled_at', today.toISOString());
+
+  const existingKeys = new Set(
+    (existing || []).map(e => `${e.student_id}_${e.original_date}`)
+  );
+
+  const newInserts = inserts.filter(i =>
+    !existingKeys.has(`${i.student_id}_${i.original_date}`)
+  );
+
+  if (!newInserts.length) {
+    showNotif('Calendar already up to date', 'success');
+    loadCalendar();
+    return;
+  }
+
+  const { error: insertError } = await db.from('class_schedule').insert(newInserts);
+  if (insertError) { showNotif('Error generating schedule', 'error'); logError(insertError, 'calGenerateSchedule'); return; }
+
+  showNotif(`Generated ${newInserts.length} sessions ✓`, 'success');
+  loadCalendar();
+}
+
 // ════════════════════════════════
 // STUDENTS (Teacher)
 // ════════════════════════════════
@@ -2590,6 +2884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   item.addEventListener('click', () => {
     showPanel(item.dataset.panel, item);
     if (item.dataset.panel === 'panel-dashboard') loadDashboard();
+    if (item.dataset.panel === 'panel-calendar') loadCalendar();
   });
 });
 

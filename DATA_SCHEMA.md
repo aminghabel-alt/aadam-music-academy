@@ -240,6 +240,53 @@ Nomrat tamrin-ha — per student per exercise
 
 ---
 
+### `class_schedule` ⭐ NEW — Calendar
+Jalasate kelas — auto-generate az class_days + editable
+
+| Sotun | Type | Nullable | Default | Tozih |
+|-------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` CASCADE |
+| `student_id` | UUID | NO | — | FK → `students.id` CASCADE |
+| `original_date` | DATE | YES | NULL | Tarikh asli az class_days |
+| `scheduled_at` | TIMESTAMPTZ | NO | — | Tarikh + sa'at vaghi |
+| `duration_min` | INT | NO | 60 | Modat be daghigheh |
+| `status` | TEXT | NO | `scheduled` | `scheduled` / `completed` / `cancelled` / `rescheduled` |
+| `rescheduled_from` | UUID | YES | NULL | FK → `class_schedule.id` — link be jalase ghadim |
+| `notes` | TEXT | YES | NULL | Yaddash morabbi |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+**RLS Policies:**
+- `teacher_own_schedule`: morabbi full CRUD khodesh
+- `student_view_own_schedule`: honarjoo faghat read khodesh
+
+**Logic:**
+- Auto-generate az `students.class_days` + `class_time` ta 3 mah ayande
+- Cancel → `status = 'cancelled'` — jalase hazf nemishe
+- Reschedule → row jadid ba `rescheduled_from` + row ghadim `status = 'rescheduled'`
+
+---
+
+### `practice_sessions` ⭐ NEW — Calendar
+Tamrin-haye honarjoo ke khodesh tarif mikone
+
+| Sotun | Type | Nullable | Default | Tozih |
+|-------|------|----------|---------|-------|
+| `id` | UUID | NO | gen_random_uuid() | — |
+| `student_id` | UUID | NO | — | FK → `students.id` CASCADE |
+| `teacher_id` | UUID | NO | — | FK → `profiles.id` CASCADE |
+| `scheduled_at` | TIMESTAMPTZ | NO | — | Tarikh + sa'at tamrin |
+| `duration_min` | INT | NO | 30 | Modat be daghigheh |
+| `title` | TEXT | YES | NULL | Onvan tamrin |
+| `notes` | TEXT | YES | NULL | Yaddash honarjoo |
+| `created_at` | TIMESTAMPTZ | NO | NOW() | — |
+
+**RLS Policies:**
+- `teacher_view_student_practice`: morabbi read-only
+- `student_own_practice`: honarjoo full CRUD khodesh
+
+---
+
 ### `repertoire` ⭐ NEW — Phase 4
 Ghat'e-haye musiqi ke honarjoo tamrin mikone
 
@@ -298,6 +345,8 @@ File-haye amuzeshi — PDF / MP3 / MP4
 | 1404/02/19 | `exercise_scores` | Jadval jadid |
 | 1404/02/19 | Storage | Bucket `session-files` ezafe shod |
 | 1404/02/25 | `repertoire` | Jadval jadid — Phase 4 |
+| 1404/02/25 | `class_schedule` | Jadval jadid — Calendar + `original_date` + `rescheduled_from` |
+| 1404/02/25 | `practice_sessions` | Jadval jadid — Calendar honarjoo |
 
 ---
 
