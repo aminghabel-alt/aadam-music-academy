@@ -56,19 +56,17 @@ function setAnimations(enabled) {
 // ════════════════════════════════
 
 function openSidebar() {
-  const sidebar  = document.querySelector('.sidebar');
-  const overlay  = document.getElementById('sidebar-overlay');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
   if (sidebar) sidebar.classList.add('open');
   if (overlay) overlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
 }
 
 function closeSidebar() {
-  const sidebar  = document.querySelector('.sidebar');
-  const overlay  = document.getElementById('sidebar-overlay');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
   if (sidebar) sidebar.classList.remove('open');
   if (overlay) overlay.classList.remove('active');
-  document.body.style.overflow = '';
 }
 
 // ════════════════════════════════

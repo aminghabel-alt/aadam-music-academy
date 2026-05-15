@@ -1851,15 +1851,10 @@ a { color: var(--gold); text-decoration: none; }
     grid-template-columns: 1fr;
   }
   .sidebar {
-    display: none;
+    display: flex;  /* keep flex, hide via transform in phase 5 rules */
   }
   .panels--sidebar {
     padding: 16px 14px 80px;
-  }
-  /* Fallback bottom nav for teacher on mobile */
-  .screen--sidebar.active::after {
-    content: '';
-    display: block;
   }
 }
 
