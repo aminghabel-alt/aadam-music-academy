@@ -31,3 +31,17 @@ Marhale felii: MVP kamel — GitHub Pages active
 3. Monetization — Zarinpal integration
 4. Kelas grohi (classes table)
 5. Skill categories custom per teacher
+
+## Dashboard — Dar Hal Anjam (Feature Feli)
+
+### ✅ Tamam Shode
+- Students list ba instrument + level + HalfMeter
+- Toggle All / New / At risk
+- Today's sessions dot
+- Overdue alerts
+- Overview stats
+
+### ❌ Mandeh
+1. Filter logic dorost — New / At risk / Inactive ba taarif vaghi
+2. Right panel — Studio cadence chart + Recent sessions
+3. Status system — pending / active / on_leave / inactive (PROPOSAL lazem dare)
