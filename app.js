@@ -833,7 +833,7 @@ function calRenderGrid(schedules) {
     const isToday = date.getTime() === today.getTime();
     const isPast = date < today;
     const dayNum = date.getDate();
-    const activeSessions = sessions.filter(s => s.status !== 'cancelled');
+    const activeSessions = sessions.filter(s => s.status !== 'cancelled' && s.status !== 'rescheduled');
 
     return `
       <div class="cal-day ${isToday ? 'cal-day--today' : ''} ${isPast ? 'cal-day--past' : ''}"
@@ -886,7 +886,7 @@ function calShowDayDetail(dayData) {
 
   titleEl.textContent = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  const active = sessions.filter(s => s.status !== 'cancelled');
+  const active = sessions.filter(s => s.status === 'scheduled' || s.status === 'completed');
   const cancelled = sessions.filter(s => s.status === 'cancelled');
 
   if (!sessions.length) {
@@ -908,6 +908,13 @@ function calShowDayDetail(dayData) {
           </div>
           ${!isCancelled ? `
           <div class="cal-detail-actions">
+            <button class="cal-action-btn cal-action-btn--reschedule" data-id="${s.id}"
+              data-date="${s.scheduled_at}" data-student="${s.students?.name || ''}" title="Reschedule">
+              <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+                <path d="M2 8a6 6 0 1 0 12 0A6 6 0 0 0 2 8z" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </button>
             <button class="cal-action-btn cal-action-btn--cancel" data-id="${s.id}" title="Cancel">
               <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             </button>
@@ -923,6 +930,14 @@ function calShowDayDetail(dayData) {
         const name = row.querySelector('.cal-detail-name')?.textContent;
         const student = dbAllStudents.find(s => s.name === name);
         if (student) openStudentProfile(student);
+      });
+    });
+
+    // Reschedule button
+    sessionsEl.querySelectorAll('.cal-action-btn--reschedule').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        calOpenRescheduleModal(btn.dataset.id, btn.dataset.date, btn.dataset.student);
       });
     });
 
@@ -944,6 +959,97 @@ function calShowDayDetail(dayData) {
   }
 
   detailEl.style.display = 'block';
+}
+
+function calOpenRescheduleModal(scheduleId, currentDate, studentName) {
+  // Remove existing modal if any
+  const existing = document.getElementById('cal-reschedule-modal');
+  if (existing) existing.remove();
+
+  const current = new Date(currentDate);
+  const dateVal = current.toISOString().slice(0, 10);
+  const timeVal = current.toTimeString().slice(0, 5);
+
+  const modal = document.createElement('div');
+  modal.id = 'cal-reschedule-modal';
+  modal.className = 'cal-modal-overlay';
+  modal.innerHTML = `
+    <div class="cal-modal">
+      <div class="cal-modal-header">
+        <span class="cal-modal-title">Reschedule — ${studentName}</span>
+        <button class="cal-close-btn" id="cal-modal-close">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="cal-modal-body">
+        <label class="cal-modal-label">New Date</label>
+        <input type="date" id="cal-reschedule-date" class="cal-modal-input" value="${dateVal}" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">New Time</label>
+        <input type="time" id="cal-reschedule-time" class="cal-modal-input" value="${timeVal}" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">Notes (optional)</label>
+        <input type="text" id="cal-reschedule-notes" class="cal-modal-input" placeholder="Reason for reschedule..." />
+      </div>
+      <div class="cal-modal-footer">
+        <button class="cal-modal-btn-cancel" id="cal-modal-cancel">Cancel</button>
+        <button class="btn-gold cal-modal-btn-confirm" id="cal-modal-confirm">Reschedule</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  document.getElementById('cal-modal-close').onclick = () => modal.remove();
+  document.getElementById('cal-modal-cancel').onclick = () => modal.remove();
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  document.getElementById('cal-modal-confirm').onclick = async () => {
+    const newDate = document.getElementById('cal-reschedule-date').value;
+    const newTime = document.getElementById('cal-reschedule-time').value;
+    const notes = document.getElementById('cal-reschedule-notes').value;
+
+    if (!newDate || !newTime) { showNotif('Date and time required', 'error'); return; }
+
+    const newScheduledAt = new Date(`${newDate}T${newTime}:00`).toISOString();
+    await calReschedule(scheduleId, newScheduledAt, notes);
+    modal.remove();
+  };
+}
+
+async function calReschedule(scheduleId, newScheduledAt, notes) {
+  // 1. Mark old session as rescheduled
+  const { data: oldSession, error: fetchErr } = await db
+    .from('class_schedule')
+    .select('*')
+    .eq('id', scheduleId)
+    .single();
+
+  if (fetchErr || !oldSession) { showNotif('Error fetching session', 'error'); return; }
+
+  const { error: updateErr } = await db
+    .from('class_schedule')
+    .update({ status: 'rescheduled' })
+    .eq('id', scheduleId);
+
+  if (updateErr) { showNotif('Error updating session', 'error'); return; }
+
+  // 2. Insert new session linked to old
+  const { error: insertErr } = await db
+    .from('class_schedule')
+    .insert({
+      teacher_id: oldSession.teacher_id,
+      student_id: oldSession.student_id,
+      original_date: oldSession.original_date,
+      scheduled_at: newScheduledAt,
+      duration_min: oldSession.duration_min,
+      status: 'scheduled',
+      rescheduled_from: scheduleId,
+      notes: notes || null
+    });
+
+  if (insertErr) { showNotif('Error creating new session', 'error'); logError(insertErr, 'calReschedule'); return; }
+
+  showNotif('Session rescheduled ✓', 'success');
+  document.getElementById('cal-day-detail').style.display = 'none';
+  loadCalendar();
 }
 
 async function calGenerateSchedule() {

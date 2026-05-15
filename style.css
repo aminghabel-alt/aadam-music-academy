@@ -4184,3 +4184,97 @@ body.no-animations *::after {
   .cal-day-count { text-align: left; }
   .cal-generate-btn span { display: none; }
 }
+/* ════════════════════════════════
+   CALENDAR — Reschedule Modal
+════════════════════════════════ */
+
+.cal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: oklch(0.05 0.003 75 / 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.cal-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 380px;
+  padding: 1.25rem;
+}
+
+.cal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.cal-modal-title {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.cal-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-modal-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.cal-modal-input {
+  width: 100%;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.88rem;
+  color: var(--text);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.cal-modal-input:focus { border-color: var(--border-gold); }
+
+.cal-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.cal-modal-btn-cancel {
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: var(--text-dim);
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.cal-modal-btn-cancel:hover { border-color: var(--border-gold); color: var(--text); }
+
+.cal-modal-btn-confirm {
+  font-size: 0.85rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 20px;
+}
+
+.cal-action-btn--reschedule:hover { border-color: var(--border-gold); color: var(--gold); }
