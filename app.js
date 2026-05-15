@@ -2543,8 +2543,9 @@ function initMetronome(prefix) {
   // PENDULUM
   // ════════════════════════════
   function renderPendulum() {
-    stage.innerHTML = '<canvas id="metro-cv-pendulum" style="width:100%;height:100%;display:block;"></canvas>';
-    const cv = document.getElementById('metro-cv-pendulum');
+    const canvasId = prefix + 'metro-cv-pendulum';
+    stage.innerHTML = `<canvas id="${canvasId}" style="width:100%;height:100%;display:block;"></canvas>`;
+    const cv = document.getElementById(canvasId);
     const dpr = window.devicePixelRatio || 1;
     const W = stage.offsetWidth * dpr;
     const H = stage.offsetHeight * dpr;
@@ -2772,8 +2773,9 @@ function initMetronome(prefix) {
   }
 
   function renderConducting() {
-    stage.innerHTML='<canvas id="metro-cv-conducting" style="width:100%;height:100%;display:block;"></canvas>';
-    const cv=document.getElementById('metro-cv-conducting');
+    const canvasId = prefix + 'metro-cv-conducting';
+    stage.innerHTML=`<canvas id="${canvasId}" style="width:100%;height:100%;display:block;"></canvas>`;
+    const cv=document.getElementById(canvasId);
     const dpr=window.devicePixelRatio||1;
     cv.width=stage.offsetWidth*dpr;
     cv.height=stage.offsetHeight*dpr;
