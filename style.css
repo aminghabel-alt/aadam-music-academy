@@ -21,19 +21,19 @@
   --purple-deep: oklch(0.18 0.020 78);
 
   /* ── Backgrounds ── */
-  --bg:          oklch(0.10 0.005 75);   /* deepest — body */
-  --bg-card:     oklch(0.13 0.006 75);   /* surface */
-  --bg-card2:    oklch(0.17 0.009 78);   /* surface2 */
-  --bg-card3:    oklch(0.21 0.011 78);   /* surface3 / hover */
+  --bg:          oklch(0.13 0.006 75);   /* deepest — body */
+  --bg-card:     oklch(0.17 0.008 75);   /* surface */
+  --bg-card2:    oklch(0.21 0.010 78);   /* surface2 */
+  --bg-card3:    oklch(0.26 0.012 78);   /* surface3 / hover */
 
   /* ── Borders ── */
-  --border:      oklch(0.30 0.015 78 / 0.55);
-  --border-gold: oklch(0.82 0.13 88 / 0.22);
+  --border:      oklch(0.40 0.015 78 / 0.70);
+  --border-gold: oklch(0.82 0.13 88 / 0.35);
 
   /* ── Text ── */
-  --text:        oklch(0.96 0.005 80);
-  --text-mid:    oklch(0.68 0.010 80);
-  --text-dim:    oklch(0.50 0.010 80);
+  --text:        oklch(0.97 0.004 80);
+  --text-mid:    oklch(0.78 0.008 80);
+  --text-dim:    oklch(0.62 0.008 80);
 
   /* ── Semantic ── */
   --danger:      oklch(0.62 0.18 25);
