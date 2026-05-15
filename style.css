@@ -21,10 +21,10 @@
   --purple-deep: oklch(0.18 0.020 78);
 
   /* ── Backgrounds ── */
-  --bg:          oklch(0.13 0.006 75);   /* deepest — body */
-  --bg-card:     oklch(0.17 0.008 75);   /* surface */
-  --bg-card2:    oklch(0.21 0.010 78);   /* surface2 */
-  --bg-card3:    oklch(0.26 0.012 78);   /* surface3 / hover */
+  --bg:          oklch(0.18 0.005 270);   /* Claude dark mode */
+  --bg-card:     oklch(0.21 0.006 270);   /* surface */
+  --bg-card2:    oklch(0.25 0.007 270);   /* surface2 */
+  --bg-card3:    oklch(0.29 0.008 270);   /* surface3 / hover */
 
   /* ── Borders ── */
   --border:      oklch(0.40 0.015 78 / 0.70);
@@ -3301,4 +3301,56 @@ body.no-animations *::after {
 }
 .screen.active {
   animation: screenFade 0.25s ease;
+}
+
+
+/* ════════════════════════════════════════════════
+   FIX: Mobile topbar + sidebar overlay — out of grid
+════════════════════════════════════════════════ */
+
+.mobile-topbar {
+  /* Take out of grid flow on all sizes */
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 680px) {
+  /* mobile-topbar fixed at top — always above content */
+  .mobile-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 8;
+    height: 54px;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--bg-card2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Push main content down so it doesn't hide under topbar */
+  .panels--sidebar {
+    padding-top: 70px !important;
+  }
+
+  /* Sidebar overlay covers full screen */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9;
+    background: oklch(0.05 0.003 75 / 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+  }
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* Sidebar drawer above overlay */
+  .sidebar {
+    z-index: 10 !important;
+  }
 }
