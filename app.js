@@ -228,8 +228,11 @@ async function afterAuth(user) {
     if (avatarEl) avatarEl.textContent = profile.name?.[0]?.toUpperCase() || 'T';
     document.getElementById('invite-code-display').textContent = profile.invite_code || '—';
     showScreen('screen-teacher');
-    loadStudents();
-    loadLessons();
+loadStudents();
+loadLessons();
+loadDashboard();
+const dbNavBtn = document.querySelector('[data-panel="panel-dashboard"]');
+if (dbNavBtn) showPanel('panel-dashboard', dbNavBtn);
   } else {
     document.getElementById('student-name-display').textContent = profile.name;
     showScreen('screen-student');
@@ -239,6 +242,216 @@ async function afterAuth(user) {
     loadStudentRepertoire();
     loadPracticeStreak();
   }
+}
+// ════════════════════════════════
+// DASHBOARD (Teacher)
+// ════════════════════════════════
+
+const AVATAR_COLORS = [
+  'oklch(0.55 0.14 260)', // blue-purple
+  'oklch(0.52 0.16 145)', // teal
+  'oklch(0.58 0.16 30)',  // coral
+  'oklch(0.54 0.13 310)', // violet
+  'oklch(0.56 0.15 200)', // cyan
+  'oklch(0.53 0.14 80)',  // warm amber
+];
+
+function dbAvatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+let dbAllStudents = [];
+let dbCurrentFilter = 'all';
+
+async function loadDashboard() {
+  // Day + term header
+  const dayEl = document.getElementById('db-day-term');
+  if (dayEl) {
+    const now = new Date();
+    const day = now.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
+    dayEl.textContent = `${day} · SPRING TERM`;
+  }
+
+  const { data: students, error } = await db
+    .from('students')
+    .select('*')
+    .eq('teacher_id', currentProfile.id)
+    .order('created_at', { ascending: true });
+
+  if (error) { logError(error, 'loadDashboard'); return; }
+  dbAllStudents = students || [];
+
+  // Count
+  const activeCount = dbAllStudents.filter(s => s.status === 'active').length;
+  const atRiskCount = dbAllStudents.filter(s => s.payment_status === 'overdue').length;
+  const countEl = document.getElementById('db-student-count');
+  if (countEl) countEl.textContent = `${activeCount} active · ${atRiskCount} require attention`;
+
+  // Load scores for HalfMeters
+  const ids = dbAllStudents.map(s => s.id);
+  let scoreMap = {};
+  if (ids.length) {
+    const { data: scores, error: scErr } = await db
+  .from('exercise_scores')
+  .select('student_id, score, exercises(max_score)')
+  .in('student_id', ids)
+  .order('created_at', { ascending: false });
+
+if (scErr) console.log('scores error:', scErr.message);
+
+if (scErr) {
+  console.log('exercise_scores error:', scErr.message);
+  // continue without scores
+}
+
+    (scores || []).forEach(sc => {
+  if (!scoreMap[sc.student_id]) {
+    const maxScore = sc.exercises?.max_score ?? 20;
+    const pct = maxScore > 0 ? Math.round((sc.score / maxScore) * 100) : 0;
+    scoreMap[sc.student_id] = pct;
+  }
+});
+  }
+
+  dbRenderStudents(dbAllStudents, scoreMap, dbCurrentFilter);
+  dbRenderStats(dbAllStudents);
+  dbRenderAlerts(dbAllStudents, scoreMap);
+
+  // Filter buttons
+  document.querySelectorAll('#panel-dashboard .db-toggle-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#panel-dashboard .db-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      dbCurrentFilter = btn.dataset.filter;
+      dbRenderStudents(dbAllStudents, scoreMap, dbCurrentFilter);
+    };
+  });
+}
+
+function dbRenderStudents(students, scoreMap, filter) {
+  const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const todayName = dayNames[new Date().getDay()];
+
+  let filtered = students.filter(s => s.status === 'active');
+  if (filter === 'new') {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    filtered = filtered.filter(s => new Date(s.created_at) >= cutoff);
+  } else if (filter === 'atrisk') {
+    filtered = filtered.filter(s => s.payment_status === 'overdue' || (scoreMap[s.id] !== undefined && scoreMap[s.id] < 50));
+  }
+
+  const list = document.getElementById('db-students-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="db-empty">No students in this category</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(s => {
+    const initials = s.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+    const color = dbAvatarColor(s.name);
+    const pct = scoreMap[s.id] ?? 0;
+    const isToday = Array.isArray(s.class_days) && s.class_days.map(d => d.toLowerCase()).includes(todayName);
+    const focusText = [s.instrument, s.level].filter(Boolean).join(' · ') || '—';
+
+    return `
+      <div class="db-student-row" data-id="${s.id}">
+        <div class="db-student-avatar" style="background:${color}20;color:${color}">${initials}</div>
+        <div class="db-student-info">
+          <span class="db-student-name">${s.name}${isToday ? ' <span class="db-today-dot"></span>' : ''}</span>
+          <span class="db-student-sub">${focusText}</span>
+        </div>
+        <div class="db-student-meter">
+          ${dbHalfMeter(pct)}
+        </div>
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="color:var(--text-dim);flex-shrink:0"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.db-student-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const s = students.find(s => s.id === row.dataset.id);
+      if (s) openStudentProfile(s);
+    });
+  });
+}
+
+function dbHalfMeter(pct) {
+  const R = 20, cx = 26, cy = 26;
+  const circumference = Math.round(Math.PI * R);
+  const filled = Math.round(pct / 100 * circumference);
+  const color = pct >= 70 ? 'var(--gold)' : pct >= 50 ? 'oklch(0.75 0.12 50)' : 'var(--danger)';
+  return `
+    <div class="db-half-meter">
+      <svg width="52" height="30" viewBox="0 0 52 30" fill="none">
+        <path d="M6 26 A20 20 0 0 1 46 26" stroke="var(--bg-card3)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M6 26 A20 20 0 0 1 46 26"
+          stroke="${color}" stroke-width="3" stroke-linecap="round"
+          stroke-dasharray="${filled} ${circumference - filled}"
+          stroke-dashoffset="0"/>
+      </svg>
+      <span class="db-meter-val" style="color:${color}">${pct}%</span>
+    </div>`;
+}
+
+function dbRenderStats(students) {
+  const active = students.filter(s => s.status === 'active').length;
+  const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const todayName = dayNames[new Date().getDay()];
+  const todayCount = students.filter(s =>
+    s.status === 'active' && Array.isArray(s.class_days) &&
+    s.class_days.map(d => d.toLowerCase()).includes(todayName)
+  ).length;
+  const overdue = students.filter(s => s.payment_status === 'overdue').length;
+
+  document.getElementById('db-stats').innerHTML = `
+    <div class="db-stat">
+      <span class="db-stat-num">${active}</span>
+      <span class="db-stat-label">Active Students</span>
+    </div>
+    <div class="db-stat">
+      <span class="db-stat-num">${todayCount}</span>
+      <span class="db-stat-label">Today's Sessions</span>
+    </div>
+    <div class="db-stat db-stat--warn">
+      <span class="db-stat-num">${overdue}</span>
+      <span class="db-stat-label">Overdue Payments</span>
+    </div>`;
+}
+
+function dbRenderAlerts(students, scoreMap) {
+  const alerts = [];
+  students.filter(s => s.status === 'active').forEach(s => {
+    if (s.payment_status === 'overdue')
+      alerts.push({ type: 'payment', msg: 'Payment overdue', student: s });
+    else if (scoreMap[s.id] !== undefined && scoreMap[s.id] < 50)
+      alerts.push({ type: 'risk', msg: `Last score: ${scoreMap[s.id]}%`, student: s });
+  });
+
+  const el = document.getElementById('db-alerts');
+  el.innerHTML = alerts.length
+    ? alerts.map(a => {
+        const color = dbAvatarColor(a.student.name);
+        const initials = a.student.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        return `
+          <div class="db-alert-row db-alert--${a.type}" data-id="${a.student.id}">
+            <div class="db-student-avatar" style="background:${color}20;color:${color}">${initials}</div>
+            <div class="db-student-info">
+              <span class="db-student-name">${a.student.name}</span>
+              <span class="db-student-sub">${a.msg}</span>
+            </div>
+          </div>`;
+      }).join('')
+    : '<div class="db-empty">No alerts — all good ✓</div>';
+
+  el.querySelectorAll('.db-alert-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const s = students.find(s => s.id === row.dataset.id);
+      if (s) openStudentProfile(s);
+    });
+  });
 }
 
 // ════════════════════════════════
@@ -2091,8 +2304,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Nav (Teacher) ──
   document.querySelectorAll('#screen-teacher .sidebar-nav-item').forEach(item => {
-    item.addEventListener('click', () => showPanel(item.dataset.panel, item));
+  item.addEventListener('click', () => {
+    showPanel(item.dataset.panel, item);
+    if (item.dataset.panel === 'panel-dashboard') loadDashboard();
   });
+});
 
   // ── Nav (Student) ──
   document.querySelectorAll('#screen-student .tab-bar-item').forEach(item => {
