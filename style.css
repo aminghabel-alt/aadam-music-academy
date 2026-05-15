@@ -3586,3 +3586,54 @@ body.no-animations *::after {
   .db-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .db-title { font-size: 1.6rem; }
 }
+/* ── Recent Sessions ── */
+.db-viewall {
+  font-size: 0.72rem;
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 500;
+  float: right;
+  margin-top: 1px;
+}
+.db-viewall:hover { opacity: 0.8; }
+
+.db-recent-sessions { display: flex; flex-direction: column; gap: 6px; }
+
+.db-session-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.db-session-row:hover { border-color: var(--border-gold); }
+
+.db-session-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-card2);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.db-session-num {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.db-session-dur {
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}

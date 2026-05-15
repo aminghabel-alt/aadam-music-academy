@@ -318,6 +318,7 @@ if (scErr) {
   dbRenderStudents(dbAllStudents, scoreMap, dbCurrentFilter);
   dbRenderStats(dbAllStudents);
   dbRenderAlerts(dbAllStudents, scoreMap);
+  dbLoadRecentSessions();
 
   // Filter buttons
   document.querySelectorAll('#panel-dashboard .db-toggle-btn').forEach(btn => {
@@ -336,11 +337,16 @@ function dbRenderStudents(students, scoreMap, filter) {
 
   let filtered = students.filter(s => s.status === 'active');
   if (filter === 'new') {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    filtered = filtered.filter(s => new Date(s.created_at) >= cutoff);
+    filtered = filtered.filter(s =>
+      !s.class_days || s.class_days.length === 0 || !s.class_time
+    );
   } else if (filter === 'atrisk') {
-    filtered = filtered.filter(s => s.payment_status === 'overdue' || (scoreMap[s.id] !== undefined && scoreMap[s.id] < 50));
+    filtered = filtered.filter(s =>
+      s.payment_status === 'overdue' ||
+      (scoreMap[s.id] !== undefined && scoreMap[s.id] < 50)
+    );
+  } else if (filter === 'inactive') {
+    filtered = students.filter(s => s.status === 'inactive');
   }
 
   const list = document.getElementById('db-students-list');
@@ -419,6 +425,65 @@ function dbRenderStats(students) {
       <span class="db-stat-num">${overdue}</span>
       <span class="db-stat-label">Overdue Payments</span>
     </div>`;
+}
+
+async function dbLoadRecentSessions() {
+  const el = document.getElementById('db-recent-sessions');
+  if (!el) return;
+
+  // sessions → terms → students (join chain)
+  const { data: sessions, error } = await db
+    .from('sessions')
+    .select('id, session_number, session_date, content_text, terms(student_id, students(id, name, instrument, class_duration))')
+    .eq('terms.teacher_id', currentProfile.id)
+    .not('session_date', 'is', null)
+    .order('session_date', { ascending: false })
+    .limit(5);
+
+  if (error) { logError(error, 'dbLoadRecentSessions'); return; }
+
+  const validSessions = (sessions || []).filter(s => s.terms?.students);
+
+  if (!validSessions.length) {
+    el.innerHTML = '<div class="db-empty">No sessions recorded yet</div>';
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  el.innerHTML = validSessions.map(s => {
+    const student = s.terms.students;
+    const color = dbAvatarColor(student.name);
+    const initials = student.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+    const duration = student.class_duration || 60;
+    const sessionDate = new Date(s.session_date);
+    const diffDays = Math.round((today - sessionDate) / (1000 * 60 * 60 * 24));
+    const dateLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+    const content = s.content_text ? s.content_text.slice(0, 40) + (s.content_text.length > 40 ? '…' : '') : '—';
+
+    return `
+      <div class="db-session-row" data-student-id="${student.id}">
+        <div class="db-session-icon">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M8 5v3.5L10 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="db-student-info">
+          <span class="db-student-name">${student.name} <span class="db-session-num">· Session ${s.session_number}</span></span>
+          <span class="db-student-sub">${dateLabel} · ${content}</span>
+        </div>
+        <span class="db-session-dur">${duration} min</span>
+      </div>`;
+  }).join('');
+
+  el.querySelectorAll('.db-session-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const s = dbAllStudents.find(s => s.id === row.dataset.studentId);
+      if (s) openStudentProfile(s);
+    });
+  });
 }
 
 function dbRenderAlerts(students, scoreMap) {
