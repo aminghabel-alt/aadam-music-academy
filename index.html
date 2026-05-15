@@ -190,6 +190,25 @@
     </div>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
+    <!-- Top bar — search + actions -->
+    <div class="db-topbar">
+      <div class="db-search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="color:var(--text-dim);flex-shrink:0"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input id="db-search-input" type="text" class="db-search-input" placeholder="Search students, sessions..." autocomplete="off" />
+        <span class="db-search-kbd"><kbd>⌘K</kbd></span>
+      </div>
+      <div class="db-topbar-actions">
+        <button class="db-topbar-btn" id="btn-topbar-messages" title="Messages">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M18 13a2 2 0 01-2 2H6l-4 4V5a2 2 0 012-2h12a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="db-topbar-btn db-topbar-btn--notif" id="btn-topbar-notif" title="Notifications">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2a6 6 0 00-6 6v3l-2 2v1h16v-1l-2-2V8a6 6 0 00-6-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 18a2 2 0 002-2H8a2 2 0 002 2z" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span class="db-notif-dot" id="db-notif-dot"></span>
+        </button>
+        <div class="db-topbar-avatar" id="db-topbar-avatar"></div>
+      </div>
+    </div>
+
     <main class="panels panels--sidebar">
       <div id="panel-dashboard" class="panel">
 
@@ -199,34 +218,77 @@
       <span id="db-day-term" class="db-day-term"></span>
       <h2 class="db-title">Teacher <em>Studio</em></h2>
     </div>
+    <button class="db-schedule-btn" id="btn-schedule-session">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Schedule session
+    </button>
   </div>
 
-  <!-- Students in tempo card -->
-  <div class="db-card">
-    <div class="db-card-head">
-      <div>
-        <span class="db-card-title">Students <em>· in tempo</em></span>
-        <span id="db-student-count" class="db-student-count"></span>
-      </div>
-      <div class="db-toggle-group">
-        <button class="db-toggle-btn active" data-filter="all">All</button>
-        <button class="db-toggle-btn" data-filter="new">New</button>
-        <button class="db-toggle-btn" data-filter="atrisk">At risk</button>
-        <button class="db-toggle-btn" data-filter="inactive">Inactive</button>
+  <!-- Two column layout -->
+  <div class="db-layout">
+
+    <!-- LEFT: Students -->
+    <div class="db-col-left">
+      <div class="db-card">
+        <div class="db-card-head">
+          <div>
+            <span class="db-card-title">Students <em>· in tempo</em></span>
+            <span id="db-student-count" class="db-student-count"></span>
+          </div>
+          <div class="db-toggle-group">
+            <button class="db-toggle-btn active" data-filter="all">All</button>
+            <button class="db-toggle-btn" data-filter="new">New</button>
+            <button class="db-toggle-btn" data-filter="atrisk">At risk</button>
+            <button class="db-toggle-btn" data-filter="inactive">Inactive</button>
+          </div>
+        </div>
+        <div id="db-students-list" class="db-students-list"></div>
       </div>
     </div>
-    <div id="db-students-list" class="db-students-list"></div>
+
+    <!-- RIGHT: Studio cadence + stats + recent sessions -->
+    <div class="db-col-right">
+
+      <!-- Studio Cadence -->
+      <div class="db-card db-cadence-card">
+        <div class="db-cadence-head">
+          <span class="db-card-title">Studio <em>cadence</em></span>
+          <span class="db-cadence-legend">
+            <span class="db-legend-dot db-legend-perf"></span> Performance
+            <span class="db-legend-dot db-legend-sessions"></span> Sessions
+          </span>
+        </div>
+        <canvas id="db-cadence-chart" class="db-cadence-canvas"></canvas>
+        <div class="db-cadence-stats">
+          <div class="db-cadence-stat">
+            <span class="db-cadence-stat-label">AVG PERF</span>
+            <span id="db-avg-perf" class="db-cadence-stat-num">—</span>
+          </div>
+          <div class="db-cadence-stat">
+            <span class="db-cadence-stat-label">SESSIONS</span>
+            <span id="db-total-sessions" class="db-cadence-stat-num">—</span>
+          </div>
+          <div class="db-cadence-stat">
+            <span class="db-cadence-stat-label">STUDENTS</span>
+            <span id="db-total-students" class="db-cadence-stat-num">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="db-section-title" style="margin-top:1.25rem">Alerts</div>
+      <div id="db-alerts" class="db-alerts-list"></div>
+
+      <!-- Recent Sessions -->
+      <div class="db-section-title" style="margin-top:1.25rem">Recent Sessions <a id="db-sessions-viewall" class="db-viewall" href="#">View all</a></div>
+      <div id="db-recent-sessions" class="db-recent-sessions"></div>
+
+      <!-- Overview Stats -->
+      <div class="db-section-title" style="margin-top:1.25rem">Overview</div>
+      <div id="db-stats" class="db-stats-grid"></div>
+
+    </div>
   </div>
-
-  <!-- Alerts + Stats -->
-  <div class="db-section-title">Overview</div>
-  <div id="db-stats" class="db-stats-grid"></div>
-
-  <div class="db-section-title" style="margin-top:1.25rem">Alerts</div>
-  <div id="db-alerts" class="db-alerts-list"></div>
-
-  <div class="db-section-title" style="margin-top:1.25rem">Recent Sessions <a id="db-sessions-viewall" class="db-viewall" href="#">View all</a></div>
-  <div id="db-recent-sessions" class="db-recent-sessions"></div>
 
 </div>
       <div id="panel-students" class="panel">

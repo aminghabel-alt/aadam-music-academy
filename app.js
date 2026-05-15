@@ -265,6 +265,90 @@ function dbAvatarColor(name) {
 let dbAllStudents = [];
 let dbCurrentFilter = 'all';
 
+function dbInitTopbar() {
+  // Avatar
+  const avatarEl = document.getElementById('db-topbar-avatar');
+  if (avatarEl && currentProfile?.name) {
+    avatarEl.textContent = currentProfile.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  // Notif dot — show if overdue students exist
+  const overdueCount = dbAllStudents.filter(s => s.payment_status === 'overdue').length;
+  const dot = document.getElementById('db-notif-dot');
+  if (dot) dot.style.display = overdueCount > 0 ? 'block' : 'none';
+
+  // Messages button → go to messages panel
+  const msgBtn = document.getElementById('btn-topbar-messages');
+  if (msgBtn) {
+    msgBtn.onclick = () => {
+      const navItem = document.querySelector('[data-panel="panel-messages"]');
+      if (navItem) { showPanel('panel-messages', navItem); }
+    };
+  }
+
+  // Schedule session button → add student or go to students
+  const schedBtn = document.getElementById('btn-schedule-session');
+  if (schedBtn) {
+    schedBtn.onclick = () => {
+      const navItem = document.querySelector('[data-panel="panel-students"]');
+      if (navItem) showPanel('panel-students', navItem);
+    };
+  }
+
+  // Search
+  const searchInput = document.getElementById('db-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      if (!q) {
+        dbRenderStudents(dbAllStudents, {}, dbCurrentFilter);
+        return;
+      }
+      const filtered = dbAllStudents.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.instrument && s.instrument.toLowerCase().includes(q)) ||
+        (s.level && s.level.toLowerCase().includes(q))
+      );
+      const list = document.getElementById('db-students-list');
+      if (!filtered.length) {
+        list.innerHTML = '<div class="db-empty">No results found</div>';
+        return;
+      }
+      const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const todayName = dayNames[new Date().getDay()];
+      list.innerHTML = filtered.map(s => {
+        const initials = s.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        const color = dbAvatarColor(s.name);
+        const isToday = Array.isArray(s.class_days) && s.class_days.map(d => d.toLowerCase()).includes(todayName);
+        const focusText = [s.instrument, s.level].filter(Boolean).join(' · ') || '—';
+        return `
+          <div class="db-student-row" data-id="${s.id}">
+            <div class="db-student-avatar" style="background:${color}20;color:${color}">${initials}</div>
+            <div class="db-student-info">
+              <span class="db-student-name">${s.name}${isToday ? ' <span class="db-today-dot"></span>' : ''}</span>
+              <span class="db-student-sub">${focusText}</span>
+            </div>
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="color:var(--text-dim);flex-shrink:0"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>`;
+      }).join('');
+      list.querySelectorAll('.db-student-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const s = dbAllStudents.find(s => s.id === row.dataset.id);
+          if (s) openStudentProfile(s);
+        });
+      });
+    });
+
+    // Keyboard shortcut Cmd+K / Ctrl+K
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+  }
+}
+
 async function loadDashboard() {
   // Day + term header
   const dayEl = document.getElementById('db-day-term');
@@ -319,6 +403,8 @@ if (scErr) {
   dbRenderStats(dbAllStudents);
   dbRenderAlerts(dbAllStudents, scoreMap);
   dbLoadRecentSessions();
+  dbLoadCadenceChart();
+  dbInitTopbar();
 
   // Filter buttons
   document.querySelectorAll('#panel-dashboard .db-toggle-btn').forEach(btn => {
@@ -425,6 +511,138 @@ function dbRenderStats(students) {
       <span class="db-stat-num">${overdue}</span>
       <span class="db-stat-label">Overdue Payments</span>
     </div>`;
+}
+
+async function dbLoadCadenceChart() {
+  // Load last 7 weeks of exercise_scores for this teacher
+  const sevenWeeksAgo = new Date();
+  sevenWeeksAgo.setDate(sevenWeeksAgo.getDate() - 49);
+
+  const { data: scores } = await db
+    .from('exercise_scores')
+    .select('score, exercises(max_score, sessions(session_date, terms(teacher_id)))')
+    .gte('created_at', sevenWeeksAgo.toISOString());
+
+  // Group by week
+  const weekMap = {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i * 7);
+    const key = `W${7 - i}`;
+    weekMap[key] = { perf: [], sessions: new Set() };
+  }
+
+  (scores || []).forEach(sc => {
+    const teacherId = sc.exercises?.sessions?.terms?.teacher_id;
+    if (teacherId !== currentProfile.id) return;
+    const sessionDate = sc.exercises?.sessions?.session_date;
+    if (!sessionDate) return;
+    const date = new Date(sessionDate);
+    const now = new Date();
+    const diffDays = Math.round((now - date) / (1000 * 60 * 60 * 24));
+    const weekIdx = Math.floor(diffDays / 7);
+    if (weekIdx > 6) return;
+    const key = `W${7 - weekIdx}`;
+    if (!weekMap[key]) return;
+    const max = sc.exercises?.max_score ?? 20;
+    const pct = max > 0 ? Math.round((sc.score / max) * 100) : 0;
+    weekMap[key].perf.push(pct);
+    weekMap[key].sessions.add(sc.exercises?.sessions?.session_date);
+  });
+
+  const labels = Object.keys(weekMap);
+  const perfData = labels.map(k => {
+    const arr = weekMap[k].perf;
+    return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+  });
+  const sessionData = labels.map(k => weekMap[k].sessions.size);
+
+  // Update stats
+  const totalPerf = perfData.filter(v => v > 0);
+  const avgPerf = totalPerf.length ? Math.round(totalPerf.reduce((a, b) => a + b, 0) / totalPerf.length) : 0;
+  const totalSess = sessionData.reduce((a, b) => a + b, 0);
+
+  const avgPerfEl = document.getElementById('db-avg-perf');
+  const totalSessEl = document.getElementById('db-total-sessions');
+  const totalStudEl = document.getElementById('db-total-students');
+  if (avgPerfEl) avgPerfEl.textContent = avgPerf ? avgPerf + '%' : '—';
+  if (totalSessEl) totalSessEl.textContent = totalSess || '—';
+  if (totalStudEl) totalStudEl.textContent = dbAllStudents.filter(s => s.status === 'active').length;
+
+  // Draw chart
+  const canvas = document.getElementById('db-cadence-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 320;
+  const H = 100;
+  canvas.width = W;
+  canvas.height = H;
+
+  const gold = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || 'oklch(0.82 0.13 88)';
+  const dim = getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || 'oklch(0.5 0 0)';
+
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { l: 8, r: 8, t: 10, b: 24 };
+  const chartW = W - pad.l - pad.r;
+  const chartH = H - pad.t - pad.b;
+  const n = labels.length;
+
+  function xPos(i) { return pad.l + (i / (n - 1)) * chartW; }
+  function yPos(v) { return pad.t + chartH - (v / 100) * chartH; }
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  [25, 50, 75, 100].forEach(v => {
+    ctx.beginPath();
+    ctx.moveTo(pad.l, yPos(v));
+    ctx.lineTo(W - pad.r, yPos(v));
+    ctx.stroke();
+  });
+
+  // Performance area
+  if (perfData.some(v => v > 0)) {
+    ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(perfData[0]));
+    perfData.forEach((v, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(v)); });
+    ctx.lineTo(xPos(n - 1), H - pad.b);
+    ctx.lineTo(xPos(0), H - pad.b);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+    grad.addColorStop(0, 'rgba(210,170,80,0.35)');
+    grad.addColorStop(1, 'rgba(210,170,80,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(perfData[0]));
+    perfData.forEach((v, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(v)); });
+    ctx.strokeStyle = 'rgba(210,170,80,0.9)';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  // Session dots
+  const maxSess = Math.max(...sessionData, 1);
+  sessionData.forEach((v, i) => {
+    if (v === 0) return;
+    const r = 3 + (v / maxSess) * 3;
+    ctx.beginPath();
+    ctx.arc(xPos(i), yPos((v / maxSess) * 80 + 10), r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fill();
+  });
+
+  // Week labels
+  ctx.fillStyle = dim;
+  ctx.font = '10px Manrope, sans-serif';
+  ctx.textAlign = 'center';
+  const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  labels.forEach((l, i) => {
+    ctx.fillText(dayLabels[i] || l, xPos(i), H - 6);
+  });
 }
 
 async function dbLoadRecentSessions() {

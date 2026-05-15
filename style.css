@@ -1537,6 +1537,20 @@ a { color: var(--gold); text-decoration: none; }
 .screen--sidebar.active {
   display: grid;
   grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Topbar spans full width except sidebar */
+.db-topbar {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.panels--sidebar {
+  grid-column: 2;
+  grid-row: 2;
 }
 
 /* ── Sidebar ── */
@@ -1552,6 +1566,7 @@ a { color: var(--gold); text-decoration: none; }
   overflow-y: auto;
   padding: 20px 14px;
   z-index: 10;
+  grid-row: 1 / -1;
 }
 
 .sidebar-logo {
@@ -1698,14 +1713,23 @@ a { color: var(--gold); text-decoration: none; }
 
 /* ── Teacher main panels ── */
 .panels--sidebar {
-  padding: 20px 24px 24px;
+  padding: 24px 32px 32px;
   min-height: 100vh;
   overflow-y: auto;
-  padding-top: 20px;
-  padding-bottom: 24px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex: 1;
 }
 .panels--sidebar .panel { display: none; }
-.panels--sidebar .panel.active { display: block; }
+.panels--sidebar .panel.active {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 
 /* ════════════════════════════════════════════
@@ -3354,7 +3378,7 @@ body.no-animations *::after {
    DASHBOARD — Teacher Studio
 ════════════════════════════════ */
 
-.db-header { margin-bottom: 1.5rem; }
+.db-header { margin-bottom: 1.5rem; width: 100%; }
 
 .db-day-term {
   font-size: 0.68rem;
@@ -3393,6 +3417,7 @@ body.no-animations *::after {
   justify-content: space-between;
   margin-bottom: 1rem;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .db-card-title {
@@ -3582,9 +3607,49 @@ body.no-animations *::after {
   padding: 0.75rem 0.25rem;
 }
 
+@media (max-width: 900px) {
+  /* Tablet: two columns but tighter */
+  .db-layout { gap: 1rem; }
+}
+
 @media (max-width: 680px) {
+  /* Mobile: single column */
+  .db-layout { grid-template-columns: 1fr; }
   .db-stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .db-title { font-size: 1.6rem; }
+  .db-title { font-size: 1.4rem; }
+  .db-day-term { font-size: 0.62rem; }
+  .db-header { margin-bottom: 1rem; }
+
+  /* Toggle group wrap on mobile */
+  .db-toggle-group { flex-wrap: wrap; gap: 4px; }
+  .db-toggle-btn { font-size: 0.7rem; padding: 0.25rem 0.55rem; }
+
+  /* Students card compact */
+  .db-card { padding: 0.85rem 0.85rem 0.4rem; }
+  .db-card-head { flex-direction: column; gap: 0.6rem; }
+  .db-card-title { font-size: 1rem; }
+  .db-student-count { font-size: 0.7rem; }
+
+  /* Student rows compact */
+  .db-student-row { padding: 0.65rem 0.25rem; gap: 8px; }
+  .db-student-avatar { width: 30px; height: 30px; font-size: 11px; }
+  .db-student-name { font-size: 0.82rem; }
+  .db-student-sub { font-size: 0.7rem; }
+
+  /* Stats */
+  .db-cadence-stats { grid-template-columns: repeat(3, 1fr); }
+  .db-cadence-stat-num { font-size: 1.1rem; }
+
+  /* Session rows */
+  .db-session-row { padding: 0.6rem 0.75rem; }
+  .db-session-icon { width: 28px; height: 28px; }
+
+  /* Alert rows */
+  .db-alert-row { padding: 0.6rem 0.75rem; }
+
+  /* Overview stats */
+  .db-stat { padding: 0.75rem 0.85rem; }
+  .db-stat-num { font-size: 1.4rem; }
 }
 /* ── Recent Sessions ── */
 .db-viewall {
@@ -3602,13 +3667,14 @@ body.no-animations *::after {
 .db-session-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0.75rem 1rem;
+  gap: 10px;
+  padding: 0.65rem 0.85rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: border-color 0.15s;
+  min-width: 0;
 }
 .db-session-row:hover { border-color: var(--border-gold); }
 
@@ -3636,4 +3702,244 @@ body.no-animations *::after {
   font-weight: 600;
   flex-shrink: 0;
   white-space: nowrap;
+}
+/* ════════════════════════════════
+   DASHBOARD — Two Column Layout
+════════════════════════════════ */
+
+.db-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.db-col-left { min-width: 0; }
+.db-col-right { min-width: 0; }
+
+/* Studio Cadence */
+.db-cadence-card { padding: 1rem 1rem 0.75rem; }
+
+.db-cadence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.db-cadence-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.db-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.db-legend-perf { background: var(--gold); }
+.db-legend-sessions { background: rgba(255,255,255,0.3); }
+
+.db-cadence-canvas {
+  width: 100%;
+  height: 100px;
+  display: block;
+  border-radius: 6px;
+}
+
+.db-cadence-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.db-cadence-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 0.5rem;
+}
+
+.db-cadence-stat + .db-cadence-stat {
+  border-left: 1px solid var(--border);
+}
+
+.db-cadence-stat-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.db-cadence-stat-num {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+/* Responsive — mobile: single column */
+/* ════════════════════════════════
+   DASHBOARD — Top Bar
+════════════════════════════════ */
+
+.db-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(12px);
+  background: oklch(0.18 0.005 270 / 0.92);
+}
+
+.db-search-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 38px;
+  transition: border-color 0.15s;
+  max-width: 480px;
+}
+
+.db-search-wrap:focus-within {
+  border-color: var(--border-gold);
+}
+
+.db-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.db-search-input::placeholder { color: var(--text-dim); }
+
+.db-search-kbd {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  background: var(--bg-card3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.db-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.db-topbar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.db-topbar-btn:hover {
+  border-color: var(--border-gold);
+  color: var(--text);
+}
+
+.db-notif-dot {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger, oklch(0.65 0.2 25));
+  border: 1.5px solid var(--bg);
+}
+
+.db-topbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold-dim, oklch(0.82 0.13 88 / 0.15));
+  border: 1.5px solid var(--border-gold);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Schedule button */
+.db-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  gap: 1rem;
+}
+
+.db-schedule-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--gold);
+  color: oklch(0.15 0.02 80);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.db-schedule-btn:hover { opacity: 0.88; }
+
+/* panels--sidebar needs top padding removed since topbar is sticky */
+.panels--sidebar { padding-top: 24px; }
+
+/* Mobile topbar */
+@media (max-width: 680px) {
+  .db-topbar {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .db-search-kbd { display: none; }
+  .db-schedule-btn { display: none; }
+  .db-header { flex-direction: column; align-items: flex-start; }
 }
