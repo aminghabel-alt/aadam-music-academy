@@ -13,6 +13,7 @@ let currentUser = null;
 let currentProfile = null;
 let timerInterval = null;
 let timerSeconds = 0;
+let practiceSelectedExercise = null; // { id, title }
 
 
 // ════════════════════════════════
@@ -1137,6 +1138,375 @@ async function calGenerateSchedule() {
   loadCalendar();
 }
 
+
+// ════════════════════════════════
+// TOOLS PANEL (Student)
+// ════════════════════════════════
+
+function initToolsPanel() {
+  const metroBtn = document.getElementById('tool-metronome-btn');
+  const metroPanel = document.getElementById('tools-metronome-panel');
+  const metroClose = document.getElementById('tools-metro-close');
+
+  if (metroBtn) {
+    metroBtn.onclick = () => {
+      metroPanel.style.display = 'block';
+      metroBtn.closest('.tools-card').classList.add('tools-card--active');
+      initMetronome('t');
+    };
+  }
+
+  if (metroClose) {
+    metroClose.onclick = () => {
+      metroPanel.style.display = 'none';
+      if (metroBtn) metroBtn.closest('.tools-card').classList.remove('tools-card--active');
+      // Stop metronome if playing
+      const playBtn = document.getElementById('t-metro-play');
+      if (playBtn && playBtn.classList.contains('active')) playBtn.click();
+    };
+  }
+}
+
+// ════════════════════════════════
+// STUDENT PRACTICE PANEL
+// ════════════════════════════════
+
+async function loadPracticePanel() {
+  const listEl = document.getElementById('practice-exercise-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<div class="empty-state">Loading...</div>';
+  practiceSelectedExercise = null;
+  updatePracticeExBadge();
+
+  // 1. Get student row via profile_id
+  const { data: studentRow, error: stErr } = await db
+    .from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .single();
+
+  if (stErr || !studentRow) {
+    listEl.innerHTML = '<div class="empty-state">No student profile found.</div>';
+    logError(stErr || 'no student row', 'loadPracticePanel');
+    return;
+  }
+
+  const studentId = studentRow.id;
+
+  // 2. Get active term
+  const { data: term, error: termErr } = await db
+    .from('terms')
+    .select('id')
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (termErr || !term) {
+    listEl.innerHTML = '<div class="empty-state">No active term. Ask your teacher to start one.</div>';
+    return;
+  }
+
+  // 3. Get all sessions of this term
+  const { data: sessions, error: sessErr } = await db
+    .from('sessions')
+    .select('id')
+    .eq('term_id', term.id);
+
+  if (sessErr || !sessions?.length) {
+    listEl.innerHTML = '<div class="empty-state">No sessions in this term yet.</div>';
+    return;
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+
+  // 4. Get exercises for these sessions
+  const { data: exercises, error: exErr } = await db
+    .from('exercises')
+    .select('id, title, description, max_score, session_id, skill_categories(name)')
+    .in('session_id', sessionIds)
+    .order('created_at', { ascending: false });
+
+  if (exErr) logError(exErr, 'loadPracticePanel:exercises');
+
+  if (!exercises?.length) {
+    listEl.innerHTML = '<div class="empty-state">No exercises assigned yet.</div>';
+    return;
+  }
+
+  // 5. Get scores for this student
+  const { data: scores } = await db
+    .from('exercise_scores')
+    .select('exercise_id, score')
+    .eq('student_id', studentId)
+    .in('exercise_id', exercises.map(e => e.id));
+
+  const scoreMap = {};
+  (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
+
+  // 6. Render exercise cards
+  listEl.innerHTML = exercises.map(ex => {
+    const score = scoreMap[ex.id];
+    const scoreText = score != null ? `${score} / ${ex.max_score}` : `— / ${ex.max_score}`;
+    const cat = ex.skill_categories?.name || '';
+    return `
+      <div class="practice-ex-card" data-id="${ex.id}" data-title="${ex.title}">
+        <div class="practice-ex-info">
+          <span class="practice-ex-title">${ex.title}</span>
+          ${cat ? `<span class="practice-ex-cat">${cat}</span>` : ''}
+          ${ex.description ? `<p class="practice-ex-desc">${ex.description}</p>` : ''}
+        </div>
+        <div class="practice-ex-score">${scoreText}</div>
+      </div>`;
+  }).join('');
+
+  // 7. Tap to select exercise
+  listEl.querySelectorAll('.practice-ex-card').forEach(card => {
+    card.addEventListener('click', () => {
+      practiceSelectedExercise = { id: card.dataset.id, title: card.dataset.title };
+      listEl.querySelectorAll('.practice-ex-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      updatePracticeExBadge();
+      showNotif(`Selected: ${card.dataset.title}`, 'success');
+    });
+  });
+
+  // 8. Load streak banner
+  loadStreakBanner(studentId);
+}
+
+function updatePracticeExBadge() {
+  const badge = document.getElementById('practice-selected-exercise');
+  if (!badge) return;
+  if (practiceSelectedExercise) {
+    badge.textContent = `📌 ${practiceSelectedExercise.title}`;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════
+// STUDENT CALENDAR
+// ════════════════════════════════
+
+let stuCalWeekStart = null;
+
+async function loadStudentCalendar() {
+  if (!stuCalWeekStart) stuCalWeekStart = calGetWeekStart(new Date());
+
+  // Week label
+  const labelEl = document.getElementById('stucal-week-label');
+  if (labelEl) labelEl.textContent = calFormatWeekLabel(stuCalWeekStart);
+
+  // Nav
+  document.getElementById('stucal-prev').onclick = () => {
+    stuCalWeekStart.setDate(stuCalWeekStart.getDate() - 7);
+    loadStudentCalendar();
+  };
+  document.getElementById('stucal-next').onclick = () => {
+    stuCalWeekStart.setDate(stuCalWeekStart.getDate() + 7);
+    loadStudentCalendar();
+  };
+
+  // Add practice button
+  document.getElementById('stucal-add-practice').onclick = () => stuCalOpenAddPractice();
+
+  const weekEnd = new Date(stuCalWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59);
+
+  // Get student_id from currentProfile
+  const { data: studentData } = await db
+    .from('students')
+    .select('id')
+    .eq('profile_id', currentUser.id)
+    .single();
+
+  if (!studentData) {
+    document.getElementById('stucal-list').innerHTML = '<div class="db-empty">No student profile found</div>';
+    return;
+  }
+
+  const studentId = studentData.id;
+
+  // Load class sessions
+  const { data: classSessions } = await db
+    .from('class_schedule')
+    .select('*, students(name, instrument)')
+    .eq('student_id', studentId)
+    .gte('scheduled_at', stuCalWeekStart.toISOString())
+    .lte('scheduled_at', weekEnd.toISOString())
+    .in('status', ['scheduled', 'completed'])
+    .order('scheduled_at', { ascending: true });
+
+  // Load practice sessions
+  const { data: practiceSessions } = await db
+    .from('practice_sessions')
+    .select('*')
+    .eq('student_id', studentId)
+    .gte('scheduled_at', stuCalWeekStart.toISOString())
+    .lte('scheduled_at', weekEnd.toISOString())
+    .order('scheduled_at', { ascending: true });
+
+  stuCalRenderList(classSessions || [], practiceSessions || [], studentId);
+}
+
+function stuCalRenderList(classSessions, practiceSessions, studentId) {
+  const list = document.getElementById('stucal-list');
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Build 7 days
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(stuCalWeekStart);
+    d.setDate(d.getDate() + i);
+    const isToday = d.getTime() === today.getTime();
+    const isPast = d < today;
+    const dateStr = d.toISOString().split('T')[0];
+
+    const daySessions = classSessions.filter(s => s.scheduled_at.startsWith(dateStr));
+    const dayPractice = practiceSessions.filter(s => s.scheduled_at.startsWith(dateStr));
+    const allEvents = [
+      ...daySessions.map(s => ({ type: 'class', data: s })),
+      ...dayPractice.map(s => ({ type: 'practice', data: s }))
+    ].sort((a, b) => new Date(a.data.scheduled_at) - new Date(b.data.scheduled_at));
+
+    if (!allEvents.length && isPast) continue; // skip empty past days
+
+    html += `
+      <div class="stucal-day ${isToday ? 'stucal-day--today' : ''} ${isPast ? 'stucal-day--past' : ''}">
+        <div class="stucal-day-label">
+          <span class="stucal-day-name">${dayNames[i]}</span>
+          <span class="stucal-day-date ${isToday ? 'stucal-day-date--today' : ''}">${d.getDate()} ${d.toLocaleDateString('en-GB', { month: 'short' })}</span>
+        </div>
+        <div class="stucal-events">
+          ${allEvents.length ? allEvents.map(ev => {
+            const time = new Date(ev.data.scheduled_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            if (ev.type === 'class') {
+              return `
+                <div class="stucal-event stucal-event--class">
+                  <div class="stucal-event-time">${time}</div>
+                  <div class="stucal-event-info">
+                    <span class="stucal-event-title">Class Session</span>
+                    <span class="stucal-event-meta">${ev.data.duration_min || 60} min</span>
+                  </div>
+                  <span class="stucal-event-badge stucal-event-badge--class">Class</span>
+                </div>`;
+            } else {
+              return `
+                <div class="stucal-event stucal-event--practice" data-id="${ev.data.id}">
+                  <div class="stucal-event-time">${time}</div>
+                  <div class="stucal-event-info">
+                    <span class="stucal-event-title">${ev.data.title || 'Practice'}</span>
+                    <span class="stucal-event-meta">${ev.data.duration_min || 30} min${ev.data.notes ? ' · ' + ev.data.notes : ''}</span>
+                  </div>
+                  <div class="stucal-event-actions">
+                    <button class="cal-action-btn stucal-delete-btn" data-id="${ev.data.id}" title="Delete">
+                      <svg viewBox="0 0 16 16" fill="none" width="11" height="11"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                </div>`;
+            }
+          }).join('') : '<div class="stucal-empty">No sessions</div>'}
+        </div>
+      </div>`;
+  }
+
+  list.innerHTML = html || '<div class="db-empty">No sessions this week</div>';
+
+  // Delete practice session
+  list.querySelectorAll('.stucal-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Delete this practice session?')) return;
+      const { error } = await db.from('practice_sessions').delete().eq('id', btn.dataset.id);
+      if (error) { showNotif('Error deleting', 'error'); return; }
+      showNotif('Practice session deleted', 'success');
+      loadStudentCalendar();
+    });
+  });
+}
+
+function stuCalOpenAddPractice() {
+  const existing = document.getElementById('stucal-add-modal');
+  if (existing) existing.remove();
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const modal = document.createElement('div');
+  modal.id = 'stucal-add-modal';
+  modal.className = 'cal-modal-overlay';
+  modal.innerHTML = `
+    <div class="cal-modal">
+      <div class="cal-modal-header">
+        <span class="cal-modal-title">Add Practice Session</span>
+        <button class="cal-close-btn" id="stucal-modal-close">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="cal-modal-body">
+        <label class="cal-modal-label">Title</label>
+        <input type="text" id="stucal-title" class="cal-modal-input" placeholder="e.g. Scales practice" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">Date</label>
+        <input type="date" id="stucal-date" class="cal-modal-input" value="${today}" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">Time</label>
+        <input type="time" id="stucal-time" class="cal-modal-input" value="09:00" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">Duration (minutes)</label>
+        <input type="number" id="stucal-duration" class="cal-modal-input" value="30" min="10" max="240" />
+        <label class="cal-modal-label" style="margin-top:0.75rem">Notes</label>
+        <input type="text" id="stucal-notes" class="cal-modal-input" placeholder="Optional..." />
+      </div>
+      <div class="cal-modal-footer">
+        <button class="cal-modal-btn-cancel" id="stucal-modal-cancel">Cancel</button>
+        <button class="btn-gold cal-modal-btn-confirm" id="stucal-modal-confirm">Add</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  document.getElementById('stucal-modal-close').onclick = () => modal.remove();
+  document.getElementById('stucal-modal-cancel').onclick = () => modal.remove();
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  document.getElementById('stucal-modal-confirm').onclick = async () => {
+    const title = document.getElementById('stucal-title').value || 'Practice';
+    const date = document.getElementById('stucal-date').value;
+    const time = document.getElementById('stucal-time').value;
+    const duration = parseInt(document.getElementById('stucal-duration').value) || 30;
+    const notes = document.getElementById('stucal-notes').value;
+
+    if (!date || !time) { showNotif('Date and time required', 'error'); return; }
+
+    // Get student profile
+    const { data: studentData } = await db
+      .from('students')
+      .select('id, teacher_id')
+      .eq('profile_id', currentUser.id)
+      .single();
+
+    if (!studentData) { showNotif('Student profile not found', 'error'); return; }
+
+    const { error } = await db.from('practice_sessions').insert({
+      student_id: studentData.id,
+      teacher_id: studentData.teacher_id,
+      scheduled_at: new Date(`${date}T${time}:00`).toISOString(),
+      duration_min: duration,
+      title,
+      notes: notes || null
+    });
+
+    if (error) { showNotif('Error adding session', 'error'); logError(error, 'stuCalAddPractice'); return; }
+
+    showNotif('Practice session added ✓', 'success');
+    modal.remove();
+    loadStudentCalendar();
+  };
+}
+
 // ════════════════════════════════
 // STUDENTS (Teacher)
 // ════════════════════════════════
@@ -2130,15 +2500,21 @@ async function stopTimer() {
   if (!studentRec) { showNotif('Student profile not found', 'error'); return; }
 
   const note = document.getElementById('practice-note').value || null;
+  const noteWithEx = practiceSelectedExercise
+    ? `[${practiceSelectedExercise.title}] ${note || ''}`.trim()
+    : note;
+
   const { error } = await db.from('practice_logs').insert({
     student_id: studentRec.id,
     duration_seconds: timerSeconds,
-    note
+    note: noteWithEx
   });
 
   if (error) { showNotif('Error saving practice', 'error'); logError(error, 'stopTimer'); return; }
   showNotif(`Practice ${formatTime(timerSeconds)} saved ✓`, 'success');
   document.getElementById('practice-note').value = '';
+  timerSeconds = 0;
+  if (display) display.textContent = '00:00';
 }
 
 
@@ -2996,7 +3372,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Nav (Student) ──
   document.querySelectorAll('#screen-student .tab-bar-item').forEach(item => {
-    item.addEventListener('click', () => showPanel(item.dataset.panel, item));
+    item.addEventListener('click', () => {
+      showPanel(item.dataset.panel, item);
+      if (item.dataset.panel === 'panel-student-calendar') loadStudentCalendar();
+      if (item.dataset.panel === 'panel-student-tools') initToolsPanel();
+      if (item.dataset.panel === 'panel-practice') loadPracticePanel();
+    });
   });
 
   // ── Add Student Button ──

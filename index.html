@@ -527,9 +527,22 @@
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.7"/></svg>
         <span class="tab-bar-label">Music</span>
       </button>
-      <button class="tab-bar-item" data-panel="panel-student-metronome">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M8 19h8M10 5h4M12 5l5.5 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <span class="tab-bar-label">Metro</span>
+      <button class="tab-bar-item" data-panel="panel-student-tools">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="tab-bar-label">Tools</span>
+      </button>
+      <button class="tab-bar-item" data-panel="panel-student-calendar">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <circle cx="8" cy="14" r="1.2" fill="currentColor"/>
+          <circle cx="12" cy="14" r="1.2" fill="currentColor"/>
+          <circle cx="16" cy="14" r="1.2" fill="currentColor"/>
+        </svg>
+        <span class="tab-bar-label">Calendar</span>
       </button>
     </nav>
 
@@ -549,23 +562,46 @@
       </div>
 
       <div id="panel-practice" class="panel">
-        <div class="panel-header"><h2>Today's Practice</h2></div>
+        <div class="panel-header"><h2>Practice</h2></div>
         <div id="streak-banner" class="streak-banner hidden"></div>
-        <div class="practice-timer">
-          <div id="timer-display" class="timer-display">00:00</div>
-          <div class="timer-buttons">
-            <button id="btn-timer-start" class="btn-gold">
-              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M4 3l10 5-10 5V3z" fill="currentColor"/></svg>
-              Start
-            </button>
-            <button id="btn-timer-stop" class="btn-outline" style="display:none">
-              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="3" y="3" width="4" height="10" rx="1" fill="currentColor"/><rect x="9" y="3" width="4" height="10" rx="1" fill="currentColor"/></svg>
-              Stop & Save
-            </button>
+
+        <!-- Exercise List -->
+        <div class="practice-section">
+          <div class="practice-section-label">Today's Exercises</div>
+          <div id="practice-exercise-list">
+            <div class="empty-state">Loading exercises...</div>
           </div>
-          <div class="field" style="margin-top:1rem">
-            <label>Notes</label>
-            <textarea id="practice-note" placeholder="What did you practice?" rows="2"></textarea>
+        </div>
+
+        <!-- Timer -->
+        <div class="practice-section">
+          <div class="practice-section-label">Timer</div>
+          <div class="practice-timer">
+            <div id="practice-selected-exercise" class="practice-ex-badge hidden"></div>
+            <div id="timer-display" class="timer-display">00:00</div>
+            <div class="timer-buttons">
+              <button id="btn-timer-start" class="btn-gold">
+                <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M4 3l10 5-10 5V3z" fill="currentColor"/></svg>
+                Start
+              </button>
+              <button id="btn-timer-stop" class="btn-outline" style="display:none">
+                <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="3" y="3" width="4" height="10" rx="1" fill="currentColor"/><rect x="9" y="3" width="4" height="10" rx="1" fill="currentColor"/></svg>
+                Stop & Save
+              </button>
+            </div>
+            <div class="field" style="margin-top:1rem">
+              <label>Notes</label>
+              <textarea id="practice-note" placeholder="What did you practice?" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metronome: use the Tools tab for full metronome -->
+        <div class="practice-section">
+          <div class="practice-section-label">Metronome</div>
+          <div class="practice-metro-hint">
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2L7 20h10L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+            <span>Open the <strong>Tools</strong> tab for the full metronome.</span>
           </div>
         </div>
       </div>
@@ -589,6 +625,92 @@
       <div id="panel-student-repertoire" class="panel">
         <div class="panel-header"><h2>Repertoire</h2></div>
         <div id="student-repertoire-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <div id="panel-student-calendar" class="panel">
+        <div class="panel-header">
+          <h2>My Calendar</h2>
+          <div class="cal-header-actions">
+            <button class="cal-nav-btn" id="stucal-prev">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M10 4L6 8l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <span id="stucal-week-label" class="cal-week-label"></span>
+            <button class="cal-nav-btn" id="stucal-next">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly list view -->
+        <div id="stucal-list" class="stucal-list"></div>
+
+        <!-- Add Practice Session -->
+        <div class="stucal-add-section">
+          <button class="btn-gold stucal-add-btn" id="stucal-add-practice">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Add Practice Session
+          </button>
+        </div>
+      </div>
+
+      <div id="panel-student-tools" class="panel">
+        <div class="panel-header"><h2>Tools</h2></div>
+
+        <!-- Tools grid -->
+        <div class="tools-grid">
+          <button class="tools-card" id="tool-metronome-btn">
+            <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+              <path d="M12 19V5M8 19h8M10 5h4M12 5l5.5 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            <span class="tools-card-label">Metronome</span>
+          </button>
+        </div>
+
+        <!-- Metronome expanded -->
+        <div id="tools-metronome-panel" class="tools-expanded-panel" style="display:none">
+          <div class="tools-expanded-header">
+            <span class="tools-expanded-title">Metronome</span>
+            <button class="cal-close-btn" id="tools-metro-close">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div class="metronome-wrap">
+            <div class="metro-bpm-row">
+              <button class="metro-bpm-btn" id="t-metro-bpm-minus"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+              <div class="metro-bpm-display"><span id="t-metro-bpm-val">80</span><span class="metro-bpm-label">BPM</span></div>
+              <button class="metro-bpm-btn" id="t-metro-bpm-plus"><svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            </div>
+            <input type="range" id="t-metro-slider" class="metro-slider" min="40" max="208" value="80" />
+            <div class="metro-section-label">Time Signature</div>
+            <div class="metro-sig-grid" id="t-metro-sig-grid">
+              <button class="metro-sig-btn active" data-sig="2/4">2/4</button>
+              <button class="metro-sig-btn" data-sig="3/4">3/4</button>
+              <button class="metro-sig-btn" data-sig="4/4">4/4</button>
+              <button class="metro-sig-btn" data-sig="6/8">6/8</button>
+            </div>
+            <div class="metro-section-label">Accents</div>
+            <div class="metro-accent-grid" id="t-metro-accent-grid"></div>
+            <div class="metro-section-label">Mode</div>
+            <div class="metro-mode-row">
+              <button class="metro-mode-btn active" id="t-metro-mode-zarb">Beat Only</button>
+              <button class="metro-mode-btn" id="t-metro-mode-both">Beat + Off-beat</button>
+              <button class="metro-mode-btn" id="t-metro-mode-zad">Off-beat Only</button>
+            </div>
+            <div class="metro-section-label">Visual</div>
+            <div class="metro-theme-row">
+              <button class="metro-theme-btn active" data-theme="pendulum" data-metro="tools" title="Pendulum"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><circle cx="11" cy="17" r="3" stroke="currentColor" stroke-width="1.4"/><line x1="11" y1="14" x2="11" y2="4" stroke="currentColor" stroke-width="1.4"/><path d="M5 4h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+              <button class="metro-theme-btn" data-theme="conducting" data-metro="tools" title="Conductor"><svg viewBox="0 0 22 22" fill="none" width="18" height="18"><path d="M11 3 Q6 14 11 19 Q16 14 11 3Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/><circle cx="11" cy="19" r="2" fill="currentColor"/></svg></button>
+            </div>
+            <div class="metro-stage" id="t-metro-stage"></div>
+            <div class="metro-controls">
+              <button class="metro-tap-btn" id="t-metro-tap">Tap</button>
+              <button class="metro-play-btn" id="t-metro-play">
+                <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 3l10 5-10 5V3z" fill="currentColor"/></svg>
+                Start
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="panel-student-metronome" class="panel">

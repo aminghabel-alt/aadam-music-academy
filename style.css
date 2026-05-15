@@ -4278,3 +4278,297 @@ body.no-animations *::after {
 }
 
 .cal-action-btn--reschedule:hover { border-color: var(--border-gold); color: var(--gold); }
+/* ════════════════════════════════
+   STUDENT CALENDAR
+════════════════════════════════ */
+
+.stucal-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+
+.stucal-day {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stucal-day--today { border-color: var(--gold); }
+.stucal-day--past { opacity: 0.7; }
+
+.stucal-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card2);
+}
+
+.stucal-day-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stucal-day-date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stucal-day-date--today {
+  color: var(--gold);
+}
+
+.stucal-events { display: flex; flex-direction: column; }
+
+.stucal-event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.stucal-event:last-child { border-bottom: none; }
+
+.stucal-event--class { background: oklch(0.82 0.13 88 / 0.04); }
+.stucal-event--practice { }
+
+.stucal-event-time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.stucal-event-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stucal-event-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stucal-event-meta {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.stucal-event-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.stucal-event-badge--class {
+  background: oklch(0.82 0.13 88 / 0.15);
+  color: var(--gold);
+}
+
+.stucal-event-actions { flex-shrink: 0; }
+
+.stucal-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+.stucal-empty {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 0.6rem 1rem;
+  font-style: italic;
+}
+
+.stucal-add-section {
+  padding: 0.5rem 0 1rem;
+}
+
+.stucal-add-btn {
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  padding: 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+/* ════════════════════════════════
+   TOOLS PANEL (Student)
+════════════════════════════════ */
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.tools-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--text-dim);
+}
+
+.tools-card:hover { border-color: var(--border-gold); color: var(--text); }
+.tools-card--active { border-color: var(--gold); color: var(--gold); background: oklch(0.82 0.13 88 / 0.06); }
+
+.tools-card-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.tools-expanded-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.tools-expanded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.tools-expanded-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+/* ════════════════════════════════
+   PRACTICE PANEL
+════════════════════════════════ */
+.practice-section {
+  margin-bottom: 2rem;
+}
+
+.practice-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.75rem;
+}
+
+.practice-ex-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.practice-ex-card:hover {
+  border-color: var(--border-gold);
+}
+
+.practice-ex-card.selected {
+  border-color: var(--gold);
+  background: var(--bg-card2);
+}
+
+.practice-ex-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.practice-ex-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.practice-ex-cat {
+  font-size: 0.72rem;
+  color: var(--gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.practice-ex-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0.1rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.practice-ex-score {
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-ex-badge {
+  font-size: 0.82rem;
+  color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--gold) 30%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-metro-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-mid);
+  font-size: 0.88rem;
+}
+
+.practice-metro-hint svg {
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+
+.practice-metro-hint strong {
+  color: var(--gold);
+}
