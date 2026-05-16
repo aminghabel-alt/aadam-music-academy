@@ -1740,6 +1740,7 @@ a { color: var(--gold); text-decoration: none; }
   display: none;
   flex-direction: column;
   min-height: 100vh;
+  width: 100vw;
   position: relative;
 }
 .screen--mobile.active {
@@ -1751,8 +1752,10 @@ a { color: var(--gold); text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px 12px;
+  padding: 18px 2rem 12px;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
   position: relative;
   z-index: 5;
 }
@@ -1862,15 +1865,56 @@ a { color: var(--gold); text-decoration: none; }
 /* ── Student main panels ── */
 .panels--mobile {
   flex: 1;
-  padding: 0 24px;
-  padding-bottom: 96px;
   overflow-y: auto;
+  padding: 0;
 }
 .panels--mobile .panel {
   display: none;
+  padding: 1.25rem 1.5rem 6rem;
+  max-width: 720px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 .panels--mobile .panel.active { display: block; }
+
+/* Practice dashboard — full width 2-col */
+.panel--practice-dashboard {
+  max-width: 100% !important;
+  padding: 1.5rem 2rem 6rem !important;
+  width: 100%;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1.25rem;
+}
+
+.practice-col-left { min-width: 0; }
+
+.practice-col-right {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+.practice-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+}
+
+.practice-col-right .metro-stage { height: 160px; }
+.practice-col-right .practice-timer-wrap { text-align: center; }
+
+@media (max-width: 780px) {
+  .panel--practice-dashboard { padding: 1rem 1rem 6rem !important; }
+  .practice-grid { grid-template-columns: 1fr; }
+  .practice-col-right { position: static; }
+}
 
 /* ── Responsive: mobile collapses sidebar ── */
 @media (max-width: 680px) {
@@ -4626,56 +4670,134 @@ body.no-animations *::after {
 .practice-metro-wrap .metro-stage {
   height: 180px;
 }
-/* ════════════════════════════════
-   PRACTICE DASHBOARD — 2-COLUMN
-════════════════════════════════ */
-
-.panel--practice-dashboard {
-  max-width: 1100px;
-  padding-top: 1.5rem;
+/* ── Student sidebar info ── */
+.sidebar-student-info {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+.sidebar-student-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: block;
+}
+.sidebar-student-name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* ── Practice grid ── */
 .practice-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 1.5rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
   align-items: start;
   margin-top: 1.25rem;
 }
-
-.practice-col-left {
-  min-width: 0;
-}
-
-.practice-col-right {
-  min-width: 0;
-  position: sticky;
-  top: 1rem;
-}
-
+.practice-col-left { min-width: 0; }
+.practice-col-right { min-width: 0; position: sticky; top: 1rem; }
 .practice-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 1.25rem;
 }
+.practice-col-right .metro-stage { height: 160px; }
+.practice-col-right .practice-timer-wrap { text-align: center; }
+.panel--practice-dashboard { max-width: 100% !important; }
 
-/* Metro stage taller in right col */
-.practice-col-right .metro-stage {
-  height: 160px;
+/* ── Student mobile ── */
+@media (max-width: 768px) {
+  .practice-grid { grid-template-columns: 1fr; }
+  .practice-col-right { position: static; }
 }
 
-/* Timer centered in card */
-.practice-col-right .practice-timer-wrap {
-  text-align: center;
+/* ════════════════════════════════
+   PROGRESS PANEL
+════════════════════════════════ */
+.progress-section {
+  margin-bottom: 2rem;
 }
 
-/* Mobile: stack columns */
-@media (max-width: 780px) {
-  .practice-grid {
-    grid-template-columns: 1fr;
-  }
-  .practice-col-right {
-    position: static;
-  }
+.progress-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.8;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
+
+.progress-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 2rem 0;
+}
+/* ── Progress Panel ── */
+.progress-section { margin-bottom: 2rem; }
+.progress-section-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold); opacity: 0.8;
+  margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+.progress-divider { height: 1px; background: var(--border); margin: 2rem 0; }
+
+/* ── Practice Log Entries ── */
+.practice-log-entry {
+  padding: 0.7rem 0.9rem; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.5rem;
+}
+.practice-log-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.practice-log-time { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.practice-log-dur { font-size: 0.85rem; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.practice-log-note { font-size: 0.8rem; color: var(--text-mid); margin: 0.35rem 0 0; line-height: 1.4; }
+
+/* ── Progress Panel ── */
+.progress-section { margin-bottom: 2rem; }
+.progress-section-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); opacity: 0.8; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.progress-divider { height: 1px; background: var(--border); margin: 2rem 0; }
+
+/* ── Practice Log ── */
+.practice-log-entry { padding: 0.7rem 0.9rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.5rem; }
+.practice-log-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.practice-log-time { font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.practice-log-dur { font-size: 0.85rem; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.practice-log-note { font-size: 0.8rem; color: var(--text-mid); margin: 0.35rem 0 0; line-height: 1.4; }
+
+/* ── Calendar Month View ── */
+.stucal-view-toggle { display: flex; gap: 2px; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-right: 0.5rem; }
+.stucal-view-btn { font-size: 0.78rem; font-weight: 600; font-family: var(--font); padding: 0.25rem 0.75rem; border-radius: 6px; border: none; background: none; color: var(--text-dim); cursor: pointer; transition: color 0.15s, background 0.15s; }
+.stucal-view-btn.active { background: var(--bg-card); color: var(--gold); }
+
+.stucal-month-grid { margin-top: 0.5rem; }
+.stucal-month-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+.stucal-month-dow { text-align: center; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; color: var(--text-dim); padding: 0.25rem 0; }
+.stucal-month-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+.stucal-month-cell { min-height: 70px; padding: 0.35rem 0.4rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; }
+.stucal-month-cell--empty { background: transparent; border-color: transparent; }
+.stucal-month-cell--today { border-color: color-mix(in oklch, var(--gold) 40%, transparent); background: color-mix(in oklch, var(--gold) 5%, var(--bg-card)); }
+.stucal-month-cell--has-class { border-color: color-mix(in oklch, var(--gold) 30%, transparent); }
+
+.stucal-cell-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; }
+.stucal-cell-day { font-size: 0.82rem; font-weight: 500; color: var(--text-mid); }
+.stucal-cell-day--today { color: var(--gold); font-weight: 700; }
+.stucal-cell-dots { display: flex; gap: 3px; align-items: center; }
+.stucal-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.stucal-dot--class { background: var(--gold); }
+.stucal-dot--practice { background: oklch(0.65 0.15 200); }
+
+.stucal-cell-summary { font-size: 0.67rem; line-height: 1.3; border-radius: 3px; padding: 1px 3px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stucal-cell-summary--practice { color: oklch(0.72 0.12 200); background: oklch(0.65 0.15 200 / 0.1); }
+.stucal-cell-summary--class { color: var(--gold); background: color-mix(in oklch, var(--gold) 10%, transparent); }

@@ -15,6 +15,7 @@ let timerInterval = null;
 let timerSeconds = 0;
 let practiceSelectedExercise = null;
 let practiceMetronomeInited = false;
+let _cachedStudentId = null;
 
 
 // ════════════════════════════════
@@ -206,6 +207,7 @@ async function logout() {
   await db.auth.signOut();
   currentUser = null;
   currentProfile = null;
+  _cachedStudentId = null;
   showScreen('screen-auth');
 }
 
@@ -237,12 +239,17 @@ const dbNavBtn = document.querySelector('[data-panel="panel-dashboard"]');
 if (dbNavBtn) showPanel('panel-dashboard', dbNavBtn);
   } else {
     document.getElementById('student-name-display').textContent = profile.name;
+    const sidebarName = document.getElementById('student-sidebar-name');
+    if (sidebarName) sidebarName.textContent = profile.name?.split(' ')[0] || profile.name;
     showScreen('screen-student');
+    document.querySelectorAll('#screen-student .panels--sidebar .panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-progress')?.classList.add('active');
     initKarname();
     loadStudentMessages();
     loadStudentTerms();
     loadStudentRepertoire();
     loadPracticeStreak();
+    loadTodayPracticeLogs(); // load on login so logs show immediately
   }
 }
 // ════════════════════════════════
@@ -1210,26 +1217,65 @@ async function loadPracticePanel() {
     .select('id')
     .eq('term_id', term.id);
 
-  if (!sessions?.length) {
-    listEl.innerHTML = '<div class="empty-state">No sessions in this term yet.</div>';
-    loadPracticeStreak();
-    initPracticeMetronome();
-    return;
-  }
-
-  const sessionIds = sessions.map(s => s.id);
+  const sessionIds = (sessions || []).map(s => s.id);
 
   // 4. Exercises
-  const { data: exercises, error: exErr } = await db
-    .from('exercises')
-    .select('id, title, description, link, max_score, skill_categories(name)')
-    .in('session_id', sessionIds)
-    .order('created_at', { ascending: false });
+  let exercises = [];
+  if (sessionIds.length) {
+    const { data: exData, error: exErr } = await db
+      .from('exercises')
+      .select('id, title, description, link, max_score, skill_categories(name)')
+      .in('session_id', sessionIds)
+      .order('created_at', { ascending: false });
+    if (exErr) logError(exErr, 'loadPracticePanel:exercises');
+    exercises = exData || [];
+  }
 
-  if (exErr) logError(exErr, 'loadPracticePanel:exercises');
-
-  if (!exercises?.length) {
-    listEl.innerHTML = '<div class="empty-state">No exercises assigned yet.</div>';
+  if (!exercises.length) {
+    listEl.innerHTML = `
+      <div class="practice-ex-card" style="opacity:0.65">
+        <div class="practice-ex-top">
+          <div class="practice-ex-info">
+            <span class="practice-ex-cat">Sample — Add real exercises via Teacher app</span>
+            <span class="practice-ex-title">Dorian Mode — Introduction</span>
+            <p class="practice-ex-desc">Practice the D Dorian scale across 2 octaves at 60 BPM. Focus on smooth finger transitions.</p>
+          </div>
+          <div class="practice-ex-right">
+            <span class="practice-ex-score">—/10</span>
+            <button class="practice-ex-select-btn" data-id="sample-1" data-title="Dorian Mode — Introduction" title="Select for timer">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="practice-ex-media">
+          <a class="practice-ex-link" href="https://www.musictheory.net/lessons/54" target="_blank">📄 Dorian Mode — Music Theory Reference</a>
+        </div>
+      </div>
+      <div class="practice-ex-card" style="opacity:0.65">
+        <div class="practice-ex-top">
+          <div class="practice-ex-info">
+            <span class="practice-ex-cat">Sample</span>
+            <span class="practice-ex-title">Metronome Practice — 80 BPM</span>
+            <p class="practice-ex-desc">Play quarter notes steady for 5 minutes. Increase to 100 BPM when comfortable.</p>
+          </div>
+          <div class="practice-ex-right">
+            <span class="practice-ex-score">—/10</span>
+            <button class="practice-ex-select-btn" data-id="sample-2" data-title="Metronome Practice" title="Select for timer">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+    listEl.querySelectorAll('.practice-ex-select-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        practiceSelectedExercise = { id: btn.dataset.id, title: btn.dataset.title };
+        listEl.querySelectorAll('.practice-ex-select-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updatePracticeExBadge();
+        showNotif(`Timer: ${btn.dataset.title}`, 'success');
+      });
+    });
     loadPracticeStreak();
     initPracticeMetronome();
     return;
@@ -1286,6 +1332,7 @@ async function loadPracticePanel() {
 
   loadPracticeStreak();
   initPracticeMetronome();
+  loadTodayPracticeLogs();
 }
 
 function getLinkType(link) {
@@ -1353,65 +1400,157 @@ function initPracticeMetronome() {
 // ════════════════════════════════
 
 let stuCalWeekStart = null;
+let stuCalMonthDate = null;
+let stuCalView = 'month';
 
 async function loadStudentCalendar() {
   if (!stuCalWeekStart) stuCalWeekStart = calGetWeekStart(new Date());
+  if (!stuCalMonthDate) stuCalMonthDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-  // Week label
-  const labelEl = document.getElementById('stucal-week-label');
-  if (labelEl) labelEl.textContent = calFormatWeekLabel(stuCalWeekStart);
+  const btnMonth = document.getElementById('stucal-btn-month');
+  const btnWeek = document.getElementById('stucal-btn-week');
+  const monthGrid = document.getElementById('stucal-month-grid');
+  const weekList = document.getElementById('stucal-list');
 
-  // Nav
-  document.getElementById('stucal-prev').onclick = () => {
-    stuCalWeekStart.setDate(stuCalWeekStart.getDate() - 7);
-    loadStudentCalendar();
-  };
-  document.getElementById('stucal-next').onclick = () => {
-    stuCalWeekStart.setDate(stuCalWeekStart.getDate() + 7);
-    loadStudentCalendar();
-  };
-
-  // Add practice button
-  document.getElementById('stucal-add-practice').onclick = () => stuCalOpenAddPractice();
-
-  const weekEnd = new Date(stuCalWeekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  weekEnd.setHours(23, 59, 59);
-
-  // Get student_id from currentProfile
-  const { data: studentData } = await db
-    .from('students')
-    .select('id')
-    .eq('profile_id', currentUser.id)
-    .single();
-
-  if (!studentData) {
-    document.getElementById('stucal-list').innerHTML = '<div class="db-empty">No student profile found</div>';
-    return;
+  if (btnMonth && !btnMonth._bound) {
+    btnMonth._bound = true;
+    btnMonth.addEventListener('click', () => {
+      stuCalView = 'month';
+      btnMonth.classList.add('active'); btnWeek.classList.remove('active');
+      if (monthGrid) monthGrid.style.display = '';
+      if (weekList) weekList.style.display = 'none';
+      renderStudentCalendar();
+    });
+    btnWeek.addEventListener('click', () => {
+      stuCalView = 'week';
+      btnWeek.classList.add('active'); btnMonth.classList.remove('active');
+      if (monthGrid) monthGrid.style.display = 'none';
+      if (weekList) weekList.style.display = '';
+      renderStudentCalendar();
+    });
   }
 
-  const studentId = studentData.id;
+  document.getElementById('stucal-prev').onclick = () => {
+    if (stuCalView === 'month') stuCalMonthDate.setMonth(stuCalMonthDate.getMonth() - 1);
+    else stuCalWeekStart.setDate(stuCalWeekStart.getDate() - 7);
+    renderStudentCalendar();
+  };
+  document.getElementById('stucal-next').onclick = () => {
+    if (stuCalView === 'month') stuCalMonthDate.setMonth(stuCalMonthDate.getMonth() + 1);
+    else stuCalWeekStart.setDate(stuCalWeekStart.getDate() + 7);
+    renderStudentCalendar();
+  };
 
-  // Load class sessions
-  const { data: classSessions } = await db
-    .from('class_schedule')
-    .select('*, students(name, instrument)')
-    .eq('student_id', studentId)
-    .gte('scheduled_at', stuCalWeekStart.toISOString())
-    .lte('scheduled_at', weekEnd.toISOString())
-    .in('status', ['scheduled', 'completed'])
-    .order('scheduled_at', { ascending: true });
+  document.getElementById('stucal-add-practice').onclick = () => stuCalOpenAddPractice();
 
-  // Load practice sessions
-  const { data: practiceSessions } = await db
-    .from('practice_sessions')
-    .select('*')
-    .eq('student_id', studentId)
-    .gte('scheduled_at', stuCalWeekStart.toISOString())
-    .lte('scheduled_at', weekEnd.toISOString())
-    .order('scheduled_at', { ascending: true });
+  // Show correct view on first load
+  if (monthGrid) monthGrid.style.display = stuCalView === 'month' ? '' : 'none';
+  if (weekList) weekList.style.display = stuCalView === 'week' ? '' : 'none';
 
-  stuCalRenderList(classSessions || [], practiceSessions || [], studentId);
+  renderStudentCalendar();
+}
+
+async function renderStudentCalendar() {
+  const labelEl = document.getElementById('stucal-week-label');
+  const studentId = await getStudentId();
+  if (!studentId) return;
+
+  if (stuCalView === 'month') {
+    const y = stuCalMonthDate.getFullYear();
+    const m = stuCalMonthDate.getMonth();
+    if (labelEl) labelEl.textContent = stuCalMonthDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+    const monthStart = new Date(y, m, 1);
+    const monthEnd = new Date(y, m + 1, 0, 23, 59, 59);
+
+    const [{ data: classSessions }, { data: practiceLogs }] = await Promise.all([
+      db.from('class_schedule').select('*').eq('student_id', studentId)
+        .gte('scheduled_at', monthStart.toISOString()).lte('scheduled_at', monthEnd.toISOString())
+        .in('status', ['scheduled', 'completed']),
+      db.from('practice_logs').select('duration_seconds, created_at').eq('student_id', studentId)
+        .gte('created_at', monthStart.toISOString()).lte('created_at', monthEnd.toISOString())
+    ]);
+
+    stuCalRenderMonth(y, m, classSessions || [], practiceLogs || []);
+  } else {
+    const weekEnd = new Date(stuCalWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6); weekEnd.setHours(23, 59, 59);
+    if (labelEl) labelEl.textContent = calFormatWeekLabel(stuCalWeekStart);
+
+    const [{ data: classSessions }, { data: practiceSessions }] = await Promise.all([
+      db.from('class_schedule').select('*, students(name, instrument)').eq('student_id', studentId)
+        .gte('scheduled_at', stuCalWeekStart.toISOString()).lte('scheduled_at', weekEnd.toISOString())
+        .in('status', ['scheduled', 'completed']).order('scheduled_at', { ascending: true }),
+      db.from('practice_sessions').select('*').eq('student_id', studentId)
+        .gte('scheduled_at', stuCalWeekStart.toISOString()).lte('scheduled_at', weekEnd.toISOString())
+        .order('scheduled_at', { ascending: true })
+    ]);
+
+    stuCalRenderList(classSessions || [], practiceSessions || [], studentId);
+  }
+}
+
+function stuCalRenderMonth(year, month, classSessions, practiceLogs) {
+  const grid = document.getElementById('stucal-month-grid');
+  if (!grid) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let startDow = firstDay.getDay() - 1;
+  if (startDow < 0) startDow = 6;
+
+  const classMap = {};
+  (classSessions || []).forEach(s => {
+    const d = s.scheduled_at.slice(0, 10);
+    if (!classMap[d]) classMap[d] = 0;
+    classMap[d]++;
+  });
+
+  const practiceMap = {};
+  (practiceLogs || []).forEach(l => {
+    const d = new Date(l.created_at).toISOString().slice(0, 10);
+    if (!practiceMap[d]) practiceMap[d] = { count: 0, seconds: 0 };
+    practiceMap[d].count++;
+    practiceMap[d].seconds += l.duration_seconds || 0;
+  });
+
+  const dayHeaders = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html = `<div class="stucal-month-header">${dayHeaders.map(d => `<div class="stucal-month-dow">${d}</div>`).join('')}</div>`;
+  html += '<div class="stucal-month-days">';
+
+  for (let i = 0; i < startDow; i++) html += '<div class="stucal-month-cell stucal-month-cell--empty"></div>';
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const d = new Date(year, month, day);
+    const isToday = d.getTime() === today.getTime();
+    const hasClass = !!classMap[dateStr];
+    const hasPractice = !!practiceMap[dateStr];
+    const p = practiceMap[dateStr];
+
+    let dots = '';
+    if (hasClass) dots += '<span class="stucal-dot stucal-dot--class"></span>';
+    if (hasPractice) dots += '<span class="stucal-dot stucal-dot--practice"></span>';
+
+    let summary = '';
+    if (hasPractice) {
+      const mins = Math.round(p.seconds / 60);
+      const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60>0?' '+mins%60+'m':''}` : `${mins}m`;
+      summary += `<div class="stucal-cell-summary stucal-cell-summary--practice">${p.count} · ${hrs}</div>`;
+    }
+    if (hasClass) summary += `<div class="stucal-cell-summary stucal-cell-summary--class">Class</div>`;
+
+    html += `<div class="stucal-month-cell${isToday?' stucal-month-cell--today':''}${hasClass?' stucal-month-cell--has-class':''}${hasPractice?' stucal-month-cell--has-practice':''}">
+      <div class="stucal-cell-top">
+        <span class="stucal-cell-day${isToday?' stucal-cell-day--today':''}">${day}</span>
+        <div class="stucal-cell-dots">${dots}</div>
+      </div>${summary}</div>`;
+  }
+
+  html += '</div>';
+  grid.innerHTML = html;
 }
 
 function stuCalRenderList(classSessions, practiceSessions, studentId) {
@@ -2542,6 +2681,13 @@ function startTimer() {
   }, 1000);
 }
 
+async function getStudentId() {
+  if (_cachedStudentId) return _cachedStudentId;
+  const { data } = await db.from('students').select('id').eq('profile_id', currentUser.id).single();
+  if (data) _cachedStudentId = data.id;
+  return _cachedStudentId;
+}
+
 async function stopTimer() {
   clearInterval(timerInterval);
   const display = document.getElementById('timer-display');
@@ -2551,13 +2697,8 @@ async function stopTimer() {
 
   if (timerSeconds < 10) { showNotif('Practice session too short', 'error'); return; }
 
-  const { data: studentRec } = await db
-    .from('students')
-    .select('id')
-    .eq('profile_id', currentUser.id)
-    .single();
-
-  if (!studentRec) { showNotif('Student profile not found', 'error'); return; }
+  const studentId = await getStudentId();
+  if (!studentId) { showNotif('Student profile not found', 'error'); return; }
 
   const rawNote = document.getElementById('practice-note').value || null;
   const note = practiceSelectedExercise
@@ -2565,7 +2706,7 @@ async function stopTimer() {
     : rawNote;
 
   const { error } = await db.from('practice_logs').insert({
-    student_id: studentRec.id,
+    student_id: studentId,
     duration_seconds: timerSeconds,
     note
   });
@@ -2575,6 +2716,55 @@ async function stopTimer() {
   document.getElementById('practice-note').value = '';
   timerSeconds = 0;
   if (display) display.textContent = '00:00';
+  loadTodayPracticeLogs();
+}
+
+async function loadTodayPracticeLogs() {
+  const listEl = document.getElementById('practice-logs-list');
+  if (!listEl) return;
+
+  const studentId = await getStudentId();
+  if (!studentId) return;
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const { data: logs, error } = await db
+    .from('practice_logs')
+    .select('id, duration_seconds, note, created_at')
+    .eq('student_id', studentId)
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { logError(error, 'loadTodayPracticeLogs'); return; }
+
+  if (!logs?.length) {
+    listEl.innerHTML = '<div class="empty-state" style="font-size:0.82rem">No recent sessions.</div>';
+    return;
+  }
+
+  const todayStr = new Date().toDateString();
+  const yestStr = new Date(Date.now() - 86400000).toDateString();
+
+  listEl.innerHTML = logs.map(log => {
+    const d = new Date(log.created_at);
+    const ds = d.toDateString();
+    const dayLabel = ds === todayStr ? 'Today' : ds === yestStr ? 'Yesterday'
+      : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const dur = formatTime(log.duration_seconds);
+    const note = log.note || '';
+    return `
+      <div class="practice-log-entry">
+        <div class="practice-log-top">
+          <span class="practice-log-time">${dayLabel} · ${timeStr}</span>
+          <span class="practice-log-dur">${dur}</span>
+        </div>
+        ${note ? `<p class="practice-log-note">${note}</p>` : ''}
+      </div>`;
+  }).join('');
 }
 
 
@@ -3420,23 +3610,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Logout ──
   document.getElementById('btn-logout').addEventListener('click', logout);
   document.getElementById('btn-logout-student').addEventListener('click', logout);
+  document.getElementById('btn-logout-student-mobile')?.addEventListener('click', logout);
 
   // ── Nav (Teacher) ──
   document.querySelectorAll('#screen-teacher .sidebar-nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    showPanel(item.dataset.panel, item);
-    if (item.dataset.panel === 'panel-dashboard') loadDashboard();
-    if (item.dataset.panel === 'panel-calendar') loadCalendar();
-  });
-});
-
-  // ── Nav (Student) ──
-  document.querySelectorAll('#screen-student .tab-bar-item').forEach(item => {
     item.addEventListener('click', () => {
       showPanel(item.dataset.panel, item);
-      if (item.dataset.panel === 'panel-student-calendar') loadStudentCalendar();
-      if (item.dataset.panel === 'panel-practice') loadPracticePanel();
+      if (item.dataset.panel === 'panel-dashboard') loadDashboard();
+      if (item.dataset.panel === 'panel-calendar') loadCalendar();
     });
+  });
+
+  // ── Nav (Student) — sidebar + tab bar unified ──
+  function studentNavClick(panelId) {
+    document.querySelectorAll('#screen-student .panels--sidebar .panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(panelId);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('#screen-student .sidebar-nav-item, #screen-student .tab-bar-item').forEach(i => {
+      i.classList.toggle('active', i.dataset.panel === panelId);
+    });
+    if (panelId === 'panel-student-calendar') loadStudentCalendar();
+    if (panelId === 'panel-practice') loadPracticePanel();
+    if (panelId === 'panel-progress') { initKarname(); loadStudentTerms(); loadStudentRepertoire(); }
+  }
+
+  document.querySelectorAll('#screen-student .sidebar-nav-item').forEach(item => {
+    item.addEventListener('click', () => studentNavClick(item.dataset.panel));
+  });
+  document.querySelectorAll('#screen-student .tab-bar-item').forEach(item => {
+    item.addEventListener('click', () => studentNavClick(item.dataset.panel));
   });
 
   // ── Add Student Button ──

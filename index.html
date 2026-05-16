@@ -484,106 +484,126 @@
   </div>
 
   <!-- STUDENT SCREEN -->
-  <div id="screen-student" class="screen screen--mobile">
+  <div id="screen-student" class="screen screen--sidebar">
 
-    <!-- Compact inline header -->
-    <header class="student-header">
-      <div class="student-header-left">
-        <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
+    <!-- Student Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <svg width="26" height="26" viewBox="0 0 60 60" fill="none">
           <circle cx="30" cy="30" r="27" stroke="var(--gold)" stroke-width="1.6"/>
           <line x1="30" y1="3.5" x2="30" y2="56.5" stroke="var(--gold)" stroke-width="1.6"/>
-          <line x1="18" y1="4.5" x2="42" y2="4.5" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"/>
-          <line x1="18" y1="55.5" x2="42" y2="55.5" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        <div class="student-header-greeting">
-          <span class="student-header-label">Good morning</span>
-          <span id="student-name-display" class="student-header-name"></span>
-        </div>
+        <span class="sidebar-logo-text">AADAM</span>
       </div>
-      <button id="btn-logout-student" class="student-logout" aria-label="Sign Out">
-        <svg viewBox="0 0 20 20" fill="none" width="15" height="15"><path d="M7 10H17m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-    </header>
+      <div class="sidebar-student-info">
+        <span class="sidebar-student-label">Student</span>
+        <span id="student-sidebar-name" class="sidebar-student-name"></span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" data-panel="panel-progress">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Progress</span>
+        </button>
+        <button class="sidebar-nav-item" data-panel="panel-practice">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Practice</span>
+        </button>
+        <button class="sidebar-nav-item" data-panel="panel-student-msgs">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>Messages</span>
+        </button>
 
-    <!-- Floating pill tab bar -->
-    <nav class="tab-bar">
-      <button class="tab-bar-item active" data-panel="panel-my-scores">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <span class="tab-bar-label">Report</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-practice">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <span class="tab-bar-label">Practice</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-student-msgs">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
-        <span class="tab-bar-label">Messages</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-student-terms">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <span class="tab-bar-label">Terms</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-student-repertoire">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.7"/></svg>
-        <span class="tab-bar-label">Music</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-student-tools">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none">
-          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="tab-bar-label">Tools</span>
-      </button>
-      <button class="tab-bar-item" data-panel="panel-student-calendar">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/>
-          <path d="M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          <circle cx="8" cy="14" r="1.2" fill="currentColor"/>
-          <circle cx="12" cy="14" r="1.2" fill="currentColor"/>
-          <circle cx="16" cy="14" r="1.2" fill="currentColor"/>
-        </svg>
-        <span class="tab-bar-label">Calendar</span>
-      </button>
+        <button class="sidebar-nav-item" data-panel="panel-student-tools">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Tools</span>
+        </button>
+        <button class="sidebar-nav-item" data-panel="panel-student-calendar">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Calendar</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user-info-wrap">
+          <span id="student-name-display" class="sidebar-user-name"></span>
+          <span class="sidebar-user-role">Student</span>
+        </div>
+        <button id="btn-logout-student" class="sidebar-logout" title="Sign Out" aria-label="Sign Out">
+          <svg viewBox="0 0 20 20" fill="none" width="15" height="15"><path d="M7 10H17m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile tab bar (hidden on desktop) -->
+    <nav class="tab-bar tab-bar--mobile">
+      <button class="tab-bar-item active" data-panel="panel-progress"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="tab-bar-label">Progress</span></button>
+      <button class="tab-bar-item" data-panel="panel-practice"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="tab-bar-label">Practice</span></button>
+      <button class="tab-bar-item" data-panel="panel-student-msgs"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="tab-bar-label">Messages</span></button>
+      
+      
+      <button class="tab-bar-item" data-panel="panel-student-calendar"><svg class="nav-svg" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="tab-bar-label">Calendar</span></button>
     </nav>
 
-    <main class="panels panels--mobile">
-      <div id="panel-my-scores" class="panel active">
-        <div class="panel-header"><h2>My Report Card</h2></div>
-        <div class="field" style="margin-bottom:1rem">
-          <select id="karname-term-select">
-            <option value="selected">Teacher-selected Terms</option>
-            <option value="all">All Terms</option>
-          </select>
+    <main class="panels panels--sidebar">
+      <div id="panel-progress" class="panel active">
+        <div class="panel-header"><h2>Progress</h2></div>
+
+        <!-- Report Card -->
+        <div class="progress-section">
+          <div class="progress-section-title">Report Card</div>
+          <div class="field" style="margin-bottom:1rem">
+            <select id="karname-term-select">
+              <option value="selected">Teacher-selected Terms</option>
+              <option value="all">All Terms</option>
+            </select>
+          </div>
+          <div id="karname-skills" class="karname-skills"></div>
+          <div class="karname-section-title">Session Chart</div>
+          <div id="karname-chart" class="karname-chart"></div>
+          <div id="karname-session-detail" class="karname-session-detail hidden"></div>
         </div>
-        <div id="karname-skills" class="karname-skills"></div>
-        <div class="karname-section-title">Session Chart</div>
-        <div id="karname-chart" class="karname-chart"></div>
-        <div id="karname-session-detail" class="karname-session-detail hidden"></div>
+
+        <div class="progress-divider"></div>
+
+        <!-- Terms -->
+        <div class="progress-section">
+          <div class="progress-section-title">My Terms</div>
+          <div id="student-terms-list"><div class="empty-state">Loading...</div></div>
+        </div>
+
+        <div class="progress-divider"></div>
+
+        <!-- Repertoire -->
+        <div class="progress-section">
+          <div class="progress-section-title">Repertoire</div>
+          <div id="student-repertoire-list"><div class="empty-state">Loading...</div></div>
+        </div>
+
       </div>
 
       <div id="panel-practice" class="panel panel--practice-dashboard">
 
-        <!-- Greeting full width -->
+        <!-- Greeting -->
         <div class="practice-greeting" id="practice-greeting"></div>
         <div id="streak-banner" class="streak-banner hidden"></div>
 
-        <!-- 2-column grid -->
+        <!-- 2-col grid -->
         <div class="practice-grid">
 
-          <!-- ── LEFT COLUMN ── -->
+          <!-- LEFT: Exercise List -->
           <div class="practice-col-left">
-
             <div class="practice-section-label">Today's Exercises</div>
             <div id="practice-exercise-list">
               <div class="empty-state">Loading exercises...</div>
             </div>
-
+            <div class="practice-section-label" style="margin-top:2rem">Practice Log</div>
+            <div id="practice-logs-list">
+              <div class="empty-state" style="font-size:0.82rem">No recent sessions.</div>
+            </div>
           </div>
 
-          <!-- ── RIGHT COLUMN ── -->
+          <!-- RIGHT: Metronome + Timer -->
           <div class="practice-col-right">
 
-            <!-- Metronome -->
             <div class="practice-card">
               <div class="practice-section-label">Metronome</div>
               <div class="metronome-wrap practice-metro-wrap">
@@ -628,8 +648,7 @@
               </div>
             </div>
 
-            <!-- Timer -->
-            <div class="practice-card" style="margin-top:1.25rem">
+            <div class="practice-card" style="margin-top:1rem">
               <div class="practice-section-label">Practice Timer</div>
               <div class="practice-timer-wrap">
                 <div id="practice-selected-exercise" class="practice-ex-badge hidden"></div>
@@ -651,8 +670,8 @@
               </div>
             </div>
 
-          </div><!-- /right -->
-        </div><!-- /grid -->
+          </div>
+        </div>
       </div>
 
       <div id="panel-student-msgs" class="panel">
@@ -666,20 +685,17 @@
         </div>
       </div>
 
-      <div id="panel-student-terms" class="panel">
-        <div class="panel-header"><h2>My Terms</h2></div>
-        <div id="student-terms-list"><div class="empty-state">Loading...</div></div>
-      </div>
-
-      <div id="panel-student-repertoire" class="panel">
-        <div class="panel-header"><h2>Repertoire</h2></div>
-        <div id="student-repertoire-list"><div class="empty-state">Loading...</div></div>
-      </div>
+      <div id="panel-student-terms" class="panel" style="display:none!important"></div>
+      <div id="panel-student-repertoire" class="panel" style="display:none!important"></div>
 
       <div id="panel-student-calendar" class="panel">
         <div class="panel-header">
           <h2>My Calendar</h2>
           <div class="cal-header-actions">
+            <div class="stucal-view-toggle">
+              <button class="stucal-view-btn active" id="stucal-btn-month">Month</button>
+              <button class="stucal-view-btn" id="stucal-btn-week">Week</button>
+            </div>
             <button class="cal-nav-btn" id="stucal-prev">
               <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M10 4L6 8l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             </button>
@@ -690,8 +706,11 @@
           </div>
         </div>
 
-        <!-- Weekly list view -->
-        <div id="stucal-list" class="stucal-list"></div>
+        <!-- Month grid -->
+        <div id="stucal-month-grid" class="stucal-month-grid"></div>
+
+        <!-- Weekly list view (hidden by default) -->
+        <div id="stucal-list" class="stucal-list" style="display:none"></div>
 
         <!-- Add Practice Session -->
         <div class="stucal-add-section">
