@@ -1862,11 +1862,14 @@ a { color: var(--gold); text-decoration: none; }
 /* ── Student main panels ── */
 .panels--mobile {
   flex: 1;
-  padding: 0 16px;
-  padding-bottom: 96px;  /* clearance for floating tab bar */
+  padding: 0 24px;
+  padding-bottom: 96px;
   overflow-y: auto;
 }
-.panels--mobile .panel { display: none; }
+.panels--mobile .panel {
+  display: none;
+  margin: 0 auto;
+}
 .panels--mobile .panel.active { display: block; }
 
 /* ── Responsive: mobile collapses sidebar ── */
@@ -4460,14 +4463,36 @@ body.no-animations *::after {
   color: var(--text);
 }
 /* ════════════════════════════════
-   PRACTICE PANEL
+   PRACTICE PANEL — DASHBOARD
 ════════════════════════════════ */
-.practice-section {
-  margin-bottom: 2rem;
+
+.practice-greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.practice-greeting-sub {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.practice-greeting-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.1;
 }
 
 .practice-section-label {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4475,27 +4500,21 @@ body.no-animations *::after {
   margin-bottom: 0.75rem;
 }
 
+/* Exercise Cards */
 .practice-ex-card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  margin-bottom: 0.5rem;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.6rem;
+  transition: border-color 0.2s;
 }
 
-.practice-ex-card:hover {
-  border-color: var(--border-gold);
-}
-
-.practice-ex-card.selected {
-  border-color: var(--gold);
-  background: var(--bg-card2);
+.practice-ex-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  justify-content: space-between;
 }
 
 .practice-ex-info {
@@ -4506,37 +4525,82 @@ body.no-animations *::after {
   min-width: 0;
 }
 
+.practice-ex-cat {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.8;
+}
+
 .practice-ex-title {
   font-weight: 600;
   font-size: 0.95rem;
   color: var(--text);
 }
 
-.practice-ex-cat {
-  font-size: 0.72rem;
-  color: var(--gold);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .practice-ex-desc {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin: 0.1rem 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.practice-ex-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .practice-ex-score {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-mid);
-  white-space: nowrap;
-  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
+.practice-ex-select-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.practice-ex-select-btn:hover,
+.practice-ex-select-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--gold) 10%, transparent);
+}
+
+.practice-ex-media {
+  margin-top: 0.75rem;
+}
+
+.practice-ex-link {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklch, var(--gold) 40%, transparent);
+  padding-bottom: 1px;
+  transition: opacity 0.2s;
+}
+
+.practice-ex-link:hover { opacity: 0.75; }
+
+/* Practice Ex Badge (selected for timer) */
 .practice-ex-badge {
   font-size: 0.82rem;
   color: var(--gold);
@@ -4552,23 +4616,66 @@ body.no-animations *::after {
   white-space: nowrap;
 }
 
-.practice-metro-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1rem;
+/* Timer section */
+.practice-timer-wrap {
+  text-align: center;
+  padding-bottom: 3rem;
+}
+
+/* Metronome inside practice - give stage more height */
+.practice-metro-wrap .metro-stage {
+  height: 180px;
+}
+/* ════════════════════════════════
+   PRACTICE DASHBOARD — 2-COLUMN
+════════════════════════════════ */
+
+.panel--practice-dashboard {
+  max-width: 1100px;
+  padding-top: 1.5rem;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1.25rem;
+}
+
+.practice-col-left {
+  min-width: 0;
+}
+
+.practice-col-right {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+.practice-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-mid);
-  font-size: 0.88rem;
+  padding: 1.25rem;
 }
 
-.practice-metro-hint svg {
-  flex-shrink: 0;
-  color: var(--text-dim);
+/* Metro stage taller in right col */
+.practice-col-right .metro-stage {
+  height: 160px;
 }
 
-.practice-metro-hint strong {
-  color: var(--gold);
+/* Timer centered in card */
+.practice-col-right .practice-timer-wrap {
+  text-align: center;
+}
+
+/* Mobile: stack columns */
+@media (max-width: 780px) {
+  .practice-grid {
+    grid-template-columns: 1fr;
+  }
+  .practice-col-right {
+    position: static;
+  }
 }

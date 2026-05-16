@@ -13,7 +13,8 @@ let currentUser = null;
 let currentProfile = null;
 let timerInterval = null;
 let timerSeconds = 0;
-let practiceSelectedExercise = null; // { id, title }
+let practiceSelectedExercise = null;
+let practiceMetronomeInited = false;
 
 
 // ════════════════════════════════
@@ -1144,34 +1145,25 @@ async function calGenerateSchedule() {
 // ════════════════════════════════
 
 function initToolsPanel() {
-  const metroBtn = document.getElementById('tool-metronome-btn');
-  const metroPanel = document.getElementById('tools-metronome-panel');
-  const metroClose = document.getElementById('tools-metro-close');
-
-  if (metroBtn) {
-    metroBtn.onclick = () => {
-      metroPanel.style.display = 'block';
-      metroBtn.closest('.tools-card').classList.add('tools-card--active');
-      initMetronome('t');
-    };
-  }
-
-  if (metroClose) {
-    metroClose.onclick = () => {
-      metroPanel.style.display = 'none';
-      if (metroBtn) metroBtn.closest('.tools-card').classList.remove('tools-card--active');
-      // Stop metronome if playing
-      const playBtn = document.getElementById('t-metro-play');
-      if (playBtn && playBtn.classList.contains('active')) playBtn.click();
-    };
-  }
+  // Metronome moved to Practice tab
 }
 
 // ════════════════════════════════
 // STUDENT PRACTICE PANEL
 // ════════════════════════════════
 
+function setPracticeGreeting() {
+  const el = document.getElementById('practice-greeting');
+  if (!el || !currentProfile) return;
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+  const name = currentProfile.name?.split(' ')[0] || '';
+  el.innerHTML = `<span class="practice-greeting-sub">PRACTICE SESSION</span><span class="practice-greeting-name">${greet}, ${name}</span>`;
+}
+
 async function loadPracticePanel() {
+  setPracticeGreeting();
+
   const listEl = document.getElementById('practice-exercise-list');
   if (!listEl) return;
 
@@ -1189,13 +1181,14 @@ async function loadPracticePanel() {
   if (stErr || !studentRow) {
     listEl.innerHTML = '<div class="empty-state">No student profile found.</div>';
     logError(stErr || 'no student row', 'loadPracticePanel');
+    loadPracticeStreak();
     return;
   }
 
   const studentId = studentRow.id;
 
   // 2. Get active term
-  const { data: term, error: termErr } = await db
+  const { data: term } = await db
     .from('terms')
     .select('id')
     .eq('student_id', studentId)
@@ -1204,28 +1197,32 @@ async function loadPracticePanel() {
     .limit(1)
     .single();
 
-  if (termErr || !term) {
+  if (!term) {
     listEl.innerHTML = '<div class="empty-state">No active term. Ask your teacher to start one.</div>';
+    loadPracticeStreak();
+    initPracticeMetronome();
     return;
   }
 
-  // 3. Get all sessions of this term
-  const { data: sessions, error: sessErr } = await db
+  // 3. Sessions of this term
+  const { data: sessions } = await db
     .from('sessions')
     .select('id')
     .eq('term_id', term.id);
 
-  if (sessErr || !sessions?.length) {
+  if (!sessions?.length) {
     listEl.innerHTML = '<div class="empty-state">No sessions in this term yet.</div>';
+    loadPracticeStreak();
+    initPracticeMetronome();
     return;
   }
 
   const sessionIds = sessions.map(s => s.id);
 
-  // 4. Get exercises for these sessions
+  // 4. Exercises
   const { data: exercises, error: exErr } = await db
     .from('exercises')
-    .select('id, title, description, max_score, session_id, skill_categories(name)')
+    .select('id, title, description, link, max_score, skill_categories(name)')
     .in('session_id', sessionIds)
     .order('created_at', { ascending: false });
 
@@ -1233,10 +1230,12 @@ async function loadPracticePanel() {
 
   if (!exercises?.length) {
     listEl.innerHTML = '<div class="empty-state">No exercises assigned yet.</div>';
+    loadPracticeStreak();
+    initPracticeMetronome();
     return;
   }
 
-  // 5. Get scores for this student
+  // 5. Scores
   const { data: scores } = await db
     .from('exercise_scores')
     .select('exercise_id, score')
@@ -1246,35 +1245,89 @@ async function loadPracticePanel() {
   const scoreMap = {};
   (scores || []).forEach(s => { scoreMap[s.exercise_id] = s.score; });
 
-  // 6. Render exercise cards
+  // 6. Render
   listEl.innerHTML = exercises.map(ex => {
     const score = scoreMap[ex.id];
-    const scoreText = score != null ? `${score} / ${ex.max_score}` : `— / ${ex.max_score}`;
+    const scoreTxt = score != null ? `${score}/${ex.max_score}` : `—/${ex.max_score}`;
     const cat = ex.skill_categories?.name || '';
+    const hasLink = !!ex.link;
+    const linkType = getLinkType(ex.link);
     return `
       <div class="practice-ex-card" data-id="${ex.id}" data-title="${ex.title}">
-        <div class="practice-ex-info">
-          <span class="practice-ex-title">${ex.title}</span>
-          ${cat ? `<span class="practice-ex-cat">${cat}</span>` : ''}
-          ${ex.description ? `<p class="practice-ex-desc">${ex.description}</p>` : ''}
+        <div class="practice-ex-top">
+          <div class="practice-ex-info">
+            ${cat ? `<span class="practice-ex-cat">${cat}</span>` : ''}
+            <span class="practice-ex-title">${ex.title}</span>
+            ${ex.description ? `<p class="practice-ex-desc">${ex.description}</p>` : ''}
+          </div>
+          <div class="practice-ex-right">
+            <span class="practice-ex-score">${scoreTxt}</span>
+            <button class="practice-ex-select-btn ${practiceSelectedExercise?.id === ex.id ? 'active' : ''}"
+              data-id="${ex.id}" data-title="${ex.title}" title="Select for timer">
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
         </div>
-        <div class="practice-ex-score">${scoreText}</div>
+        ${hasLink ? renderExerciseMedia(ex.link, linkType, ex.id) : ''}
       </div>`;
   }).join('');
 
-  // 7. Tap to select exercise
-  listEl.querySelectorAll('.practice-ex-card').forEach(card => {
-    card.addEventListener('click', () => {
-      practiceSelectedExercise = { id: card.dataset.id, title: card.dataset.title };
-      listEl.querySelectorAll('.practice-ex-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
+  // 7. Select button listeners
+  listEl.querySelectorAll('.practice-ex-select-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      practiceSelectedExercise = { id: btn.dataset.id, title: btn.dataset.title };
+      listEl.querySelectorAll('.practice-ex-select-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
       updatePracticeExBadge();
-      showNotif(`Selected: ${card.dataset.title}`, 'success');
+      showNotif(`Timer: ${btn.dataset.title}`, 'success');
     });
   });
 
-  // 8. Load streak banner
-  loadStreakBanner(studentId);
+  loadPracticeStreak();
+  initPracticeMetronome();
+}
+
+function getLinkType(link) {
+  if (!link) return null;
+  if (/youtube\.com|youtu\.be/.test(link)) return 'youtube';
+  if (/\.(mp3|wav|ogg|m4a)(\?|$)/i.test(link)) return 'audio';
+  if (/\.(pdf)(\?|$)/i.test(link)) return 'pdf';
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(link)) return 'video';
+  if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(link)) return 'image';
+  return 'link';
+}
+
+function renderExerciseMedia(link, type, exId) {
+  if (type === 'youtube') {
+    const match = link.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+    const vid = match?.[1];
+    if (!vid) return `<a class="practice-ex-link" href="${link}" target="_blank">▶ Watch</a>`;
+    return `<div class="practice-ex-media">
+      <iframe src="https://www.youtube.com/embed/${vid}" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:6px;margin-top:0.5rem"></iframe>
+    </div>`;
+  }
+  if (type === 'audio') {
+    return `<div class="practice-ex-media">
+      <audio controls src="${link}" style="width:100%;margin-top:0.5rem"></audio>
+    </div>`;
+  }
+  if (type === 'pdf') {
+    return `<a class="practice-ex-link" href="${link}" target="_blank">📄 Open PDF</a>`;
+  }
+  if (type === 'video') {
+    return `<div class="practice-ex-media">
+      <video controls src="${link}" style="width:100%;aspect-ratio:16/9;border-radius:6px;margin-top:0.5rem"></video>
+    </div>`;
+  }
+  if (type === 'image') {
+    return `<div class="practice-ex-media">
+      <img src="${link}" alt="exercise" style="width:100%;border-radius:6px;margin-top:0.5rem" />
+    </div>`;
+  }
+  return `<a class="practice-ex-link" href="${link}" target="_blank">🔗 Open Resource</a>`;
 }
 
 function updatePracticeExBadge() {
@@ -1287,6 +1340,13 @@ function updatePracticeExBadge() {
     badge.classList.add('hidden');
   }
 }
+
+function initPracticeMetronome() {
+  if (practiceMetronomeInited) return;
+  practiceMetronomeInited = true;
+  initMetronome('s-');
+}
+
 
 // ════════════════════════════════
 // STUDENT CALENDAR
@@ -2499,15 +2559,15 @@ async function stopTimer() {
 
   if (!studentRec) { showNotif('Student profile not found', 'error'); return; }
 
-  const note = document.getElementById('practice-note').value || null;
-  const noteWithEx = practiceSelectedExercise
-    ? `[${practiceSelectedExercise.title}] ${note || ''}`.trim()
-    : note;
+  const rawNote = document.getElementById('practice-note').value || null;
+  const note = practiceSelectedExercise
+    ? `[${practiceSelectedExercise.title}] ${rawNote || ''}`.trim()
+    : rawNote;
 
   const { error } = await db.from('practice_logs').insert({
     student_id: studentRec.id,
     duration_seconds: timerSeconds,
-    note: noteWithEx
+    note
   });
 
   if (error) { showNotif('Error saving practice', 'error'); logError(error, 'stopTimer'); return; }
@@ -3375,7 +3435,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     item.addEventListener('click', () => {
       showPanel(item.dataset.panel, item);
       if (item.dataset.panel === 'panel-student-calendar') loadStudentCalendar();
-      if (item.dataset.panel === 'panel-student-tools') initToolsPanel();
       if (item.dataset.panel === 'panel-practice') loadPracticePanel();
     });
   });
@@ -4125,7 +4184,7 @@ function initMetronome(prefix) {
 
   const themePanel = prefix === '' ?
     document.querySelector('#panel-metronome .metro-theme-row') :
-    document.querySelector('#panel-student-metronome .metro-theme-row');
+    document.querySelector('#panel-practice .metro-theme-row');
   themePanel?.querySelectorAll('.metro-theme-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       themePanel.querySelectorAll('.metro-theme-btn').forEach(b=>b.classList.remove('active'));
@@ -4141,6 +4200,5 @@ function initMetronome(prefix) {
   renderStage();
 }
 
-// Init both metronome instances
-initMetronome('');       // Teacher
-initMetronome('s-');    // Student
+// Init teacher metronome on load; student metronome lazy-inited when Practice tab opens
+initMetronome('');
